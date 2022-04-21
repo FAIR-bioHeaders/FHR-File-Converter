@@ -1,0 +1,15 @@
+required pacakges:
+
+io
+yaml
+microdata
+
+---
+intresting packages: 
+
+https://pypi.org/project/pelican-microdata/0.1/
+
+---
+TODO:
+
+take input from microdata, yaml, fasta and turn into centralized data structure
