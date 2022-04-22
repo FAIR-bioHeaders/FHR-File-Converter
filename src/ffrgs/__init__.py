@@ -1,1 +1,1 @@
-from .header import __header__
+from .header import ffrgs_header
