@@ -22,3 +22,10 @@ class ffrgs:
 
     def __str__(self):
         return f'("{self.version},{self.genome},{self.author}")'
+
+    def yaml(self):
+
+    def fasta(self):
+
+    def microdata(self):
+
