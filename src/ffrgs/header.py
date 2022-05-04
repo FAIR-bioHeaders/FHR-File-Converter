@@ -46,7 +46,7 @@ class ffrgs:
     @overload
     def fasta(self, stream: str):
         formulated = ""
-        data = re.findall('^;~.*', stream)
+        data = re.findall(';~.*', stream)
         for value in data
             formulated = formulated + "\n" + re.sub(';~','', value)
         self.yaml(formulated)
