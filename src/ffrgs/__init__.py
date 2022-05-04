@@ -1,1 +1,1 @@
-from .class import ffrgs
+from .header import ffrgs
