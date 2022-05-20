@@ -6,9 +6,8 @@ from typing import overload
 
 class ffrgs:
 
-    def __init__(self, version=None, schemaVersion=None, genome=None, taxa=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None):
-        #self.schema = schema
-        #self.iden = iden
+    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, taxa=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None):
+        self.schema = schema
         self.version = version
         self.schemaVersion = schemaVersion
         self.genome = genome
@@ -37,6 +36,7 @@ class ffrgs:
     @overload
     def yaml(self, stream: str):
         data = yaml.safe_load(stream)
+        self.schema = data['schema']
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
@@ -71,6 +71,7 @@ class ffrgs:
 
     def fasta(self):
         data = (
+        f';~schema: {self.schema}'
         f';~schemaVersion: {self.schemaVersion}'
         f';~genome: {self.genome}'
         f';~version: {self.version}'
@@ -101,6 +102,7 @@ class ffrgs:
     def microdata(self, stream: str):
         data = microdata.get_items(stream)
         data = data[0]
+        self.schema = data.schema
         self.version = data.version
         self.schemaVersion = data.schemaVersion
         self.genome = data.genome
@@ -132,6 +134,7 @@ class ffrgs:
 
         data = (
         f'<div itemscope itemtype="https://github.com/FFRGS/FFRGS-Specification" version="{self.schemaVersion}">'
+        f'<span itemprop="schema">{self.schema}</span>'
         f'<span itemprop="schemaVersion">{self.schemaVersion}</span>'
         f'<span itemprop="version">{self.version}</span>'
         f'<span itemprop="genome">{self.genome}</span>'
@@ -165,6 +168,7 @@ class ffrgs:
     def json(self, stream: str):
         data = json.loads(stream)
         data = yaml.safe_load(stream)
+        self.schema = data['schema']
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
