@@ -1,5 +1,6 @@
 import argparse
 import textwrap
+import sys
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -27,4 +28,33 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    with open(args.file[1], 'r', opener=opener) as input_file:
+        if args.file[1].endswith(".yml") or args.file[1].endswith(".yaml"):
+            ffrgs_to_be_converted = ffrgs.yaml(input_file)
+        elif args.file[1].endswith(".fasta") or args.file[1].endswith(".fa"):
+            ffrgs_to_be_converted = ffrgs.fasta(input_file)
+        elif args.file[1].endswith(".json"):
+            ffrgs_to_be_converted = ffrgs.json(input_file)
+        elif args.file[1].endswith(".html"):
+            ffrgs_to_be_converted = ffrgs.microdata(input_file)
+        else:
+            sys.exit('Input file extention not found')
 
+    original_stdout = sys.stdout
+
+    with open(args.file[2], 'w', opener=opener) as output_file:
+        sys.stdout = output_file
+        if args.file[2].endswith(".yml") or args.file[2].endswith(".yaml"):
+            print(ffrgs_to_be_converted.yaml())
+        elif args.file[2].endswith(".fasta") or args.file[2].endswith(".fa"):
+            print(ffrgs_to_be_converted.fasta())
+        elif args.file[2].endswith(".json"):
+            print(ffrgs_to_be_converted.json())
+        elif args.file[2].endswith(".html"):
+            print(ffrgs_to_be_converted.microdata())
+        else:
+            sys.stdout = original_stdout
+            sys.exit('Output file extention not found')
+
+    sys.stdout = original_stdout
+        
