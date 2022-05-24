@@ -33,8 +33,7 @@ class ffrgs:
     def __str__(self):
         return f'("{self.schemaVersion},{self.version},{self.genome}")'
 
-    @overload
-    def yaml(self, stream: str):
+    def input_yaml(self, stream: str):
         data = yaml.safe_load(stream)
         self.schema = data['schema']
         self.version = data['version']
@@ -58,18 +57,17 @@ class ffrgs:
         self.funding = date["funding"]
         self.licence = date["licence"]
 
-    def yaml(self):
+    def output_yaml(self):
         yaml.dump(self.__dict__)
 
-    @overload
-    def fasta(self, stream: str):
+    def input_fasta(self, stream: str):
         formulated = ""
         data = re.findall(';~.*', stream)
         for value in stream:
             formulated = formulated + "\n" + re.sub(';~','', value)
         self.yaml(formulated)
 
-    def fasta(self):
+    def output_fasta(self):
         data = (
         f';~schema: {self.schema}'
         f';~schemaVersion: {self.schemaVersion}'
@@ -98,8 +96,7 @@ class ffrgs:
         )
         return data
 
-    @overload 
-    def microdata(self, stream: str):
+    def input_microdata(self, stream: str):
         data = microdata.get_items(stream)
         data = data[0]
         self.schema = data.schema
@@ -124,7 +121,7 @@ class ffrgs:
         self.funding = data.get_all('funding')
         self.licence = data.licence
 
-    def microdata(self):
+    def output_microdata(self):
         instrument = '<span itemprop="instrument">'
         identifier = '<span itemprop="identifier">'
         relatedLink = '<span itemprop="relatedLink">'
@@ -164,8 +161,7 @@ class ffrgs:
         f'</div>')
         return data
 
-    @overload
-    def json(self, stream: str):
+    def input_json(self, stream: str):
         data = json.loads(stream)
         data = yaml.safe_load(stream)
         self.schema = data['schema']
@@ -190,7 +186,7 @@ class ffrgs:
         self.funding = date["funding"]
         self.licence = date["licence"]
 
-    def json(self):
+    def output_json(self):
         json.dumps(self.__dict__)
 
 #TODO   def validate(self)

@@ -1,1 +1,1 @@
-import ffrgs
+from .ffrgs import ffrgs
