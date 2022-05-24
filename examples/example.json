@@ -14,13 +14,17 @@
       "url":"https:/david.molik.co/person"
     },
   	"dateCreated":"2022-03-21",
-    "location": {
+    "place": {
       "name":"PBARC",
       "url":"https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/"
     },     
     "instrument": ["Sequel IIe", "Nanopore"],
+    "taxa":"Bombas",
     "physicalSample":"Located in Freezer 33, Drawer 137",
     "scholarlyArticle":"https://doi.org/10.1371/journal.pntd.0008755",
+    "assemblySoftware":"HiFiASM",
+    "funding":"funding",
+    "licence":"public domain",
     "documentation":"Built assembly from... ",
     "identifier": ["gkx10242566416842"],
     "relatedLink": ["https/david.molik.co/genome "]

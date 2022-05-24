@@ -9,7 +9,8 @@
 ;~  name: David Molik
 ;~  url: https:/david.molik.co/person
 ;~dateCreated: '2022-03-21'
-;~location:
+;~taxa: Bombas huntii
+;~place:
 ;~  name: PBARC
 ;~  url: https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/
 ;~instrument:
@@ -22,5 +23,7 @@
 ;~- gkx10242566416842
 ;~relatedLink:
 ;~- https/david.molik.co/genome
+;~funding: 'some'
+;~licence: 'public domain'
 >Contig 1
 AAAATCGATCGGCATA
