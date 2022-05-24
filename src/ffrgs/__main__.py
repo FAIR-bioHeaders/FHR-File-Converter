@@ -2,7 +2,7 @@ import argparse
 import textwrap
 import sys
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description='Convert from one FFRGS supported file type to another',
