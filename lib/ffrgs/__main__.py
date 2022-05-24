@@ -28,29 +28,29 @@ def main():
 
     args = parser.parse_args()
 
-    with open(args.file[1], 'r', opener=opener) as input_file:
-        if args.file[1].endswith(".yml") or args.file[1].endswith(".yaml"):
+    with open(args.file[0], 'r') as input_file:
+        if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):
             ffrgs_to_be_converted = ffrgs.yaml(input_file)
-        elif args.file[1].endswith(".fasta") or args.file[1].endswith(".fa"):
+        elif args.file[0].endswith(".fasta") or args.file[0].endswith(".fa"):
             ffrgs_to_be_converted = ffrgs.fasta(input_file)
-        elif args.file[1].endswith(".json"):
+        elif args.file[0].endswith(".json"):
             ffrgs_to_be_converted = ffrgs.json(input_file)
-        elif args.file[1].endswith(".html"):
+        elif args.file[0].endswith(".html"):
             ffrgs_to_be_converted = ffrgs.microdata(input_file)
         else:
             sys.exit('Input file extention not found')
 
     original_stdout = sys.stdout
 
-    with open(args.file[2], 'w', opener=opener) as output_file:
+    with open(args.file[1], 'w') as output_file:
         sys.stdout = output_file
-        if args.file[2].endswith(".yml") or args.file[2].endswith(".yaml"):
+        if args.file[1].endswith(".yml") or args.file[1].endswith(".yaml"):
             print(ffrgs_to_be_converted.yaml())
-        elif args.file[2].endswith(".fasta") or args.file[2].endswith(".fa"):
+        elif args.file[1].endswith(".fasta") or args.file[1].endswith(".fa"):
             print(ffrgs_to_be_converted.fasta())
-        elif args.file[2].endswith(".json"):
+        elif args.file[1].endswith(".json"):
             print(ffrgs_to_be_converted.json())
-        elif args.file[2].endswith(".html"):
+        elif args.file[1].endswith(".html"):
             print(ffrgs_to_be_converted.microdata())
         else:
             sys.stdout = original_stdout
