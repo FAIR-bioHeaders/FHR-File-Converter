@@ -25,12 +25,12 @@ class ffrgs:
         self.funding = []
         self.licence = licence
 
-    def __repr__(self):
-        return "%s(schemaVersion=%r, version=%r, genome=%r)" % (
-            self.schemaVersion, self.version, self.genome)
+    #def __repr__(self):
+    #    return "%s(schemaVersion=%r, version=%r, genome=%r)" % (
+    #       self.schemaVersion, self.version, self.genome)
 
-    def __str__(self):
-        return f'("{self.schemaVersion},{self.version},{self.genome}")'
+    #def __str__(self):
+    #    return f'("{self.schemaVersion},{self.version},{self.genome}")'
 
     def input_yaml(self, stream: str):
         data = yaml.safe_load(stream)
@@ -57,7 +57,7 @@ class ffrgs:
         self.licence = data["licence"]
 
     def output_yaml(self):
-        yaml.dump(self.__dict__)
+        return yaml.dump(self.__dict__)
 
     def input_fasta(self, stream: str):
         formulated = ""
@@ -68,30 +68,30 @@ class ffrgs:
 
     def output_fasta(self):
         data = (
-        f';~schema: {self.schema}'
-        f';~schemaVersion: {self.schemaVersion}'
-        f';~genome: {self.genome}'
-        f';~version: {self.version}'
+        f';~schema: {self.schema}\n'
+        f';~schemaVersion: {self.schemaVersion}\n'
+        f';~genome: {self.genome}\n'
+        f';~version: {self.version\n}'
         f';~author:'
-        f';~  name:{self.author["name"]}'
-        f';~  url:{self.author["url"]}'
+        f';~  name:{self.author["name"]\n}'
+        f';~  url:{self.author["url"]\n}'
         f';~assembler:'
-        f';~  name:{self.assembler["name"]}'
-        f';~  url:{self.assembler["url"]}'
+        f';~  name:{self.assembler["name"]\n}'
+        f';~  url:{self.assembler["url"]\n}'
         f';~place:'
-        f';~  name:{self.place["name"]}'
-        f';~  url:{self.place["url"]}'
-        f';~taxa: {self.taxa}'
-        f';~assemblySoftware: {self.assemblySoftware}'
-        f';~physicalSample: {self.physicalSample}'
-        f';~dateCreated: {self.dateCreated}'
-        f';~instrument: {self.instrument}'
-        f';~scholarlyArticle: {self.scholarlyArticle}'
-        f';~documentation: {self.documentation}'
-        f';~identifier: {self.identifier}'
-        f';~relatedLink: {self.relatedLink}'
-        f';~funding: {self.funding}'
-        f';~licence: {self.licence}'
+        f';~  name:{self.place["name"]\n}'
+        f';~  url:{self.place["url"]\n}'
+        f';~taxa: {self.taxa\n}'
+        f';~assemblySoftware: {self.assemblySoftware\n}'
+        f';~physicalSample: {self.physicalSample\n}'
+        f';~dateCreated: {self.dateCreated\n}'
+        f';~instrument: {self.instrument\n}'
+        f';~scholarlyArticle: {self.scholarlyArticle\n}'
+        f';~documentation: {self.documentation\n}'
+        f';~identifier: {self.identifier\n}'
+        f';~relatedLink: {self.relatedLink\n}'
+        f';~funding: {self.funding\n}'
+        f';~licence: {self.licence\n}'
         )
         return data
 
@@ -186,6 +186,6 @@ class ffrgs:
         self.licence = data["licence"]
 
     def output_json(self):
-        json.dumps(self.__dict__)
+        return json.dumps(self.__dict__)
 
 #TODO   def validate(self)
