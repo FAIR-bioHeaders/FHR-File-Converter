@@ -47,14 +47,14 @@ class ffrgs:
         self.taxa = data["taxa"]
         self.assemblySoftware = data["assemblySoftware"]
         self.physicalSample = data["physicalSample"]
-        self.dateCreated = date["dateCreated"]
-        self.instrument = date["instrument"]
-        self.scholarlyArticle = date["scholarlyArticle"]
-        self.documentation = date["documentation"]
-        self.identifier = date["identifier"]
-        self.relatedLink = date["relatedLink"]
-        self.funding = date["funding"]
-        self.licence = date["licence"]
+        self.dateCreated = data["dateCreated"]
+        self.instrument = data["instrument"]
+        self.scholarlyArticle = data["scholarlyArticle"]
+        self.documentation = data["documentation"]
+        self.identifier = data["identifier"]
+        self.relatedLink = data["relatedLink"]
+        self.funding = data["funding"]
+        self.licence = data["licence"]
 
     def output_yaml(self):
         yaml.dump(self.__dict__)
@@ -102,11 +102,11 @@ class ffrgs:
         self.version = data.version
         self.schemaVersion = data.schemaVersion
         self.genome = data.genome
-        self.author["name"] = data.author.name
+        self.author["name"] = data.author
         self.author["url"] = data.author.url
-        self.assembler["name"] = data.assembler.name
+        self.assembler["name"] = data.assembler
         self.assembler["url"] = data.assembler.url
-        self.place["name"] = data.place.name
+        self.place["name"] = data.place
         self.place["url"] = data.place.url
         self.taxa = data.taxa
         self.assemblySoftware = data.assemblySoftware
@@ -176,14 +176,14 @@ class ffrgs:
         self.taxa = data["taxa"]
         self.assemblySoftware = data["assemblySoftware"]
         self.physicalSample = data["physicalSample"]
-        self.dateCreated = date["dateCreated"]
-        self.instrument = date["instrument"]
-        self.scholarlyArticle = date["scholarlyArticle"]
-        self.documentation = date["documentation"]
-        self.identifier = date["identifier"]
-        self.relatedLink = date["relatedLink"]
-        self.funding = date["funding"]
-        self.licence = date["licence"]
+        self.dateCreated = data["dateCreated"]
+        self.instrument = data["instrument"]
+        self.scholarlyArticle = data["scholarlyArticle"]
+        self.documentation = data["documentation"]
+        self.identifier = data["identifier"]
+        self.relatedLink = data["relatedLink"]
+        self.funding = data["funding"]
+        self.licence = data["licence"]
 
     def output_json(self):
         json.dumps(self.__dict__)
