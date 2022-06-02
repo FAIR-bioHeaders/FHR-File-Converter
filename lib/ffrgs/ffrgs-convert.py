@@ -14,11 +14,13 @@ def main():
                             <input>.yml
                             <input>.fasta  - fasta contining a ffrgs header
                             <input>.html   - html containing microdata
+                            <input>.json
  
                         output files can be one of:
                             <output>.yml
                             <output>.fasta - fasta output type will be made as a fasta header without sequences
                             <output>.html  - microdata output type will be made into generic html output
+                            <output.json
                             '''))
 
     parser.add_argument('file', 

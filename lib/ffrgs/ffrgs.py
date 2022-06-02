@@ -2,6 +2,114 @@ import yaml
 import json
 import microdata
 import re
+from jsonschema import validate
+
+schema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.json",
+  "title": "FFRGS",
+  "description": "Fair Formatted Reference Genome Standard (FFRGS) Schema for Genome Assemblies",
+  "type": "object",
+  "properties": {
+    "schema":{
+      "type": "string",
+      "description": "centralized schema file"
+    },
+    "schemaVersion":{
+      "type": "number",
+      "description": "Version of FFRG"
+    },
+    "genome":{
+      "type": "string",
+      "description": "Name of the Genome"
+    },
+    "version":{
+      "type": "string",
+      "description": "Version number of Genome"
+    },
+    "author":{
+      "type": "object",
+      "description": "Author of the FFRGS Instance (Person or Org)",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "assembler":{
+      "type": "object",
+      "description": "Assembler of the Genome (Person or Org)",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "dateCreated":{
+      "type": "string",
+      "description": "Date the genome assembly was created"
+    },
+    "physicalSample":{
+      "type": "string",
+      "description": "Description of the physical sample"
+    },
+    "location":{
+      "type": "object",
+      "description": "location genome assembly was created",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "instrument": {
+      "type": "array",
+      "description": "Physical tools and instruments used in the creation of the genome assembly",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scholarlyArticle": {
+      "type": "string",
+      "description": "Scholarly article genome was published in"
+    },
+    "documentation": {
+      "type": "string",
+      "description": "Documentation about the genome"
+    },
+    "identifier": {
+      "type": "array",
+      "description": "Identifies of the genome",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relatedLink": {
+      "type": "array",
+      "description": "Related URLS to the genome",
+      "items": {
+        "type": "string"
+      }
+    },
+    "funding": {
+      "type": "string",
+      "description": "Grant Line Item"
+    },
+    "license": {
+      "type": "string",
+      "description": "license for the use of the Genome"
+    }
+  }
+}
 
 class ffrgs:
 
@@ -188,4 +296,6 @@ class ffrgs:
     def output_json(self):
         return json.dumps(self.__dict__)
 
-#TODO   def validate(self)
+    def ffrgs_validate(self):
+        ffrgs_instance = json.dumps(self.__dict__)
+        validate(instance=ffrgs_instance, schema=schema)
