@@ -42,7 +42,7 @@ def main():
         elif args.file[0].endswith(".json"):
             ffrgs_to_be_converted.input_json(input_file)
         elif args.file[0].endswith(".html"):
-            ffrgs_to_be_converted.input.microdata(input_file)
+            ffrgs_to_be_converted.input_microdata(input_file)
         else:
             sys.exit('Input file extention not found')
 
