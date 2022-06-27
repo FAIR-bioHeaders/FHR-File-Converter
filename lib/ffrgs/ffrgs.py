@@ -107,7 +107,7 @@ schema = {
     "license": {
       "type": "string",
       "description": "license for the use of the Genome"
-    }
+    },
     "checksum": {
       "type":"string",
       "description": "checksum value for hashing"

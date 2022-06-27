@@ -1,4 +1,5 @@
 # FFRGS-File-Converter
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762547.svg)](https://doi.org/10.5281/zenodo.6762547)
 
 This is the ffrgs file converter, it can convert ffrgs inbetween json, fasta, microdata, and fasta header.
 
