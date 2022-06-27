@@ -108,12 +108,15 @@ schema = {
       "type": "string",
       "description": "license for the use of the Genome"
     }
+    "checksum": {
+      "type":"string",
+      "description": "checksum value for hashing"
   }
 }
 
 class ffrgs:
 
-    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, taxa=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None):
+    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, taxa=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
         self.schema = schema
         self.version = version
         self.schemaVersion = schemaVersion
@@ -132,6 +135,7 @@ class ffrgs:
         self.relatedLink = []
         self.funding = []
         self.licence = licence
+        self.checksum = checksum
 
     #def __repr__(self):
     #    return "%s(schemaVersion=%r, version=%r, genome=%r)" % (
@@ -163,6 +167,7 @@ class ffrgs:
         self.relatedLink = data["relatedLink"]
         self.funding = data["funding"]
         self.licence = data["licence"]
+        self.checksum = data["checksum"]
 
     def output_yaml(self):
         return yaml.dump(self.__dict__)
@@ -200,6 +205,7 @@ class ffrgs:
         f';~relatedLink: {self.relatedLink}\n'
         f';~funding: {self.funding}\n'
         f';~licence: {self.licence}\n'
+        f';~checksum: {self.checksum}\n'
         )
         return data
 
@@ -227,6 +233,7 @@ class ffrgs:
         self.relatedLink = data.get_all('relatedLink')
         self.funding = data.get_all('funding')
         self.licence = data.licence
+        self.checksum = data.checksum
 
     def output_microdata(self):
         instrument = '<span itemprop="instrument">'
@@ -265,6 +272,7 @@ class ffrgs:
         f'{relatedLink + relatedLink.join(x + end_span for x in self.relatedLink)}'
         f'{funding + funding.join(x + end_span for x in self.funding)}'
         f'<span itemprop="licence">{self.licence}</span>'
+        f'<span itemprop="checksum">{self.checksum}</span>'
         f'</div>')
         return data
 
@@ -292,6 +300,7 @@ class ffrgs:
         self.relatedLink = data["relatedLink"]
         self.funding = data["funding"]
         self.licence = data["licence"]
+        self.checksum = data["checksum"]
 
     def output_json(self):
         return json.dumps(self.__dict__)
