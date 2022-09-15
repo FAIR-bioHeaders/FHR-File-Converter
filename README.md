@@ -35,6 +35,8 @@ positional <file> input and output files
         <output>.html  - microdata output type will be made into generic html output
 ```
 
+## Using ffrgs in Python
+
 how to use the ffrgs library on the python3 command line:
 
 ```python
@@ -44,4 +46,21 @@ how to use the ffrgs library on the python3 command line:
 >>> data.input_yaml(file.read())
 >>> data.output_fasta()
 ";~schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.json\n;~schemaVersion: 1\n;~genome: Bombas huntii\n;~version: 0.0.1\n;~author:;~  name:Adam Wright\n;~  url:https://wormbase.org/resource/person/WBPerson30813\n;~assembler:;~  name:David Molik\n;~  url:https:/david.molik.co/person\n;~place:;~  name:PBARC\n;~  url:https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/\n;~taxa: Bombas huntii\n;~assemblySoftware: HiFiASM\n;~physicalSample: Located in Freezer 33, Drawer 137\n;~dateCreated: 2022-03-21\n;~instrument: ['Sequel IIe', 'Nanopore']\n;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755\n;~documentation: Built assembly from... \n;~identifier: ['gkx10242566416842']\n;~relatedLink: ['https/david.molik.co/genome']\n;~funding: some\n;~licence: public domain\n"
+```
+
+## Checksums
+
+Because ffrgs stores the checksum, the fasta header of the reference genome may contain the checksum for the fasta file without the header. This would happen if the ffrgs fasta header was written in yaml, json, or microdata, and then converted to fasta header. Using the checksum in this example is a matter of stripping the fasta header to use the checksum:
+
+The fasta checksum in the header is the checksum of the fasta without the header use to remove the header:
+
+```bash
+cat example.fasta | grep -v '^;~*' > example.check.fasta
+```
+
+to strip to run the checksum:
+
+
+```bash
+cat example.fasta | grep ';~\s?checksum' | sed 's/;~\s?checksum//g' > example.md5
 ```
