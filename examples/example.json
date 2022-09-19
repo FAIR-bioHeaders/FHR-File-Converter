@@ -5,7 +5,7 @@
     "schemaVersion": 1.0,
     "genome": "Bombas huntii",
     "version": "0.0.1",
-    "author": {
+    "metadataAuthor": {
       "name":"Adam Wright",
       "url":"https://wormbase.org/resource/person/WBPerson30813"
     },

@@ -27,7 +27,7 @@ schema = {
       "type": "string",
       "description": "Version number of Genome"
     },
-    "author":{
+    "metadataAuthor":{
       "type": "object",
       "description": "Author of the FFRGS Instance (Person or Org)",
       "properties": {
@@ -121,7 +121,7 @@ class ffrgs:
         self.version = version
         self.schemaVersion = schemaVersion
         self.genome = genome
-        self.author = dict()
+        self.metadataAuthor = dict()
         self.assembler = dict()
         self.place = dict()
         self.taxa = taxa
@@ -150,8 +150,8 @@ class ffrgs:
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
-        self.author["name"] = data["author"]["name"]
-        self.author["url"] = data["author"]["url"]
+        self.metadataAuthor["name"] = data["metadataAuthor"]["name"]
+        self.metadataAuthor["url"] = data["metadataAuthor"]["url"]
         self.assembler["name"] = data["assembler"]["name"]
         self.assembler["url"] = data["assembler"]["url"]
         self.place["name"] = data["place"]["name"]
@@ -185,7 +185,7 @@ class ffrgs:
         f';~schemaVersion: {self.schemaVersion}\n'
         f';~genome: {self.genome}\n'
         f';~version: {self.version}\n'
-        f';~author:'
+        f';~metadataAuthor:'
         f';~  name:{self.author["name"]}\n'
         f';~  url:{self.author["url"]}\n'
         f';~assembler:'
@@ -216,8 +216,8 @@ class ffrgs:
         self.version = data.version
         self.schemaVersion = data.schemaVersion
         self.genome = data.genome
-        self.author["name"] = data.author
-        self.author["url"] = data.author.url
+        self.metadataAuthor["name"] = data.metadataAuthor.name
+        self.metadataAuthor["url"] = data.metadataAuthor.url
         self.assembler["name"] = data.assembler
         self.assembler["url"] = data.assembler.url
         self.place["name"] = data.place
@@ -249,7 +249,7 @@ class ffrgs:
         f'<span itemprop="schemaVersion">{self.schemaVersion}</span>'
         f'<span itemprop="version">{self.version}</span>'
         f'<span itemprop="genome">{self.genome}</span>'
-        f'<span itemprop="author">'
+        f'<span itemprop="metadataAuthor">'
         f'  <span itemprop="name">{self.author["name"]}</span>'
         f'  <span itemprop="url">{self.author["url"]}"</span>'
         f'</span>'
@@ -283,8 +283,8 @@ class ffrgs:
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
-        self.author["name"] = data["author"]["name"]
-        self.author["url"] = data["author"]["url"]
+        self.metadataAuthor["name"] = data["metadataAuthor"]["name"]
+        self.metadataAuthor["url"] = data["metadataAuthor"]["url"]
         self.assembler["name"] = data["assembler"]["name"]
         self.assembler["url"] = data["assembler"]["url"]
         self.place["name"] = data["place"]["name"]

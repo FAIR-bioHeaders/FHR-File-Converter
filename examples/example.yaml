@@ -2,7 +2,7 @@ schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.j
 schemaVersion: 1
 genome: Bombas huntii
 version: 0.0.1
-author:
+metadataAuthor:
   name: Adam Wright
   url: https://wormbase.org/resource/person/WBPerson30813
 assembler:
