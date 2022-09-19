@@ -55,12 +55,12 @@ Because ffrgs stores the checksum, the fasta header of the reference genome may 
 The fasta checksum in the header is the checksum of the fasta without the header use to remove the header:
 
 ```bash
-cat example.fasta | grep -v '^;~\s?checksum.*$' > example.check.fasta
+cat example.fasta | grep -E -v '^;~\s?checksum'  > example.check.fasta
 ```
 
-to strip to run the checksum:
+to strip the checksum:
 
 
 ```bash
-cat example.fasta | grep ';~\s?checksum.*$' | sed 's/;~\s?checksum.*$//g' > example.md5
+cat example.fasta | grep -E ';~\s?checksum' | sed 's/^;~checksum://g' | sed '/\'//g'
 ```
