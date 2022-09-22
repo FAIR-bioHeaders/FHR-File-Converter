@@ -3,6 +3,7 @@
     "$id":"https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/examples/example.json",
     "schema":"https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.json",
     "schemaVersion": 1.0,
+    "taxonURL" : "https://identifiers.org/taxonomy:9606",
     "genome": "Bombas huntii",
     "version": "0.0.1",
     "metadataAuthor": {
@@ -19,7 +20,6 @@
       "url":"https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/"
     },     
     "instrument": ["Sequel IIe", "Nanopore"],
-    "taxa":"Bombas",
     "physicalSample":"Located in Freezer 33, Drawer 137",
     "scholarlyArticle":"https://doi.org/10.1371/journal.pntd.0008755",
     "assemblySoftware":"HiFiASM",
@@ -27,6 +27,6 @@
     "licence":"public domain",
     "documentation":"Built assembly from... ",
     "identifier": ["gkx10242566416842"],
-    "relatedLink": ["https/david.molik.co/genome "]
+    "relatedLink": ["https/david.molik.co/genome"],
     "checksum":"md5:a3d5d9146c3992b7ed6724409ba28aa9"
 }

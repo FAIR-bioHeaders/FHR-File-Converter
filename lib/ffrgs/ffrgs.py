@@ -22,6 +22,10 @@ schema = {
     "genome":{
       "type": "string",
       "description": "Name of the Genome"
+    }
+    "taxonURL":{
+      "type": "string",
+      "description": "URL of the species information"
     },
     "version":{
       "type": "string",
@@ -116,7 +120,7 @@ schema = {
 
 class ffrgs:
 
-    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, taxa=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
+    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, taxonURL=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
         self.schema = schema
         self.version = version
         self.schemaVersion = schemaVersion
@@ -124,7 +128,7 @@ class ffrgs:
         self.metadataAuthor = dict()
         self.assembler = dict()
         self.place = dict()
-        self.taxa = taxa
+        self.taxonURL = taxonURL
         self.assemblySoftware = assemblySoftware
         self.physicalSample = physicalSample
         self.dateCreated = dateCreated
@@ -156,7 +160,7 @@ class ffrgs:
         self.assembler["url"] = data["assembler"]["url"]
         self.place["name"] = data["place"]["name"]
         self.place["url"] = data["place"]["url"]
-        self.taxa = data["taxa"]
+        self.taxonURL = data["taxonURL"]
         self.assemblySoftware = data["assemblySoftware"]
         self.physicalSample = data["physicalSample"]
         self.dateCreated = data["dateCreated"]
@@ -194,7 +198,7 @@ class ffrgs:
         f';~place:'
         f';~  name:{self.place["name"]}\n'
         f';~  url:{self.place["url"]}\n'
-        f';~taxa: {self.taxa}\n'
+        f';~taxonURL: {self.taxonURL}\n'
         f';~assemblySoftware: {self.assemblySoftware}\n'
         f';~physicalSample: {self.physicalSample}\n'
         f';~dateCreated: {self.dateCreated}\n'
@@ -222,7 +226,7 @@ class ffrgs:
         self.assembler["url"] = data.assembler.url
         self.place["name"] = data.place
         self.place["url"] = data.place.url
-        self.taxa = data.taxa
+        self.taxonURL = data.taxonURL
         self.assemblySoftware = data.assemblySoftware
         self.physicalSample = data.physicalSample
         self.dateCreated = data.dateCreated
@@ -261,7 +265,7 @@ class ffrgs:
         f'  <span itemprop="name">{self.place["name"]}</span>'
         f'  <span itemprop="url">{self.place["url"]}"</span>'
         f'</span>'
-        f'<span itemprop="taxa">{self.taxa}</span>'
+        f'<span itemprop="taxonURL">{self.taxonURL}</span>'
         f'<span itemprop="assemblySoftware">{self.assemblySoftware}</span>'
         f'<span itemprop="physicalSample">{self.physicalSample}</span>'
         f'<span itemprop="dateCreated">{self.dateCreated}</span>'
@@ -289,7 +293,7 @@ class ffrgs:
         self.assembler["url"] = data["assembler"]["url"]
         self.place["name"] = data["place"]["name"]
         self.place["url"] = data["place"]["url"]
-        self.taxa = data["taxa"]
+        self.taxonURL = data["taxonURL"]
         self.assemblySoftware = data["assemblySoftware"]
         self.physicalSample = data["physicalSample"]
         self.dateCreated = data["dateCreated"]

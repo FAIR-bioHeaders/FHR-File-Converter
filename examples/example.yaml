@@ -17,7 +17,7 @@ instrument:
 - Sequel IIe
 - Nanopore
 physicalSample: Located in Freezer 33, Drawer 137
-taxa: Bombas huntii
+taxonURL: https://identifiers.org/taxonomy:9606
 scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755
 documentation: 'Built assembly from... '
 identifier:
