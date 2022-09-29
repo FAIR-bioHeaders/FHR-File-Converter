@@ -43,7 +43,7 @@ schema = {
         }
       }
     },
-    "assembler":{
+    "assemblyAuthor":{
       "type": "object",
       "description": "Assembler of the Genome (Person or Org)",
       "properties": {
@@ -126,7 +126,7 @@ class ffrgs:
         self.schemaVersion = schemaVersion
         self.genome = genome
         self.metadataAuthor = dict()
-        self.assembler = dict()
+        self.assemblyAuthor = dict()
         self.place = dict()
         self.taxonURL = taxonURL
         self.assemblySoftware = assemblySoftware
@@ -156,8 +156,8 @@ class ffrgs:
         self.genome = data['genome']
         self.metadataAuthor["name"] = data["metadataAuthor"]["name"]
         self.metadataAuthor["url"] = data["metadataAuthor"]["url"]
-        self.assembler["name"] = data["assembler"]["name"]
-        self.assembler["url"] = data["assembler"]["url"]
+        self.assemblyAuthor["name"] = data["assemblyAuthor"]["name"]
+        self.assemblyAuthor["url"] = data["assemblyAuthor"]["url"]
         self.place["name"] = data["place"]["name"]
         self.place["url"] = data["place"]["url"]
         self.taxonURL = data["taxonURL"]
@@ -192,9 +192,9 @@ class ffrgs:
         f';~metadataAuthor:'
         f';~  name:{self.author["name"]}\n'
         f';~  url:{self.author["url"]}\n'
-        f';~assembler:'
-        f';~  name:{self.assembler["name"]}\n'
-        f';~  url:{self.assembler["url"]}\n'
+        f';~assemblyAuthor:'
+        f';~  name:{self.assemblyAuthor["name"]}\n'
+        f';~  url:{self.assemblyAuthor["url"]}\n'
         f';~place:'
         f';~  name:{self.place["name"]}\n'
         f';~  url:{self.place["url"]}\n'
@@ -222,8 +222,8 @@ class ffrgs:
         self.genome = data.genome
         self.metadataAuthor["name"] = data.metadataAuthor.name
         self.metadataAuthor["url"] = data.metadataAuthor.url
-        self.assembler["name"] = data.assembler
-        self.assembler["url"] = data.assembler.url
+        self.assemblyAuthor["name"] = data.assemblyAuthor
+        self.assemblyAuthor["url"] = data.assemblyAuthor.url
         self.place["name"] = data.place
         self.place["url"] = data.place.url
         self.taxonURL = data.taxonURL
@@ -257,9 +257,9 @@ class ffrgs:
         f'  <span itemprop="name">{self.author["name"]}</span>'
         f'  <span itemprop="url">{self.author["url"]}"</span>'
         f'</span>'
-        f'<span itemprop="assembler">'
-        f'  <span itemprop="name">{self.assembler["name"]}</span>'
-        f'  <span itemprop="url">{self.assembler["url"]}"</span>'
+        f'<span itemprop="assemblyAuthor">'
+        f'  <span itemprop="name">{self.assemblyAuthor["name"]}</span>'
+        f'  <span itemprop="url">{self.assemblyAuthor["url"]}"</span>'
         f'</span>'
         f'<span itemprop="place">'
         f'  <span itemprop="name">{self.place["name"]}</span>'
@@ -289,8 +289,8 @@ class ffrgs:
         self.genome = data['genome']
         self.metadataAuthor["name"] = data["metadataAuthor"]["name"]
         self.metadataAuthor["url"] = data["metadataAuthor"]["url"]
-        self.assembler["name"] = data["assembler"]["name"]
-        self.assembler["url"] = data["assembler"]["url"]
+        self.assemblyAuthor["name"] = data["assemblyAuthor"]["name"]
+        self.assemblyAuthor["url"] = data["assemblyAuthor"]["url"]
         self.place["name"] = data["place"]["name"]
         self.place["url"] = data["place"]["url"]
         self.taxonURL = data["taxonURL"]
