@@ -22,41 +22,54 @@ schema = {
     "genome":{
       "type": "string",
       "description": "Name of the Genome"
-    }
-    "taxonURL":{
-      "type": "string",
-      "description": "URL of the species information"
     },
-    "version":{
-      "type": "string",
-      "description": "Version number of Genome"
-    },
-    "metadataAuthor":{
+    "taxon":{
       "type": "object",
-      "description": "Author of the FFRGS Instance (Person or Org)",
+      "description": "Species name and URL of the species information at identifiers.org",
       "properties": {
         "name": {
           "type": "string"
         },
-        "url": {
-          "type": "string"
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "https://identifiers.org/taxonomy:[0-9]+"
+        }
+      }
+    },
+    "version":{
+      "type": "string",
+      "description": "Version number of Genome eg. 1.2.0"
+    },
+    "metadataAuthor":{
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "Author of the FFRGS Instance (Person or Org)",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uri": { "$ref": "#/definitions/orcidUri" }
         }
       }
     },
     "assemblyAuthor":{
-      "type": "object",
-      "description": "Assembler of the Genome (Person or Org)",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
+      "type": "array",
+        "items": {
+        "type": "object",
+        "description": "Assembler of the Genome (Person or Org)",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uri": { "$ref": "#/definitions/orcidUri" }
         }
       }
     },
     "dateCreated":{
       "type": "string",
+      "format": "date",
       "description": "Date the genome assembly was created"
     },
     "physicalSample":{
@@ -71,7 +84,8 @@ schema = {
           "type": "string"
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "format": "uri"
         }
       }
     },
@@ -84,7 +98,8 @@ schema = {
     },
     "scholarlyArticle": {
       "type": "string",
-      "description": "Scholarly article genome was published in"
+      "pattern": "^10.",
+      "description": "Scholarly article genome was published e.g. 10.5281/zenodo.6762550 "
     },
     "documentation": {
       "type": "string",
@@ -101,7 +116,8 @@ schema = {
       "type": "array",
       "description": "Related URLS to the genome",
       "items": {
-        "type": "string"
+        "type": "string",
+        "format": "uri"
       }
     },
     "funding": {
@@ -112,23 +128,32 @@ schema = {
       "type": "string",
       "description": "license for the use of the Genome"
     },
-    "checksum": {
-      "type":"string",
-      "description": "checksum value for hashing"
+    "checksum": { "$ref": "#/definitions/sha2" }
+  },
+  "definitions": {
+    "orcidUri": { "format": "uri", 
+                  "pattern": "^https://orcid.org/[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]" },
+    "sha2": {
+      "type": "string",
+      "minLength": 44,
+      "maxLength": 44,
+      "pattern": "^[A-Za-z0-9/+=]+$",
+      "description": "sha2-512/256 checksum value for hashing"
+    }
   }
 }
 
 class ffrgs:
 
-    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, taxonURL=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
+    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
         self.schema = schema
         self.version = version
         self.schemaVersion = schemaVersion
         self.genome = genome
-        self.metadataAuthor = dict()
-        self.assemblyAuthor = dict()
+        self.metadataAuthor = []
+        self.assemblyAuthor = []
         self.place = dict()
-        self.taxonURL = taxonURL
+        self.taxon = dict()
         self.assemblySoftware = assemblySoftware
         self.physicalSample = physicalSample
         self.dateCreated = dateCreated
@@ -154,13 +179,12 @@ class ffrgs:
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
-        self.metadataAuthor["name"] = data["metadataAuthor"]["name"]
-        self.metadataAuthor["url"] = data["metadataAuthor"]["url"]
-        self.assemblyAuthor["name"] = data["assemblyAuthor"]["name"]
-        self.assemblyAuthor["url"] = data["assemblyAuthor"]["url"]
+        self.metadataAuthor = data["metadataAuthor"]
+        self.assemblyAuthor = data["assemblyAuthor"]
         self.place["name"] = data["place"]["name"]
         self.place["url"] = data["place"]["url"]
-        self.taxonURL = data["taxonURL"]
+        self.taxon["name"] = data["taxon"]["name"]
+        self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
         self.physicalSample = data["physicalSample"]
         self.dateCreated = data["dateCreated"]
@@ -184,30 +208,42 @@ class ffrgs:
         self.yaml(formulated)
 
     def output_fasta(self):
+        name =  '<span itemprop="name">'
+        uri = '<span itemprop="uri">'
+        end_span = "</span>"        
+
+        array = ';~- '
+        name = '\n;~- name:'
+        uri = '\n;~  uri:'
+
         data = (
         f';~schema: {self.schema}\n'
         f';~schemaVersion: {self.schemaVersion}\n'
         f';~genome: {self.genome}\n'
         f';~version: {self.version}\n'
         f';~metadataAuthor:'
-        f';~  name:{self.author["name"]}\n'
-        f';~  url:{self.author["url"]}\n'
-        f';~assemblyAuthor:'
-        f';~  name:{self.assemblyAuthor["name"]}\n'
-        f';~  url:{self.assemblyAuthor["url"]}\n'
-        f';~place:'
+        f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
+        f'\n;~assemblyAuthor:'
+        f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.assemblyAuthor)}'
+        f';~place:\n'
         f';~  name:{self.place["name"]}\n'
         f';~  url:{self.place["url"]}\n'
-        f';~taxonURL: {self.taxonURL}\n'
+        f';~taxon:\n'
+        f';~  name:{self.taxon["name"]}\n'
+        f';~  uri:{self.taxon["uri"]}\n'
         f';~assemblySoftware: {self.assemblySoftware}\n'
         f';~physicalSample: {self.physicalSample}\n'
         f';~dateCreated: {self.dateCreated}\n'
-        f';~instrument: {self.instrument}\n'
+        f';~instrument:\n'
+        f'{array + array.join(x + end_span for x in self.instrument)}'
         f';~scholarlyArticle: {self.scholarlyArticle}\n'
         f';~documentation: {self.documentation}\n'
-        f';~identifier: {self.identifier}\n'
-        f';~relatedLink: {self.relatedLink}\n'
-        f';~funding: {self.funding}\n'
+        f';~identifier:\n' 
+        f'{array + array.join(x + end_span for x in self.identifier)}'
+        f';~relatedLink:\n' 
+        f'{array + array.join(x + end_span for x in self.relatedLink)}'
+        f';~funding:\n'
+        f'{array + array.join(x + end_span for x in self.funding)}'
         f';~licence: {self.licence}\n'
         f';~checksum: {self.checksum}\n'
         )
@@ -220,13 +256,12 @@ class ffrgs:
         self.version = data.version
         self.schemaVersion = data.schemaVersion
         self.genome = data.genome
-        self.metadataAuthor["name"] = data.metadataAuthor.name
-        self.metadataAuthor["url"] = data.metadataAuthor.url
-        self.assemblyAuthor["name"] = data.assemblyAuthor
-        self.assemblyAuthor["url"] = data.assemblyAuthor.url
+        self.metadataAuthor = data.get_all('metadataAuthor')
+        self.assemblyAuthor = data.get_all('assemblyAuthor')
         self.place["name"] = data.place
         self.place["url"] = data.place.url
-        self.taxonURL = data.taxonURL
+        self.taxon["name"] = data.taxon.name
+        self.taxon["uri"] = data.taxon.uri
         self.assemblySoftware = data.assemblySoftware
         self.physicalSample = data.physicalSample
         self.dateCreated = data.dateCreated
@@ -244,6 +279,10 @@ class ffrgs:
         identifier = '<span itemprop="identifier">'
         relatedLink = '<span itemprop="relatedLink">'
         funding = '<span itemprop="funding">'
+        metadataAuthor = '<span itemprop="metadataAuthor">'
+        assemblyAuthor = '<span itemprop="assemblyAuthor">'
+        name =  '<span itemprop="name">'
+        uri = '<span itemprop="uri">'
         end_span = "</span>"
 
 
@@ -253,19 +292,18 @@ class ffrgs:
         f'<span itemprop="schemaVersion">{self.schemaVersion}</span>'
         f'<span itemprop="version">{self.version}</span>'
         f'<span itemprop="genome">{self.genome}</span>'
-        f'<span itemprop="metadataAuthor">'
-        f'  <span itemprop="name">{self.author["name"]}</span>'
-        f'  <span itemprop="url">{self.author["url"]}"</span>'
-        f'</span>'
-        f'<span itemprop="assemblyAuthor">'
-        f'  <span itemprop="name">{self.assemblyAuthor["name"]}</span>'
-        f'  <span itemprop="url">{self.assemblyAuthor["url"]}"</span>'
-        f'</span>'
+        f'{metadataAuthor + metadataAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.metadataAuthor)}'
+        f'{</span>}'
+        f'{assemblyAuthor + assemblyAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.assemblyAuthor)}'
+        f'{</span>}'
         f'<span itemprop="place">'
         f'  <span itemprop="name">{self.place["name"]}</span>'
         f'  <span itemprop="url">{self.place["url"]}"</span>'
         f'</span>'
-        f'<span itemprop="taxonURL">{self.taxonURL}</span>'
+        f'<span itemprop="taxon">'
+        f'  <span itemprop="name">self.taxon["name"]</span>'
+        f'  <span itemprop="uri">self.taxon["uri"]</span>'
+        f'</span>'
         f'<span itemprop="assemblySoftware">{self.assemblySoftware}</span>'
         f'<span itemprop="physicalSample">{self.physicalSample}</span>'
         f'<span itemprop="dateCreated">{self.dateCreated}</span>'
@@ -287,13 +325,12 @@ class ffrgs:
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
-        self.metadataAuthor["name"] = data["metadataAuthor"]["name"]
-        self.metadataAuthor["url"] = data["metadataAuthor"]["url"]
-        self.assemblyAuthor["name"] = data["assemblyAuthor"]["name"]
-        self.assemblyAuthor["url"] = data["assemblyAuthor"]["url"]
+        self.metadataAuthor = data["metadataAuthor"]
+        self.assemblyAuthor = data["assemblyAuthor"]
         self.place["name"] = data["place"]["name"]
         self.place["url"] = data["place"]["url"]
-        self.taxonURL = data["taxonURL"]
+        self.taxon["name"] = data["taxon"]["name"]
+        self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
         self.physicalSample = data["physicalSample"]
         self.dateCreated = data["dateCreated"]
