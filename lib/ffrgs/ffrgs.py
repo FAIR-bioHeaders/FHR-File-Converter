@@ -153,7 +153,7 @@ class ffrgs:
         self.genome = genome
         self.metadataAuthor = []
         self.assemblyAuthor = []
-        self.place = dict()
+        self.location = dict()
         self.taxon = dict()
         self.assemblySoftware = assemblySoftware
         self.physicalSample = physicalSample
@@ -182,8 +182,8 @@ class ffrgs:
         self.genome = data['genome']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
-        self.place["name"] = data["place"]["name"]
-        self.place["url"] = data["place"]["url"]
+        self.location["name"] = data["location"]["name"]
+        self.location["url"] = data["location"]["url"]
         self.taxon["name"] = data["taxon"]["name"]
         self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
@@ -226,9 +226,9 @@ class ffrgs:
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
         f'\n;~assemblyAuthor:'
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.assemblyAuthor)}'
-        f';~place:\n'
-        f';~  name:{self.place["name"]}\n'
-        f';~  url:{self.place["url"]}\n'
+        f';~location:\n'
+        f';~  name:{self.location["name"]}\n'
+        f';~  url:{self.location["url"]}\n'
         f';~taxon:\n'
         f';~  name:{self.taxon["name"]}\n'
         f';~  uri:{self.taxon["uri"]}\n'
@@ -259,8 +259,8 @@ class ffrgs:
         self.genome = data.genome
         self.metadataAuthor = data.get_all('metadataAuthor')
         self.assemblyAuthor = data.get_all('assemblyAuthor')
-        self.place["name"] = data.place
-        self.place["url"] = data.place.url
+        self.location["name"] = data.location
+        self.location["url"] = data.location.url
         self.taxon["name"] = data.taxon.name
         self.taxon["uri"] = data.taxon.uri
         self.assemblySoftware = data.assemblySoftware
@@ -297,9 +297,9 @@ class ffrgs:
         f'{</span>}'
         f'{assemblyAuthor + assemblyAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.assemblyAuthor)}'
         f'{</span>}'
-        f'<span itemprop="place">'
-        f'  <span itemprop="name">{self.place["name"]}</span>'
-        f'  <span itemprop="url">{self.place["url"]}"</span>'
+        f'<span itemprop="location">'
+        f'  <span itemprop="name">{self.location["name"]}</span>'
+        f'  <span itemprop="url">{self.location["url"]}"</span>'
         f'</span>'
         f'<span itemprop="taxon">'
         f'  <span itemprop="name">self.taxon["name"]</span>'
@@ -328,8 +328,8 @@ class ffrgs:
         self.genome = data['genome']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
-        self.place["name"] = data["place"]["name"]
-        self.place["url"] = data["place"]["url"]
+        self.location["name"] = data["location"]["name"]
+        self.location["url"] = data["location"]["url"]
         self.taxon["name"] = data["taxon"]["name"]
         self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
