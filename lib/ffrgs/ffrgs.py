@@ -109,7 +109,8 @@ schema = {
       "type": "array",
       "description": "Identifies of the genome",
       "items": {
-        "type": "string"
+        "type": "string",
+        "pattern": "[a-z0-9]*:.*"
       }
     },
     "relatedLink": {
