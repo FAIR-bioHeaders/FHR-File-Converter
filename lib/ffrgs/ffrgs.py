@@ -131,6 +131,19 @@ schema = {
     },
     "checksum": { "$ref": "#/definitions/sha2" }
   },
+  "required": [
+    "schema",
+    "schemaVersion",
+    "genome",
+    "taxon",
+    "version",
+    "metadataAuthor",
+    "assemblyAuthor",
+    "dateCreated",
+    "physicalSample",
+    "location",
+    "checksum"
+  ],
   "definitions": {
     "orcidUri": { "format": "uri", 
                   "pattern": "^https://orcid.org/[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]" },
