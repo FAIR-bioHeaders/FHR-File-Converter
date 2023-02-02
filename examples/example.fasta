@@ -4,6 +4,8 @@
 ;~name: Bombas huntii
 ;~uri: https://identifiers.org/taxonomy:9606
 ;~genome: Bombas huntii
+;~genomeSynonym:
+;~  - B. huntii
 ;~version: 0.0.1
 ;~metadataAuthor:
 ;~  - name: Adam Wright

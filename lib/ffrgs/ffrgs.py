@@ -23,6 +23,13 @@ schema = {
       "type": "string",
       "description": "Name of the Genome"
     },
+    "genomeSynonym": {
+      "type": "array",
+      "description": "Other common names of the genome",
+      "items": {
+        "type":"string"
+      }
+    },
     "taxon":{
       "type": "object",
       "description": "Species name and URL of the species information at identifiers.org",
@@ -164,6 +171,7 @@ class ffrgs:
         self.version = version
         self.schemaVersion = schemaVersion
         self.genome = genome
+        self.genomeSynonym = []
         self.metadataAuthor = []
         self.assemblyAuthor = []
         self.location = dict()
@@ -193,6 +201,7 @@ class ffrgs:
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
+        self.genomeSynonym = data['genomeSynonym']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
         self.location["name"] = data["location"]["name"]
@@ -234,6 +243,8 @@ class ffrgs:
         f';~schema: {self.schema}\n'
         f';~schemaVersion: {self.schemaVersion}\n'
         f';~genome: {self.genome}\n'
+        f';~genomeSynonym:\n'
+        f'{array + array.join(x + end_span for x in self.genomeSynonym)}'
         f';~version: {self.version}\n'
         f';~metadataAuthor:'
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
@@ -270,6 +281,7 @@ class ffrgs:
         self.version = data.version
         self.schemaVersion = data.schemaVersion
         self.genome = data.genome
+        self.genomeSynonym = data.get_all('genomeSynonym')
         self.metadataAuthor = data.get_all('metadataAuthor')
         self.assemblyAuthor = data.get_all('assemblyAuthor')
         self.location["name"] = data.location
@@ -295,6 +307,7 @@ class ffrgs:
         funding = '<span itemprop="funding">'
         metadataAuthor = '<span itemprop="metadataAuthor">'
         assemblyAuthor = '<span itemprop="assemblyAuthor">'
+        genomeSynonym = '<span itemprop="genomeSynonym">'
         name =  '<span itemprop="name">'
         uri = '<span itemprop="uri">'
         end_span = "</span>"
@@ -306,6 +319,7 @@ class ffrgs:
         f'<span itemprop="schemaVersion">{self.schemaVersion}</span>'
         f'<span itemprop="version">{self.version}</span>'
         f'<span itemprop="genome">{self.genome}</span>'
+        f'{genomeSynonym + genomeSynonym.join(x + end_span for x in self.genomeSynonym)}'
         f'{metadataAuthor + metadataAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.metadataAuthor)}'
         f'</span>'
         f'{assemblyAuthor + assemblyAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.assemblyAuthor)}'
@@ -339,6 +353,7 @@ class ffrgs:
         self.version = data['version']
         self.schemaVersion = data['schemaVersion']
         self.genome = data['genome']
+        self.genomeSynonym = data['genomeSynonym']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
         self.location["name"] = data["location"]["name"]
