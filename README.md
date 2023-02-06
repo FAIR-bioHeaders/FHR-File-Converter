@@ -59,7 +59,7 @@ Validate a ffrgs containing file
 
 As such validating a yaml file named "important\_genome.ffrgs.yml" would be:
 
-`ffrgs-validate important\_genome.ffrgs.yml`
+`ffrgs-validate important_genome.ffrgs.yml`
 
 
 
