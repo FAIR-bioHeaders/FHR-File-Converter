@@ -1,18 +1,18 @@
 # FFRGS-File-Converter
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762547.svg)](https://doi.org/10.5281/zenodo.6762547)
 
-This is the ffrgs file converter, it can convert ffrgs inbetween json, fasta, microdata, and fasta header.
+This is the ffrgs file converter, it can convert ffrgs inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of ffrgs, see [FFRGS-Specification](https://github.com/FFRGS/FFRGS-Specification)
 
 using ffrgs on command line:
 
 ```bash
-ffrgs <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
+ffrgs-convert <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
 ```
 
 in more exapnsive terms:
 
 ```
-usage: ffrgs [-h] [--version] <file> <file>
+usage: ffrgs-convert [-h] [--version] <file> <file>
 
 Convert from one FFRGS supported file type to another
 
@@ -34,6 +34,34 @@ positional <file> input and output files
         <output>.fasta - fasta output type will be made as a fasta header without sequences
         <output>.html  - microdata output type will be made into generic html output
 ```
+
+## Validating an ffrgs file on bash command line
+
+
+```bash
+ffrgs-validate <input>.<yaml|json|fasta|html>
+```
+
+in more expansive terms:
+
+```
+usage: ffrgs-validate [-h] [--version] <file>
+
+Validate a ffrgs containing file
+
+ positional <file> input and output files
+                        input files can be one of:
+                            <input>.yml
+                            <input>.fasta  - fasta contining a ffrgs header
+                            <input>.html   - html containing microdata
+```
+
+
+As such validating a yaml file named "important\_genome.ffrgs.yml" would be:
+
+`ffrgs-validate important\_genome.ffrgs.yml`
+
+
 
 ## Using ffrgs in Python
 
