@@ -2,12 +2,12 @@ import argparse
 import textwrap
 import sys
 
-from ffrgs import ffrgs
+from fhr import fhr
 
 def main():
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Validate a FFRGS metadata file',
+            description='Validate a FHR metadata file',
             epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files can be one of:
@@ -25,18 +25,18 @@ def main():
 
     args = parser.parse_args()
 
-    ffrgs_to_be_validated = ffrgs()
+    fhr_to_be_validated = ffrgs()
 
     with open(args.file[0], 'r') as input_file:
         if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):
-            ffrgs_to_be_validated.input_yaml(input_file)
+            fhr_to_be_validated.input_yaml(input_file)
         elif args.file[0].endswith(".fasta") or args.file[0].endswith(".fa"):
-            ffrgs_to_be_validated.input_fasta(input_file)
+            fhr_to_be_validated.input_fasta(input_file)
         elif args.file[0].endswith(".json"):
-            ffrgs_to_be_validated.input_json(input_file)
+            fhr_to_be_validated.input_json(input_file)
         elif args.file[0].endswith(".html"):
-            ffrgs_to_be_validated.input_microdata(input_file)
+            fhr_to_be_validated.input_microdata(input_file)
         else:
             sys.exit('Input file extention not found')
 
-    ffrgs_to_be_validated.ffrgs_validate()
+    fhr_to_be_validated.ffrgs_validate()

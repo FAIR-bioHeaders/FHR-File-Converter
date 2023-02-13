@@ -6,9 +6,9 @@ from jsonschema import validate
 
 schema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.json",
-  "title": "FFRGS",
-  "description": "Fair Formatted Reference Genome Standard (FFRGS) Schema for Genome Assemblies",
+  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
+  "title": "FHR",
+  "description": "FAIR Header Reference genomeSchema for Genome Assemblies",
   "type": "object",
   "properties": {
     "schema":{
@@ -17,7 +17,7 @@ schema = {
     },
     "schemaVersion":{
       "type": "number",
-      "description": "Version of FFRG"
+      "description": "Version of FHR"
     },
     "genome":{
       "type": "string",
@@ -52,7 +52,7 @@ schema = {
       "type": "array",
       "items": {
         "type": "object",
-        "description": "Author of the FFRGS Instance (Person or Org)",
+        "description": "Author of the fhr Instance (Person or Org)",
         "properties": {
           "name": {
             "type": "string"
@@ -118,7 +118,7 @@ schema = {
       "items": {
         "type": "string",
         "pattern": "[a-z0-9]*:.*"
-      }
+        }
     },
     "relatedLink": {
       "type": "array",
@@ -147,8 +147,6 @@ schema = {
     "metadataAuthor",
     "assemblyAuthor",
     "dateCreated",
-    "physicalSample",
-    "location",
     "checksum"
   ],
   "definitions": {
@@ -164,7 +162,7 @@ schema = {
   }
 }
 
-class ffrgs:
+class fhr:
 
     def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
         self.schema = schema
@@ -314,7 +312,7 @@ class ffrgs:
 
 
         data = (
-        f'<div itemscope itemtype="https://github.com/FFRGS/FFRGS-Specification" version="{self.schemaVersion}">'
+        f'<div itemscope itemtype="https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json" version="{self.schemaVersion}">'
         f'<span itemprop="schema">{self.schema}</span>'
         f'<span itemprop="schemaVersion">{self.schemaVersion}</span>'
         f'<span itemprop="version">{self.version}</span>'
@@ -375,6 +373,6 @@ class ffrgs:
     def output_json(self):
         return json.dumps(self.__dict__)
 
-    def ffrgs_validate(self):
-        ffrgs_instance = json.dumps(self.__dict__)
-        validate(instance=ffrgs_instance, schema=schema)
+    def fhr_validate(self):
+        fhr_instance = json.dumps(self.__dict__)
+        validate(instance=fhr_instance, schema=schema)

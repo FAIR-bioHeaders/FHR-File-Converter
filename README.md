@@ -1,20 +1,20 @@
 # FFRGS-File-Converter
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762547.svg)](https://doi.org/10.5281/zenodo.6762547)
 
-This is the ffrgs file converter, it can convert ffrgs inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of ffrgs, see [FFRGS-Specification](https://github.com/FFRGS/FFRGS-Specification)
+This is the ffrgs file converter, it can convert ffrgs inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of ffrgs, see [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
 
-using ffrgs on command line:
+using fhr on command line:
 
 ```bash
-ffrgs-convert <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
+fhr-convert <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
 ```
 
 in more exapnsive terms:
 
 ```
-usage: ffrgs-convert [-h] [--version] <file> <file>
+usage: fhr-convert [-h] [--version] <file> <file>
 
-Convert from one FFRGS supported file type to another
+Convert from one FHR supported file type to another
 
 positional arguments:
   <file>      input followed by output
@@ -39,15 +39,15 @@ positional <file> input and output files
 
 
 ```bash
-ffrgs-validate <input>.<yaml|json|fasta|html>
+fhr-validate <input>.<yaml|json|fasta|html>
 ```
 
 in more expansive terms:
 
 ```
-usage: ffrgs-validate [-h] [--version] <file>
+usage: fhr-validate [-h] [--version] <file>
 
-Validate a ffrgs containing file
+Validate a fhr containing file
 
  positional <file> input and output files
                         input files can be one of:
@@ -59,18 +59,18 @@ Validate a ffrgs containing file
 
 As such validating a yaml file named "important\_genome.ffrgs.yml" would be:
 
-`ffrgs-validate important_genome.ffrgs.yml`
+`fhr-validate important_genome.ffrgs.yml`
 
 
 
-## Using ffrgs in Python
+## Using fhr in Python
 
-how to use the ffrgs library on the python3 command line:
+how to use the fhr library on the python3 command line:
 
 ```python
->>> from ffrgs import ffrgs
+>>> from fhr import fhr
 >>> file = open("example.yaml")
->>> data = ffrgs()
+>>> data = fhr()
 >>> data.input_yaml(file.read())
 >>> data.output_fasta()
 ";~schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.json\n;~schemaVersion: 1\n;~genome: Bombas huntii\n;~version: 0.0.1\n;~author:;~  name:Adam Wright\n;~  url:https://wormbase.org/resource/person/WBPerson30813\n;~assembler:;~  name:David Molik\n;~  url:https:/david.molik.co/person\n;~place:;~  name:PBARC\n;~  url:https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/\n;~taxa: Bombas huntii\n;~assemblySoftware: HiFiASM\n;~physicalSample: Located in Freezer 33, Drawer 137\n;~dateCreated: 2022-03-21\n;~instrument: ['Sequel IIe', 'Nanopore']\n;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755\n;~documentation: Built assembly from... \n;~identifier: ['gkx10242566416842']\n;~relatedLink: ['https/david.molik.co/genome']\n;~funding: some\n;~licence: public domain\n"
