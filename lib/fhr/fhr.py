@@ -83,9 +83,9 @@ schema = {
       "type": "string",
       "description": "Description of the physical sample"
     },
-    "location":{
+    "voucherId":{
       "type": "object",
-      "description": "location genome assembly was created",
+      "description": "voucherId genome assembly was created",
       "properties": {
         "name": {
           "type": "string"
@@ -172,7 +172,7 @@ class fhr:
         self.genomeSynonym = []
         self.metadataAuthor = []
         self.assemblyAuthor = []
-        self.location = dict()
+        self.voucherId = dict()
         self.taxon = dict()
         self.assemblySoftware = assemblySoftware
         self.physicalSample = physicalSample
@@ -202,8 +202,8 @@ class fhr:
         self.genomeSynonym = data['genomeSynonym']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
-        self.location["name"] = data["location"]["name"]
-        self.location["url"] = data["location"]["url"]
+        self.voucherId["name"] = data["voucherID"]["name"]
+        self.voucherId["url"] = data["voucherId"]["url"]
         self.taxon["name"] = data["taxon"]["name"]
         self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
@@ -248,9 +248,9 @@ class fhr:
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
         f'\n;~assemblyAuthor:'
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.assemblyAuthor)}'
-        f';~location:\n'
-        f';~  name:{self.location["name"]}\n'
-        f';~  url:{self.location["url"]}\n'
+        f';~voucherId:\n'
+        f';~  name:{self.voucherId["name"]}\n'
+        f';~  url:{self.voucherId["url"]}\n'
         f';~taxon:\n'
         f';~  name:{self.taxon["name"]}\n'
         f';~  uri:{self.taxon["uri"]}\n'
@@ -282,8 +282,8 @@ class fhr:
         self.genomeSynonym = data.get_all('genomeSynonym')
         self.metadataAuthor = data.get_all('metadataAuthor')
         self.assemblyAuthor = data.get_all('assemblyAuthor')
-        self.location["name"] = data.location
-        self.location["url"] = data.location.url
+        self.voucherId["name"] = data.voucherId
+        self.voucherId["url"] = data.voucherId.url
         self.taxon["name"] = data.taxon.name
         self.taxon["uri"] = data.taxon.uri
         self.assemblySoftware = data.assemblySoftware
@@ -322,9 +322,9 @@ class fhr:
         f'</span>'
         f'{assemblyAuthor + assemblyAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.assemblyAuthor)}'
         f'</span>'
-        f'<span itemprop="location">'
-        f'  <span itemprop="name">{self.location["name"]}</span>'
-        f'  <span itemprop="url">{self.location["url"]}"</span>'
+        f'<span itemprop="voucherId">'
+        f'  <span itemprop="name">{self.voucherId["name"]}</span>'
+        f'  <span itemprop="url">{self.voucherId["url"]}"</span>'
         f'</span>'
         f'<span itemprop="taxon">'
         f'  <span itemprop="name">self.taxon["name"]</span>'
@@ -354,8 +354,8 @@ class fhr:
         self.genomeSynonym = data['genomeSynonym']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
-        self.location["name"] = data["location"]["name"]
-        self.location["url"] = data["location"]["url"]
+        self.voucherId["name"] = data["voucherId"]["name"]
+        self.voucherId["url"] = data["voucherId"]["url"]
         self.taxon["name"] = data["taxon"]["name"]
         self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
