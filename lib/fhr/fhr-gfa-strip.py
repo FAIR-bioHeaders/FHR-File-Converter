@@ -10,7 +10,7 @@ def main():
             epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files must be:
-                            <input>.fasta  - fasta contining a ffrgs header
+                            <input>.gfa  - gfa contining a fhr header
                             '''))
 
     parser.add_argument('file',
@@ -26,5 +26,5 @@ def main():
             lines = sources.readlines()
     with open(args.file[1], "w") as sources:
             for line in lines:
-                   sources.write(re.sub(r'^;~.*', '', line))
+                   sources.write(re.sub(r'^#~.*', '', line))
 

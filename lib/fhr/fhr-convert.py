@@ -15,15 +15,17 @@ def main():
                             <input>.fasta  - fasta contining a fhr header
                             <input>.html   - html containing microdata
                             <input>.json
- 
+                            <input>.gfa
+
                         output files can be one of:
                             <output>.yml
                             <output>.fasta - fasta output type will be made as a fasta header without sequences
                             <output>.html  - microdata output type will be made into generic html output
-                            <output.json
+                            <output>.json
+                            <output>.gfa
                             '''))
 
-    parser.add_argument('file', 
+    parser.add_argument('file',
             nargs=2,
             metavar='<file>',
             help='input followed by output')
@@ -43,6 +45,8 @@ def main():
             fhr_to_be_converted.input_json(input_file)
         elif args.file[0].endswith(".html"):
             fhr_to_be_converted.input_microdata(input_file)
+        elif args.file[0].endswith(".gfa"):
+            fhr_to_be_converted.input_gfa(input_file)
         else:
             sys.exit('Input file extention not found')
 
@@ -58,9 +62,11 @@ def main():
             print(fhr_to_be_converted.output_json())
         elif args.file[1].endswith(".html"):
             print(fhr_to_be_converted.output_microdata())
+        elif args.file[1].endswith(".gfa"):
+            print(fhr_to_be_converted.output_gfa())
         else:
             sys.stdout = original_stdout
             sys.exit('Output file extention not found')
 
     sys.stdout = original_stdout
-        
+

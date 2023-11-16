@@ -14,10 +14,10 @@ def main():
             epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files must be:
-                            <input>.fasta  - fasta contining a ffrgs header
+                            <input>.fasta  - fasta contining a fhr header
                             '''))
 
-    parser.add_argument('file', 
+    parser.add_argument('file',
             nargs=1,
             metavar='<file>',
             help='input followed by fasta output')
@@ -47,7 +47,7 @@ def main():
             sources.write(re.sub(r'^;~checksum.*', '', line))
 
     with open(temp_file, 'rb') as file_to_check:
-        data = file_to_check.read()    
+        data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
 
     if fhr_to_be_validated.checksum == md5_returned:

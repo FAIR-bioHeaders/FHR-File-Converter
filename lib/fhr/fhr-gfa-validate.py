@@ -1,6 +1,9 @@
 import argparse
 import textwrap
+import hashlib
 import sys
+import os
+import re
 
 from fhr import fhr
 
@@ -10,18 +13,14 @@ def main():
             description='Validate a FHR metadata file',
             epilog=textwrap.dedent('''\
                     positional <file> input and output files
-                        input files can be one of:
-                            <input>.yml
-                            <input>.fasta  - fasta contining a fhr header
-                            <input>.html   - html containing microdata
-                            <input>.json   - json containing a fhr header
-                            <input>.gfa    - gfa file contining a fhr header
+                        input files must be:
+                            <input>.gfa  - gfa contining a fhr header
                             '''))
 
     parser.add_argument('file',
             nargs=1,
             metavar='<file>',
-            help='input followed by output')
+            help='input followed by gfa output')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
 
@@ -31,16 +30,31 @@ def main():
 
     with open(args.file[0], 'r') as input_file:
         if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):
-            fhr_to_be_validated.input_yaml(input_file)
+            sys.exit('Input file not of correct extention')
         elif args.file[0].endswith(".fasta") or args.file[0].endswith(".fa"):
-            fhr_to_be_validated.input_fasta(input_file)
+            sys.exit('Input file not of correct extention')
         elif args.file[0].endswith(".json"):
-            fhr_to_be_validated.input_json(input_file)
+            sys.exit('Input file not of correct extention')
         elif args.file[0].endswith(".html"):
-            fhr_to_be_validated.input_microdata(input_file)
+            sys.exit('Input file not of correct extention')
         elif args.file[0].endswith(".gfa"):
             fhr_to_be_validated.input_gfa(input_file)
         else:
             sys.exit('Input file extention not found')
 
-    fhr_to_be_validated.ffrgs_validate()
+    temp_file = args.file[0] + ".tmp"
+
+    with open(temp_file, "w") as sources:
+        for line in lines:
+            sources.write(re.sub(r'^#~checksum.*', '', line))
+
+    with open(temp_file, 'rb') as file_to_check:
+        data = file_to_check.read()
+        md5_returned = hashlib.md5(data).hexdigest()
+
+    if fhr_to_be_validated.checksum == md5_returned:
+        print "checksum verified."
+    else:
+        print "checksum verification failed!"
+
+    os.remove(temp_file)

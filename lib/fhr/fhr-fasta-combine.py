@@ -14,13 +14,15 @@ def main():
                     positional <file> input and output files
                         input files can be one of:
                             <input>.yml
-                            <input>.fasta  - fasta contining a ffrgs header
+                            <input>.fasta  - fasta contining a fhr header
                             <input>.html   - html containing microdata
+                            <input>.json
+                            <input>.gfa
 
                             second input must be a fasta file
                             '''))
 
-    parser.add_argument('file', 
+    parser.add_argument('file',
             nargs=2,
             metavar='<file>',
             help='input followed by fasta output')
@@ -46,7 +48,7 @@ def main():
     output_filename = os.path.splitext(args.file[1])[0] + ".fhr.fasta"
 
         with open(args.file[0], "r") as sources:
-            fasta_lines = sources.readlines()    
+            fasta_lines = sources.readlines()
 
     with open(output_filename, 'w') as output_file:
         print(fhr_to_be_combined.output_fasta())

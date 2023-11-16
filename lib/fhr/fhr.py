@@ -150,7 +150,7 @@ schema = {
     "checksum"
   ],
   "definitions": {
-    "orcidUri": { "format": "uri", 
+    "orcidUri": { "format": "uri",
                   "pattern": "^https://orcid.org/[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9X]" },
     "sha2": {
       "type": "string",
@@ -229,13 +229,10 @@ class fhr:
         self.yaml(formulated)
 
     def output_fasta(self):
-        name =  '<span itemprop="name">'
-        uri = '<span itemprop="uri">'
-        end_span = "</span>"        
-
         array = ';~- '
         name = '\n;~- name:'
         uri = '\n;~  uri:'
+        end_span = ''
 
         data = (
         f';~schema: {self.schema}\n'
@@ -261,9 +258,9 @@ class fhr:
         f'{array + array.join(x + end_span for x in self.instrument)}'
         f';~scholarlyArticle: {self.scholarlyArticle}\n'
         f';~documentation: {self.documentation}\n'
-        f';~identifier:\n' 
+        f';~identifier:\n'
         f'{array + array.join(x + end_span for x in self.identifier)}'
-        f';~relatedLink:\n' 
+        f';~relatedLink:\n'
         f'{array + array.join(x + end_span for x in self.relatedLink)}'
         f';~funding:\n'
         f'{array + array.join(x + end_span for x in self.funding)}'
@@ -372,6 +369,55 @@ class fhr:
 
     def output_json(self):
         return json.dumps(self.__dict__)
+
+    def input_gfa(self, stream: str):
+        formulated = ""
+        data = re.findall('#~.*', stream)
+        for value in stream:
+            formulated = formulated + "\n" + re.sub('#~','', value)
+        self.yaml(formulated)
+
+    def output_gfa(self):
+        array = '#~- '
+        name = '\n;~- name:'
+        uri = '\n;~  uri:'
+        end_span = ''
+
+        data = (
+        f'#~schema: {self.schema}\n'
+        f'#~schemaVersion: {self.schemaVersion}\n'
+        f'#~genome: {self.genome}\n'
+        f'#~genomeSynonym:\n'
+        f'{array + array.join(x + end_span for x in self.genomeSynonym)}'
+        f'#~version: {self.version}\n'
+        f'#~metadataAuthor:'
+        f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
+        f'\n;~assemblyAuthor:'
+        f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.assemblyAuthor)}'
+        f'#~voucherId:\n'
+        f'#~  name:{self.voucherId["name"]}\n'
+        f'#~  url:{self.voucherId["url"]}\n'
+        f'#~taxon:\n'
+        f'#~  name:{self.taxon["name"]}\n'
+        f'#~  uri:{self.taxon["uri"]}\n'
+        f'#~assemblySoftware: {self.assemblySoftware}\n'
+        f'#~physicalSample: {self.physicalSample}\n'
+        f'#~dateCreated: {self.dateCreated}\n'
+        f'#~instrument:\n'
+        f'{array + array.join(x + end_span for x in self.instrument)}'
+        f'#~scholarlyArticle: {self.scholarlyArticle}\n'
+        f'#~documentation: {self.documentation}\n'
+        f'#~identifier:\n'
+        f'{array + array.join(x + end_span for x in self.identifier)}'
+        f'#~relatedLink:\n'
+        f'{array + array.join(x + end_span for x in self.relatedLink)}'
+        f'#~funding:\n'
+        f'{array + array.join(x + end_span for x in self.funding)}'
+        f'#~licence: {self.licence}\n'
+        f'#~checksum: {self.checksum}\n'
+        )
+        return data
+
 
     def fhr_validate(self):
         fhr_instance = json.dumps(self.__dict__)
