@@ -79,13 +79,13 @@ schema = {
       "format": "date",
       "description": "Date the genome assembly was created"
     },
-    "physicalSample":{
+    "voucherSpecimen":{
       "type": "string",
       "description": "Description of the physical sample"
     },
-    "voucherId":{
+    "accessionID":{
       "type": "object",
-      "description": "voucherId genome assembly was created",
+      "description": "accessionID genome assembly was created",
       "properties": {
         "name": {
           "type": "string"
@@ -164,7 +164,7 @@ schema = {
 
 class fhr:
 
-    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, assemblySoftware=None, physicalSample=None, dateCreated=None, scholarlyArticle=None, documentation=None, licence=None, checksum=None):
+    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, assemblySoftware=None, voucherSpecimen=None, dateCreated=None, scholarlyArticle=None, documentation=None, reuseConditions=None, checksum=None):
         self.schema = schema
         self.version = version
         self.schemaVersion = schemaVersion
@@ -172,10 +172,10 @@ class fhr:
         self.genomeSynonym = []
         self.metadataAuthor = []
         self.assemblyAuthor = []
-        self.voucherId = dict()
+        self.accessionID = dict()
         self.taxon = dict()
         self.assemblySoftware = assemblySoftware
-        self.physicalSample = physicalSample
+        self.voucherSpecimen = voucherSpecimen
         self.dateCreated = dateCreated
         self.instrument = []
         self.scholarlyArticle = scholarlyArticle
@@ -183,7 +183,7 @@ class fhr:
         self.identifier = []
         self.relatedLink = []
         self.funding = []
-        self.licence = licence
+        self.reuseConditions = reuseConditions
         self.checksum = checksum
 
     #def __repr__(self):
@@ -202,12 +202,12 @@ class fhr:
         self.genomeSynonym = data['genomeSynonym']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
-        self.voucherId["name"] = data["voucherID"]["name"]
-        self.voucherId["url"] = data["voucherId"]["url"]
+        self.accessionID["name"] = data["voucherID"]["name"]
+        self.accessionID["url"] = data["accessionID"]["url"]
         self.taxon["name"] = data["taxon"]["name"]
         self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
-        self.physicalSample = data["physicalSample"]
+        self.voucherSpecimen = data["voucherSpecimen"]
         self.dateCreated = data["dateCreated"]
         self.instrument = data["instrument"]
         self.scholarlyArticle = data["scholarlyArticle"]
@@ -215,7 +215,7 @@ class fhr:
         self.identifier = data["identifier"]
         self.relatedLink = data["relatedLink"]
         self.funding = data["funding"]
-        self.licence = data["licence"]
+        self.reuseConditions = data["reuseConditions"]
         self.checksum = data["checksum"]
 
     def output_yaml(self):
@@ -245,14 +245,14 @@ class fhr:
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
         f'\n;~assemblyAuthor:'
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.assemblyAuthor)}'
-        f';~voucherId:\n'
-        f';~  name:{self.voucherId["name"]}\n'
-        f';~  url:{self.voucherId["url"]}\n'
+        f';~accessionID:\n'
+        f';~  name:{self.accessionID["name"]}\n'
+        f';~  url:{self.accessionID["url"]}\n'
         f';~taxon:\n'
         f';~  name:{self.taxon["name"]}\n'
         f';~  uri:{self.taxon["uri"]}\n'
         f';~assemblySoftware: {self.assemblySoftware}\n'
-        f';~physicalSample: {self.physicalSample}\n'
+        f';~voucherSpecimen: {self.voucherSpecimen}\n'
         f';~dateCreated: {self.dateCreated}\n'
         f';~instrument:\n'
         f'{array + array.join(x + end_span for x in self.instrument)}'
@@ -264,7 +264,7 @@ class fhr:
         f'{array + array.join(x + end_span for x in self.relatedLink)}'
         f';~funding:\n'
         f'{array + array.join(x + end_span for x in self.funding)}'
-        f';~licence: {self.licence}\n'
+        f';~reuseConditions: {self.reuseConditions}\n'
         f';~checksum: {self.checksum}\n'
         )
         return data
@@ -279,12 +279,12 @@ class fhr:
         self.genomeSynonym = data.get_all('genomeSynonym')
         self.metadataAuthor = data.get_all('metadataAuthor')
         self.assemblyAuthor = data.get_all('assemblyAuthor')
-        self.voucherId["name"] = data.voucherId
-        self.voucherId["url"] = data.voucherId.url
+        self.accessionID["name"] = data.accessionID
+        self.accessionID["url"] = data.accessionID.url
         self.taxon["name"] = data.taxon.name
         self.taxon["uri"] = data.taxon.uri
         self.assemblySoftware = data.assemblySoftware
-        self.physicalSample = data.physicalSample
+        self.voucherSpecimen = data.voucherSpecimen
         self.dateCreated = data.dateCreated
         self.instrument = data.get_all('instrument')
         self.scholarlyArticle = data.scholarlyArticle
@@ -292,7 +292,7 @@ class fhr:
         self.identifier = data.get_all('identifier')
         self.relatedLink = data.get_all('relatedLink')
         self.funding = data.get_all('funding')
-        self.licence = data.licence
+        self.reuseConditions = data.reuseConditions
         self.checksum = data.checksum
 
     def output_microdata(self):
@@ -319,16 +319,16 @@ class fhr:
         f'</span>'
         f'{assemblyAuthor + assemblyAuthor.join(name + x["name"] + end_span + uri + x["uri"] + end_span for x in self.assemblyAuthor)}'
         f'</span>'
-        f'<span itemprop="voucherId">'
-        f'  <span itemprop="name">{self.voucherId["name"]}</span>'
-        f'  <span itemprop="url">{self.voucherId["url"]}"</span>'
+        f'<span itemprop="accessionID">'
+        f'  <span itemprop="name">{self.accessionID["name"]}</span>'
+        f'  <span itemprop="url">{self.accessionID["url"]}"</span>'
         f'</span>'
         f'<span itemprop="taxon">'
         f'  <span itemprop="name">self.taxon["name"]</span>'
         f'  <span itemprop="uri">self.taxon["uri"]</span>'
         f'</span>'
         f'<span itemprop="assemblySoftware">{self.assemblySoftware}</span>'
-        f'<span itemprop="physicalSample">{self.physicalSample}</span>'
+        f'<span itemprop="voucherSpecimen">{self.voucherSpecimen}</span>'
         f'<span itemprop="dateCreated">{self.dateCreated}</span>'
         f'{instrument + instrument.join(x + end_span for x in self.instrument)}'
         f'<span itemprop="scholarlyArticle">{self.scholarlyArticle}</span>'
@@ -336,7 +336,7 @@ class fhr:
         f'{identifier + identifier.join(x + end_span for x in self.identifier)}'
         f'{relatedLink + relatedLink.join(x + end_span for x in self.relatedLink)}'
         f'{funding + funding.join(x + end_span for x in self.funding)}'
-        f'<span itemprop="licence">{self.licence}</span>'
+        f'<span itemprop="reuseConditions">{self.reuseConditions}</span>'
         f'<span itemprop="checksum">{self.checksum}</span>'
         f'</div>')
         return data
@@ -351,12 +351,12 @@ class fhr:
         self.genomeSynonym = data['genomeSynonym']
         self.metadataAuthor = data["metadataAuthor"]
         self.assemblyAuthor = data["assemblyAuthor"]
-        self.voucherId["name"] = data["voucherId"]["name"]
-        self.voucherId["url"] = data["voucherId"]["url"]
+        self.accessionID["name"] = data["accessionID"]["name"]
+        self.accessionID["url"] = data["accessionID"]["url"]
         self.taxon["name"] = data["taxon"]["name"]
         self.taxon["uri"] = data["taxon"]["uri"]
         self.assemblySoftware = data["assemblySoftware"]
-        self.physicalSample = data["physicalSample"]
+        self.voucherSpecimen = data["voucherSpecimen"]
         self.dateCreated = data["dateCreated"]
         self.instrument = data["instrument"]
         self.scholarlyArticle = data["scholarlyArticle"]
@@ -364,7 +364,7 @@ class fhr:
         self.identifier = data["identifier"]
         self.relatedLink = data["relatedLink"]
         self.funding = data["funding"]
-        self.licence = data["licence"]
+        self.reuseConditions = data["reuseConditions"]
         self.checksum = data["checksum"]
 
     def output_json(self):
@@ -394,14 +394,14 @@ class fhr:
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.metadataAuthor)}'
         f'\n;~assemblyAuthor:'
         f'{name + name.join(name + x["name"] + uri + x["uri"] for x in self.assemblyAuthor)}'
-        f'#~voucherId:\n'
-        f'#~  name:{self.voucherId["name"]}\n'
-        f'#~  url:{self.voucherId["url"]}\n'
+        f'#~accessionID:\n'
+        f'#~  name:{self.accessionID["name"]}\n'
+        f'#~  url:{self.accessionID["url"]}\n'
         f'#~taxon:\n'
         f'#~  name:{self.taxon["name"]}\n'
         f'#~  uri:{self.taxon["uri"]}\n'
         f'#~assemblySoftware: {self.assemblySoftware}\n'
-        f'#~physicalSample: {self.physicalSample}\n'
+        f'#~voucherSpecimen: {self.voucherSpecimen}\n'
         f'#~dateCreated: {self.dateCreated}\n'
         f'#~instrument:\n'
         f'{array + array.join(x + end_span for x in self.instrument)}'
@@ -413,7 +413,7 @@ class fhr:
         f'{array + array.join(x + end_span for x in self.relatedLink)}'
         f'#~funding:\n'
         f'{array + array.join(x + end_span for x in self.funding)}'
-        f'#~licence: {self.licence}\n'
+        f'#~reuseConditions: {self.reuseConditions}\n'
         f'#~checksum: {self.checksum}\n'
         )
         return data

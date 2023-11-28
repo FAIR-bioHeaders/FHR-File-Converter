@@ -14,17 +14,17 @@ assemblyAuthor:
 - name: David Molik
   uri: https://orcid.org/0000-0003-3192-6538
 dateCreated: '2022-03-21'
-voucherId:
+accessionID:
   name: PBARC
   url: https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/
 instrument:
 - Sequel IIe
 - Nanopore
-physicalSample: Located in Freezer 33, Drawer 137
+voucherSpecimen: Located in Freezer 33, Drawer 137
 scholarlyArticle: 10.1371/journal.pntd.0008755
 assemblySoftware: HiFiASM
 funding: funding
-licence: public domain
+reuseConditions: public domain
 documentation: 'Built assembly from... '
 identifier:
 - beetlebase:TC010103
