@@ -3,13 +3,26 @@
 
 This is the fhr file converter, it can convert fhr inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of fhr, see [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
 
-using fhr on command line:
+## Installation
+
+You can install the FHR file converter and its dependencies using Poetry:
+
+```bash
+poetry install
+```
+
+## Usage
+
+
+### Commnand line Usage
+
+Using FHR on the command line:
 
 ```bash
 fhr-convert <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
 ```
 
-in more exapnsive terms:
+In more exapnsive terms:
 
 ```
 usage: fhr-convert [-h] [--version] <file> <file>
@@ -35,7 +48,7 @@ positional <file> input and output files
         <output>.html  - microdata output type will be made into generic html output
 ```
 
-## Validating an fhr file on bash command line
+## Validating an FHR file on bash command line
 
 
 ```bash
@@ -65,7 +78,7 @@ As such validating a yaml file named "important\_genome.fhr.yml" would be:
 
 ## Using fhr in Python
 
-how to use the fhr library on the python3 command line:
+How to use the fhr library on the python3 command line:
 
 ```python
 >>> from fhr import fhr
@@ -86,9 +99,24 @@ The fasta checksum in the header is the checksum of the fasta without the header
 cat example.fasta | grep -E -v '^;~\s?checksum'  > example.check.fasta
 ```
 
-to strip the checksum:
+To strip the checksum:
 
 
 ```bash
 cat example.fasta | grep -E ';~\s?checksum' | sed 's/^;~checksum://g' | sed '/\'//g'
 ```
+
+## Docker Support
+
+You can also run the FHR file converter in a Docker container. To build the Docker image:
+
+```bash
+docker build -t fhr-file-converter .
+```
+
+And then run the Docker container:
+
+```bash
+docker run -it --rm fhr-file-converter
+```
+
