@@ -5,175 +5,208 @@ import re
 from jsonschema import validate
 
 schema = {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
-    "title": "FHR",
-    "description": "FAIR Header Reference genomeSchema for Genome Assemblies",
-    "type": "object",
-    "properties": {
-        "schema": {
-            "type": "string",
-            "description": "centralized schema file"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
+  "title": "FHR",
+  "description": "FAIR Header Reference genome Schema for Genome Assemblies",
+  "type": "object",
+  "properties": {
+    "schema":{
+      "type": "string",
+      "description": "centralized schema file"
+    },
+    "schemaVersion":{
+      "type": "number",
+      "description": "Version of FHR"
+    },
+    "genome":{
+      "type": "string",
+      "description": "Name of the Genome"
+    },
+    "genomeSynonym": {
+      "type": "array",
+      "description": "Other common names of the genome",
+      "items": {
+        "type":"string"
+      }
+    },
+    "taxon":{
+      "type": "object",
+      "description": "Species name and URL of the species information at identifiers.org",
+      "properties": {
+        "name": {
+          "type": "string"
         },
-        "schemaVersion": {
-            "type": "number",
-            "description": "Version of FHR"
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "https://identifiers.org/taxonomy:[0-9]+"
+        }
+      }
+    },
+    "version":{
+      "type": "string",
+      "description": "Version number of Genome eg. 1.2.0"
+    },
+    "metadataAuthor":{
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "Author of the FHR Instance (Person or Org)",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uri": { "$ref": "#/definitions/orcidUri" }
+        }
+      }
+    },
+    "assemblyAuthor":{
+      "type": "array",
+        "items": {
+        "type": "object",
+        "description": "Assembler of the Genome (Person or Org)",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uri": { "$ref": "#/definitions/orcidUri" }
+        }
+      }
+    },
+    "dateCreated":{
+      "type": "string",
+      "format": "date",
+      "description": "Date the genome assembly was created"
+    },
+    "voucherSpecimen":{
+      "type": "string",
+      "description": "Description of the physical sample"
+    },
+    "accessionID":{
+      "type": "object",
+      "description": "accessionID genome assembly was created",
+      "properties": {
+        "name": {
+          "type": "string"
         },
-        "genome": {
-            "type": "string",
-            "description": "Name of the Genome"
-        },
-        "genomeSynonym": {
-            "type": "array",
-            "description": "Other common names of the genome",
-            "items": {
-                "type": "string"
-            }
-        },
-        "taxon": {
-            "type": "object",
-            "description": "Species name and URL of the species information at identifiers.org",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "uri": {
-                    "type": "string",
-                    "format": "uri",
-                    "pattern": "https://identifiers.org/taxonomy:[0-9]+"
-                }
-            }
-        },
-        "version": {
-            "type": "string",
-            "description": "Version number of Genome eg. 1.2.0"
-        },
-        "metadataAuthor": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "description": "Author of the fhr Instance (Person or Org)",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "uri": {
-                        "$ref": "#/definitions/orcidUri"
-                    }
-                }
-            }
-        },
-        "assemblyAuthor": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "description": "Assembler of the Genome (Person or Org)",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "uri": {
-                        "$ref": "#/definitions/orcidUri"
-                    }
-                }
-            }
-        },
-        "dateCreated": {
-            "type": "string",
-            "format": "date",
-            "description": "Date the genome assembly was created"
-        },
-        "voucherSpecimen": {
-            "type": "string",
-            "description": "Description of the physical sample"
-        },
-        "accessionID": {
-            "type": "object",
-            "description": "accessionID genome assembly was created",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string",
-                    "format": "uri"
-                }
-            }
-        },
-        "instrument": {
-            "type": "array",
-            "description": "Physical tools and instruments used in the creation of the genome assembly",
-            "items": {
-                "type": "string"
-            }
-        },
-        "scholarlyArticle": {
-            "type": "string",
-            "pattern": "^10.",
-            "description": "Scholarly article genome was published e.g. 10.5281/zenodo.6762550 "
-        },
-        "documentation": {
-            "type": "string",
-            "description": "Documentation about the genome"
-        },
-        "identifier": {
-            "type": "array",
-            "description": "Identifies of the genome",
-            "items": {
-                "type": "string",
-                "pattern": "[a-z0-9]*:.*"
-            }
-        },
-        "relatedLink": {
-            "type": "array",
-            "description": "Related URLS to the genome",
-            "items": {
-                "type": "string",
-                "format": "uri"
-            }
-        },
-        "funding": {
-            "type": "string",
-            "description": "Grant Line Item"
-        },
-        "license": {
-            "type": "string",
-            "description": "license for the use of the Genome"
-        },
-        "checksum": {
-            "$ref": "#/definitions/sha2"
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "instrument": {
+      "type": "array",
+      "description": "Physical tools and instruments used in the creation of the genome assembly",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scholarlyArticle": {
+      "type": "string",
+      "pattern": "^10.",
+      "description": "Scholarly article genome was published e.g. 10.5281/zenodo.6762550 "
+    },
+    "documentation": {
+      "type": "string",
+      "description": "Documentation about the genome"
+    },
+    "identifier": {
+      "type": "array",
+      "description": "Identifies of the genome",
+      "items": {
+        "type": "string",
+        "pattern": "[a-z0-9]*:.*"
         }
     },
-    "required": [
-        "schema",
-        "schemaVersion",
-        "genome",
-        "taxon",
-        "version",
-        "metadataAuthor",
-        "assemblyAuthor",
-        "dateCreated",
-        "checksum"
-    ],
-    "definitions": {
-        "orcidUri": {
-            "format": "uri",
-            "pattern": "^https://orcid.org/[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9X]"
+    "relatedLink": {
+      "type": "array",
+      "description": "Related URLS to the genome",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "funding": {
+      "type": "string",
+      "description": "Grant Line Item"
+    },
+    "license": {
+      "type": "string",
+      "description": "license for the use of the Genome"
+    },
+    "masking": {
+      "type": "string",
+      "pattern": "(not-masked|hard-masked|soft-masked|repeat-masked)",
+    "description": "masking applied to the genome assembly"
+    },
+    "vitalStats": {
+      "type": "object",
+      "description": "general statistics about the genome assembly",
+      "properties": {
+        "L50": {
+            "type": "integer",
+            "description": "L50 of the genome assembly"
         },
-        "sha2": {
+        "N50": {
+            "type": "integer",
+             "description": "N50 of the genome assembly"
+        },
+        "L90": {
+            "type": "integer" ,
+            "description": "L90 of the genome assembly"
+        },
+        "totalBasePairs": {
+            "type": "integer" ,
+            "description": "total base pairs of the genome assembly"
+        },
+        "numberContigs": {
+            "type": "integer" ,
+            "description": "number of contigs of the genome assembly"
+        },
+        "numberScaffolds": {
+            "type": "integer" ,
+            "description": "number of scaffolds of the genome assembly"
+        },
+        "readTechnology": {
             "type": "string",
-            "minLength": 44,
-            "maxLength": 44,
-            "pattern": "^[A-Za-z0-9/+=]+$",
-            "description": "sha2-512/256 checksum value for hashing"
+            "description": "read technology of the genome assembly (short, long, hifi, etc...)"
         }
+      }
+    },
+    "checksum": { "$ref": "#/definitions/sha2" }
+  },
+  "required": [
+    "schema",
+    "schemaVersion",
+    "genome",
+    "taxon",
+    "version",
+    "metadataAuthor",
+    "assemblyAuthor",
+    "dateCreated",
+    "masking",
+    "checksum"
+  ],
+  "definitions": {
+    "orcidUri": { "format": "uri",
+                  "pattern": "^https://orcid.org/[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9X]" },
+    "sha2": {
+      "type": "string",
+      "minLength": 44,
+      "maxLength": 44,
+      "pattern": "^[A-Za-z0-9/+=]+$",
+      "description": "sha2-512/256 checksum value for hashing"
     }
+  },
+  "additionalProperties": false
 }
 
 
 class fhr:
 
-    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, assemblySoftware=None, voucherSpecimen=None, dateCreated=None, scholarlyArticle=None, documentation=None, reuseConditions=None, checksum=None):
+    def __init__(self, schema=None, version=None, schemaVersion=None, genome=None, assemblySoftware=None, voucherSpecimen=None, dateCreated=None, scholarlyArticle=None, documentation=None, reuseConditions=None, masking=None, checksum=None):
         self.schema = schema
         self.version = version
         self.schemaVersion = schemaVersion
@@ -192,6 +225,8 @@ class fhr:
         self.identifier = []
         self.relatedLink = []
         self.funding = []
+        self.masking = masking
+        self.vitalStats = []
         self.reuseConditions = reuseConditions
         self.checksum = checksum
 
@@ -224,6 +259,14 @@ class fhr:
         self.identifier = data["identifier"]
         self.relatedLink = data["relatedLink"]
         self.funding = data["funding"]
+        self.masking = data["masking"]
+        self.vitalStats["N50"]
+        self.vitalStats["L50"]
+        self.vitalStats["L90"]
+        self.vitalStats["totalBasePairs"]
+        self.vitalStats["numberContigs"]
+        self.vitalStats["numberScaffolds"]
+        self.vitalStats["readTechnology"]
         self.reuseConditions = data["reuseConditions"]
         self.checksum = data["checksum"]
 
@@ -273,6 +316,15 @@ class fhr:
             f'{array + array.join(x + end_span for x in self.relatedLink)}'
             f';~funding:\n'
             f'{array + array.join(x + end_span for x in self.funding)}'
+            f';~masking {self.masking}\n'
+            f';~vitalStats:\n'
+            f';~-N50: {self.vitalStats["N50"]}\n'
+            f';~-L50: {self.vitalStats["L50"]}\n'
+            f';~-L90: {self.vitalStats["L90"]}\n'
+            f';~-totalBasePairs: {self.vitalStats["totalBasePairs"]}\n'
+            f';~-numberContigs: {self.vitalStats["numberContigs"]}\n'
+            f';~-numberScaffolds: {self.vitalStats["numberScaffolds"]}\n'
+            f';~-readTechnology: {self.vitalStats["readTechnology"]}\n'
             f';~reuseConditions: {self.reuseConditions}\n'
             f';~checksum: {self.checksum}\n'
         )
@@ -302,6 +354,8 @@ class fhr:
         self.identifier = data.get_all('identifier')
         self.relatedLink = data.get_all('relatedLink')
         self.funding = data.get_all('funding')
+        self.masking = data.masking
+        self.vitalStats = data.get_all('vitalStats')
         self.reuseConditions = data.reuseConditions
         self.checksum = data.checksum
 
@@ -345,6 +399,16 @@ class fhr:
             f'{identifier + identifier.join(x + end_span for x in self.identifier)}'
             f'{relatedLink + relatedLink.join(x + end_span for x in self.relatedLink)}'
             f'{funding + funding.join(x + end_span for x in self.funding)}'
+            f'<span itemprop="masking">{self.masking}<\span>'
+            f'<span itemprop="vitalStats">'
+            f'  <span itemprop="N50">{self.vitalStats["N50"]}<\span>'
+            f'  <span itemprop="L50">self.vitalStats["L50"]}<\span>'
+            f'  <span itemprop="L90">{self.vitalStats["L90"]}<\span>'
+            f'  <span itemprop="totalBasePairs">{self.vitalStats["totalBasePairs"]}<\span>'
+            f'  <span itemprop="numberContigs">{self.vitalStats["numberContigs"]}<\span>'
+            f'  <span itemprop="numberScaffolds">{self.vitalStats["numberScaffolds"]}<\span>'
+            f'  <span itemprop="readTechnology">{self.vitalStats["readTechnology"]}<\span>'
+            f'</span>'
             f'<span itemprop="reuseConditions">{self.reuseConditions}</span>'
             f'<span itemprop="checksum">{self.checksum}</span>'
             f'</div>'
@@ -375,6 +439,8 @@ class fhr:
         self.identifier = data["identifier"]
         self.relatedLink = data["relatedLink"]
         self.funding = data["funding"]
+        self.masking = data["masking"]
+        self.vitalStats = data["vitalStats"]
         self.reuseConditions = data["reuseConditions"]
         self.checksum = data["checksum"]
 
@@ -424,6 +490,15 @@ class fhr:
             f'{array + array.join(x + end_span for x in self.relatedLink)}'
             f'#~funding:\n'
             f'{array + array.join(x + end_span for x in self.funding)}'
+            f'#~masking {self.masking}\n'
+            f'#~vitalStats:\n'
+            f'#~-N50: {self.vitalStats["N50"]}\n'
+            f'#~-L50: {self.vitalStats["L50"]}\n'
+            f'#~-L90: {self.vitalStats["L90"]}\n'
+            f'#~-totalBasePairs: {self.vitalStats["totalBasePairs"]}\n'
+            f'#~-numberContigs: {self.vitalStats["numberContigs"]}\n'
+            f'#~-numberScaffolds: {self.vitalStats["numberScaffolds"]}\n'
+            f'#~-readTechnology: {self.vitalStats["readTechnology"]}\n'
             f'#~reuseConditions: {self.reuseConditions}\n'
             f'#~checksum: {self.checksum}\n'
         )
