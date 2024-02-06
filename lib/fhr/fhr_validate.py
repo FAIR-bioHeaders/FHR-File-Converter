@@ -4,11 +4,12 @@ import sys
 
 from fhr import fhr
 
+
 def main():
     parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Validate a FHR metadata file',
-            epilog=textwrap.dedent('''\
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Validate a FHR metadata file',
+        epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files can be one of:
                             <input>.yml
@@ -19,9 +20,9 @@ def main():
                             '''))
 
     parser.add_argument('file',
-            nargs=1,
-            metavar='<file>',
-            help='input followed by output')
+                        nargs=1,
+                        metavar='<file>',
+                        help='input followed by output')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
 

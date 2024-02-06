@@ -4,11 +4,12 @@ import sys
 
 from fhr import fhr
 
+
 def main():
     parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Convert from one FHR supported file type to another',
-            epilog=textwrap.dedent('''\
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Convert from one FHR supported file type to another',
+        epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files can be one of:
                             <input>.yml
@@ -26,9 +27,9 @@ def main():
                             '''))
 
     parser.add_argument('file',
-            nargs=2,
-            metavar='<file>',
-            help='input followed by output')
+                        nargs=2,
+                        metavar='<file>',
+                        help='input followed by output')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
 
@@ -69,4 +70,3 @@ def main():
             sys.exit('Output file extention not found')
 
     sys.stdout = original_stdout
-

@@ -7,20 +7,21 @@ import re
 
 from fhr import fhr
 
+
 def main():
     parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Validate a FHR metadata file',
-            epilog=textwrap.dedent('''\
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Validate a FHR metadata file',
+        epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files must be:
                             <input>.gfa  - gfa contining a fhr header
                             '''))
 
     parser.add_argument('file',
-            nargs=1,
-            metavar='<file>',
-            help='input followed by gfa output')
+                        nargs=1,
+                        metavar='<file>',
+                        help='input followed by gfa output')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
 
@@ -53,8 +54,8 @@ def main():
         md5_returned = hashlib.md5(data).hexdigest()
 
     if fhr_to_be_validated.checksum == md5_returned:
-        print "checksum verified."
+        print("checksum verified.")
     else:
-        print "checksum verification failed!"
+        print("checksum verification failed!")
 
     os.remove(temp_file)

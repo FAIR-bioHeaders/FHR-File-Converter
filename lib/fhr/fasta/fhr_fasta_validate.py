@@ -7,20 +7,21 @@ import re
 
 from fhr import fhr
 
+
 def main():
     parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Validate a FHR metadata file',
-            epilog=textwrap.dedent('''\
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Validate a FHR metadata file',
+        epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files must be:
                             <input>.fasta  - fasta contining a fhr header
                             '''))
 
     parser.add_argument('file',
-            nargs=1,
-            metavar='<file>',
-            help='input followed by fasta output')
+                        nargs=1,
+                        metavar='<file>',
+                        help='input followed by fasta output')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
 
@@ -30,7 +31,7 @@ def main():
 
     with open(args.file[0], 'r') as input_file:
         if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):
-             sys.exit('Input file not of correct extention')
+            sys.exit('Input file not of correct extention')
         elif args.file[0].endswith(".fasta") or args.file[0].endswith(".fa"):
             fhr_to_be_validated.input_fasta(input_file)
         elif args.file[0].endswith(".json"):
@@ -51,8 +52,8 @@ def main():
         md5_returned = hashlib.md5(data).hexdigest()
 
     if fhr_to_be_validated.checksum == md5_returned:
-        print "checksum verified."
+        print("checksum verified.")
     else:
-        print "checksum verification failed!"
+        print("checksum verification failed!")
 
     os.remove(temp_file)

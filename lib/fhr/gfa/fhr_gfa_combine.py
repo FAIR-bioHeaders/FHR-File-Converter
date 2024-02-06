@@ -2,15 +2,15 @@ import argparse
 import textwrap
 import sys
 import os
-import re
 
 from fhr import fhr
 
+
 def main():
     parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Validate a FHR metadata file',
-            epilog=textwrap.dedent('''\
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Validate a FHR metadata file',
+        epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files can be one of:
                             <input>.yml
@@ -23,9 +23,9 @@ def main():
                             '''))
 
     parser.add_argument('file',
-            nargs=2,
-            metavar='<file>',
-            help='input followed by gfa output')
+                        nargs=2,
+                        metavar='<file>',
+                        help='input followed by gfa output')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
 
@@ -49,11 +49,10 @@ def main():
 
     output_filename = os.path.splitext(args.file[1])[0] + ".fhr.gfa"
 
-        with open(args.file[0], "r") as sources:
-            gfa_lines = sources.readlines()
+    with open(args.file[0], "r") as sources:
+        gfa_lines = sources.readlines()
 
     with open(output_filename, 'w') as output_file:
         print(fhr_to_be_combined.output_fasta())
         for line in gfa_lines:
             sources.write(line)
-
