@@ -31,7 +31,7 @@ def main():
 
     args = parser.parse_args()
 
-    fhr_to_be_combined = ffrgs()
+    fhr_to_be_combined = fhr()
 
     with open(args.file[0], 'r') as input_file:
         if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):

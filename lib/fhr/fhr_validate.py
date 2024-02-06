@@ -27,7 +27,7 @@ def main():
 
     args = parser.parse_args()
 
-    fhr_to_be_validated = ffrgs()
+    fhr_to_be_validated = fhr()
 
     with open(args.file[0], 'r') as input_file:
         if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):
@@ -43,4 +43,4 @@ def main():
         else:
             sys.exit('Input file extention not found')
 
-    fhr_to_be_validated.ffrgs_validate()
+    fhr_to_be_validated.fhr_validate()

@@ -1,7 +1,7 @@
 # FHR-File-Converter
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762547.svg)](https://doi.org/10.5281/zenodo.6762547)
 
-This is the ffrgs file converter, it can convert ffrgs inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of ffrgs, see [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
+This is the fhr file converter, it can convert fhr inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of fhr, see [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
 
 using fhr on command line:
 
@@ -26,7 +26,7 @@ optional arguments:
 positional <file> input and output files
     input files can be one of:
         <input>.yml
-        <input>.fasta  - fasta contining a ffrgs header
+        <input>.fasta  - fasta contining a fhr header
         <input>.html   - html containing microdata
 
     output files can be one of:
@@ -35,7 +35,7 @@ positional <file> input and output files
         <output>.html  - microdata output type will be made into generic html output
 ```
 
-## Validating an ffrgs file on bash command line
+## Validating an fhr file on bash command line
 
 
 ```bash
@@ -52,14 +52,14 @@ Validate a fhr containing file
  positional <file> input and output files
                         input files can be one of:
                             <input>.yml
-                            <input>.fasta  - fasta contining a ffrgs header
+                            <input>.fasta  - fasta contining a fhr header
                             <input>.html   - html containing microdata
 ```
 
 
-As such validating a yaml file named "important\_genome.ffrgs.yml" would be:
+As such validating a yaml file named "important\_genome.fhr.yml" would be:
 
-`fhr-validate important_genome.ffrgs.yml`
+`fhr-validate important_genome.fhr.yml`
 
 
 
@@ -73,12 +73,12 @@ how to use the fhr library on the python3 command line:
 >>> data = fhr()
 >>> data.input_yaml(file.read())
 >>> data.output_fasta()
-";~schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/ffrgs.json\n;~schemaVersion: 1\n;~genome: Bombas huntii\n;~version: 0.0.1\n;~author:;~  name:Adam Wright\n;~  url:https://wormbase.org/resource/person/WBPerson30813\n;~assembler:;~  name:David Molik\n;~  url:https:/david.molik.co/person\n;~place:;~  name:PBARC\n;~  url:https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/\n;~taxa: Bombas huntii\n;~assemblySoftware: HiFiASM\n;~physicalSample: Located in Freezer 33, Drawer 137\n;~dateCreated: 2022-03-21\n;~instrument: ['Sequel IIe', 'Nanopore']\n;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755\n;~documentation: Built assembly from... \n;~identifier: ['gkx10242566416842']\n;~relatedLink: ['https/david.molik.co/genome']\n;~funding: some\n;~reuseConditions: public domain\n"
+";~schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/fhr.json\n;~schemaVersion: 1\n;~genome: Bombas huntii\n;~version: 0.0.1\n;~author:;~  name:Adam Wright\n;~  url:https://wormbase.org/resource/person/WBPerson30813\n;~assembler:;~  name:David Molik\n;~  url:https:/david.molik.co/person\n;~place:;~  name:PBARC\n;~  url:https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/\n;~taxa: Bombas huntii\n;~assemblySoftware: HiFiASM\n;~physicalSample: Located in Freezer 33, Drawer 137\n;~dateCreated: 2022-03-21\n;~instrument: ['Sequel IIe', 'Nanopore']\n;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755\n;~documentation: Built assembly from... \n;~identifier: ['gkx10242566416842']\n;~relatedLink: ['https/david.molik.co/genome']\n;~funding: some\n;~reuseConditions: public domain\n"
 ```
 
 ## Checksums
 
-Because ffrgs stores the checksum, the fasta header of the reference genome may contain the checksum for the fasta file without the header. This would happen if the ffrgs fasta header was written in yaml, json, or microdata, and then converted to fasta header. Using the checksum in this example is a matter of stripping the fasta header to use the checksum:
+Because fhr stores the checksum, the fasta header of the reference genome may contain the checksum for the fasta file without the header. This would happen if the fhr fasta header was written in yaml, json, or microdata, and then converted to fasta header. Using the checksum in this example is a matter of stripping the fasta header to use the checksum:
 
 The fasta checksum in the header is the checksum of the fasta without the header use to remove the header:
 

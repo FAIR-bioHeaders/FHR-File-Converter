@@ -10,7 +10,7 @@ def main():
             epilog=textwrap.dedent('''\
                     positional <file> input and output files
                         input files must be:
-                            <input>.fasta  - fasta contining a ffrgs header
+                            <input>.fasta  - fasta contining a fhr header
                             '''))
 
     parser.add_argument('file',
