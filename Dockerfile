@@ -14,4 +14,4 @@ RUN pip install poetry
 RUN poetry install --no-root
 
 # Define the command to run your application
-CMD ["python", "lib/fhr/fhr_convert.py"]
+# CMD ["python", "lib/fhr/fhr_convert.py"]

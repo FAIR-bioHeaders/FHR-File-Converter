@@ -138,7 +138,7 @@ schema = {
     },
     "masking": {
       "type": "string",
-      "pattern": "(not-masked|hard-masked|soft-masked|repeat-masked)",
+      "pattern": "(not-masked|hard-masked|soft-masked|repeat-masked|unknown)",
     "description": "masking applied to the genome assembly"
     },
     "vitalStats": {
