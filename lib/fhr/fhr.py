@@ -274,10 +274,7 @@ class fhr:
         return yaml.dump(self.__dict__)
 
     def input_fasta(self, stream: str):
-        formulated = ""
-        data = re.findall(';~.*', stream)
-        for value in stream:
-            formulated = formulated + "\n" + re.sub(';~', '', value)
+        formulated = "\n".join(re.sub(';~', '', line) for line in stream.splitlines() if line.startswith(';~'))
         self.yaml(formulated)
 
     def output_fasta(self):
@@ -448,10 +445,7 @@ class fhr:
         return json.dumps(self.__dict__)
 
     def input_gfa(self, stream: str):
-        formulated = ""
-        data = re.findall('#~.*', stream)
-        for value in stream:
-            formulated = formulated + "\n" + re.sub('#~', '', value)
+        formulated = "\n".join(re.sub('#~', '', line) for line in stream.splitlines() if line.startswith('#~'))
         self.yaml(formulated)
 
     def output_gfa(self):

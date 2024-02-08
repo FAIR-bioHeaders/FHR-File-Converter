@@ -41,19 +41,24 @@ def main():
         else:
             sys.exit('Input file extention not found')
 
-    temp_file = args.file[0] + ".tmp"
+    with open(input_file_path, 'r') as input_file:
+        if file_extension == ".fasta":
+            fhr_to_be_validated.input_fasta(input_file)
 
-    with open(temp_file, "w") as sources:
-        for line in lines:
-            sources.write(re.sub(r'^;~checksum.*', '', line))
+    temp_file_path = input_file_path + ".tmp"
 
-    with open(temp_file, 'rb') as file_to_check:
+    with open(temp_file_path, "w") as temp_file:
+        for line in input_file:
+            modified_line = re.sub(r'^;~checksum.*', '', line)
+            temp_file.write(modified_line)
+
+    with open(temp_file_path, 'rb') as file_to_check:
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
 
     if fhr_to_be_validated.checksum == md5_returned:
-        print("checksum verified.")
+        print("Checksum verified.")
     else:
-        print("checksum verification failed!")
+        print("Checksum verification failed!")
 
     os.remove(temp_file)

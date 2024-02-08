@@ -52,7 +52,9 @@ def main():
     with open(args.file[0], "r") as sources:
         gfa_lines = sources.readlines()
 
+
     with open(output_filename, 'w') as output_file:
-        print(fhr_to_be_combined.output_fasta())
+        output_content = fhr_to_be_combined.output_gfa()
+        output_file.write(output_content)
         for line in gfa_lines:
-            sources.write(line)
+            output_file.write(line)
