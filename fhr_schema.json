@@ -194,6 +194,6 @@
 				"description": "sha2-512/256 checksum value for hashing"
 			}
 	},
-	"additionalProperties": False
+	"additionalProperties": false
 }
 

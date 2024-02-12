@@ -1,6 +1,6 @@
 import unittest
 
-from fhr import fhr
+from fhr_file_converter.fhr import fhr
 
 
 class TestFFRGS(unittest.TestCase):

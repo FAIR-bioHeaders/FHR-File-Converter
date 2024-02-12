@@ -17,7 +17,7 @@ microdata = "^0.8.0"
 jsonschema = "^4.21.1"
 pyyaml = "^6.0.1"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 mypy = "^1.8.0"
 types-pyyaml = "^6.0.12.12"
 types-jsonschema = "^4.21.0.20240118"
@@ -25,6 +25,16 @@ isort = "^5.13.2"
 black = "^24.1.1"
 ruff = "^0.2.1"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.scripts]
+fhr-convert = "fhr.fhr_convert:main"
+fhr-validate = "fhr.fhr_validate:main"
+fhr-fasta-strip = "fhr.fasta.fhr_fasta_strip:main"
+fhr-fasta-combine = "fhr.fasta.fhr_fasta_combine:main"
+fhr-fasta-validate = "fhr.fasta.fhr_fasta_validate:main"
+fhr-gfa-strip = "fhr.gfa.fhr_gfa_strip:main"
+fhr-gfa-combine = "fhr.gfa.fhr_gfa_combine:main"
+fhr-gfa-validate = "fhr.gfa.fhr_gfa_validate:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+

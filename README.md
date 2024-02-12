@@ -141,7 +141,7 @@ ruff is a lightweight linter for Python that aims to detect common programming e
 To run ruff, use the following command:
 
 ```bash
-poetry run ruff
+poetry run ruff .
 ```
 
 ###black
