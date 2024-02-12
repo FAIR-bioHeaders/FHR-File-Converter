@@ -156,3 +156,11 @@ poetry run black .
 
 Running these code quality checks regularly helps maintain a clean and consistent codebase, making it easier to collaborate with others and ensuring code readability and maintainability. These checks are required to pass in order to pull changes into the main branch. 
 
+
+### pytest
+
+Make sure you install depedencies first and then run the tests with poetry
+```bash
+poetry run install
+poetry run pytest
+```
