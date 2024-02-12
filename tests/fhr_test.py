@@ -22,12 +22,13 @@ class TestFFRGS(unittest.TestCase):
         test_fhr.input_microdata(test_data)
         self.isinstance(test_fhr, fhr)
 
+
 #    def test_fasta(self): # noqa
 #        test_data = ";~schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/fhr.json\n;~schemaVersion: 1\n;~genome: Bombas huntii\n;~version: 0.0.1\n;~author:;~  name:Adam Wright\n;~  url:https://wormbase.org/resource/person/WBPerson30813\n;~assembler:;~  name:David Molik\n;~  url:https:/david.molik.co/person\n;~place:;~  name:PBARC\n;~  url:https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/\n;~taxa: Bombas huntii\n;~assemblySoftware: HiFiASM\n;~physicalSample: Located in Freezer 33, Drawer 137\n;~dateCreated: 2022-03-21\n;~instrument: ['Sequel IIe', 'Nanopore']\n;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755\n;~documentation: Built assembly from... \n;~identifier: ['gkx10242566416842']\n;~relatedLink: ['https/david.molik.co/genome']\n;~funding: some\n;~licence: public domain\n"= # noqa
- #       test_fhr = fhr() # noqa
- #       test_fhr.input_fasta(test_data) # noqa
- #       self.assertEqual(test_data, test_fhr.output_fasta) # noqa
+#       test_fhr = fhr() # noqa
+#       test_fhr.input_fasta(test_data) # noqa
+#       self.assertEqual(test_data, test_fhr.output_fasta) # noqa
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

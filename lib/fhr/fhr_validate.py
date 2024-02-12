@@ -1,6 +1,6 @@
 import argparse
-import textwrap
 import sys
+import textwrap
 
 from fhr import fhr
 
@@ -8,8 +8,9 @@ from fhr import fhr
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='Validate a FHR metadata file',
-        epilog=textwrap.dedent('''\
+        description="Validate a FHR metadata file",
+        epilog=textwrap.dedent(
+            """\
                     positional <file> input and output files
                         input files can be one of:
                             <input>.yml
@@ -17,20 +18,21 @@ def main():
                             <input>.html   - html containing microdata
                             <input>.json   - json containing a fhr header
                             <input>.gfa    - gfa file contining a fhr header
-                            '''))
+                            """
+        ),
+    )
 
-    parser.add_argument('file',
-                        nargs=1,
-                        metavar='<file>',
-                        help='input followed by output')
+    parser.add_argument(
+        "file", nargs=1, metavar="<file>", help="input followed by output"
+    )
 
-    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument("--version", action="version", version="%(prog)s 0.0.1")
 
     args = parser.parse_args()
 
     fhr_to_be_validated = fhr()
 
-    with open(args.file[0], 'r') as input_file:
+    with open(args.file[0], "r") as input_file:
         if args.file[0].endswith(".yml") or args.file[0].endswith(".yaml"):
             fhr_to_be_validated.input_yaml(input_file)
         elif args.file[0].endswith(".fasta") or args.file[0].endswith(".fa"):
@@ -42,6 +44,6 @@ def main():
         elif args.file[0].endswith(".gfa"):
             fhr_to_be_validated.input_gfa(input_file)
         else:
-            sys.exit('Input file extention not found')
+            sys.exit("Input file extention not found")
 
     fhr_to_be_validated.fhr_validate()
