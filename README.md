@@ -22,7 +22,7 @@ Using FHR on the command line:
 fhr-convert <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
 ```
 
-In more exapnsive terms:
+Detailed Usage:
 
 ```
 usage: fhr-convert [-h] [--version] <file> <file>
@@ -48,14 +48,14 @@ positional <file> input and output files
         <output>.html  - microdata output type will be made into generic html output
 ```
 
-## Validating an FHR file on bash command line
+## Validating an FHR file on command line
 
 
 ```bash
 fhr-validate <input>.<yaml|json|fasta|html>
 ```
 
-in more expansive terms:
+Detailed Usage:
 
 ```
 usage: fhr-validate [-h] [--version] <file>
@@ -76,9 +76,9 @@ As such validating a yaml file named "important\_genome.fhr.yml" would be:
 
 
 
-## Using fhr in Python
+## Using FHR in Python
 
-How to use the fhr library on the python3 command line:
+To use FHR libabry in Python
 
 ```python
 >>> from fhr import fhr
@@ -91,9 +91,9 @@ How to use the fhr library on the python3 command line:
 
 ## Checksums
 
-Because fhr stores the checksum, the fasta header of the reference genome may contain the checksum for the fasta file without the header. This would happen if the fhr fasta header was written in yaml, json, or microdata, and then converted to fasta header. Using the checksum in this example is a matter of stripping the fasta header to use the checksum:
+The FHR stores checksums, allowing the FASTA header of the reference genome to contain the checksum for the FASTA file without the header.
 
-The fasta checksum in the header is the checksum of the fasta without the header use to remove the header:
+To utilize the checksum, strip the FASTA header:
 
 ```bash
 cat example.fasta | grep -E -v '^;~\s?checksum'  > example.check.fasta
@@ -119,4 +119,40 @@ And then run the Docker container:
 ```bash
 docker run -it --rm fhr-file-converter
 ```
+
+
+## Running Code Quality Checks
+
+Ensuring code quality is crucial for maintaining a healthy and sustainable codebase. The following tools help enforce coding standards and best practices:
+
+### isort
+
+`isort` is a tool that sorts Python imports alphabetically within each section and separated by a blank line. It ensures consistent import styles across your project.
+
+To run isort, use the following command:
+
+```bash
+poetry run isort .
+```
+
+###ruff
+ruff is a lightweight linter for Python that aims to detect common programming errors, stylistic issues, and code smells. It provides quick feedback on potential issues in your code.
+
+To run ruff, use the following command:
+
+```bash
+poetry run ruff
+```
+
+###black
+
+`black` is an uncompromising Python code formatter. It reformats entire files in place to ensure a consistent and readable code style. It's opinionated and strives for the smallest diffs possible.
+
+To run black, use the following command:
+
+```bash
+poetry run black .
+```
+
+Running these code quality checks regularly helps maintain a clean and consistent codebase, making it easier to collaborate with others and ensuring code readability and maintainability. These checks are required to pass in order to pull changes into the main branch. 
 
