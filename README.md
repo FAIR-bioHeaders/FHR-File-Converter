@@ -144,7 +144,7 @@ To run ruff, use the following command:
 poetry run ruff .
 ```
 
-###black
+### black
 
 `black` is an uncompromising Python code formatter. It reformats entire files in place to ensure a consistent and readable code style. It's opinionated and strives for the smallest diffs possible.
 
