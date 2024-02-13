@@ -1,6 +1,6 @@
 import unittest
 
-from fhr_file_converter.fhr import fhr
+from fhr import fhr
 
 
 class TestFHR(unittest.TestCase):
@@ -41,19 +41,19 @@ class TestFHR(unittest.TestCase):
 "checksum: md5:7582b26fcb0a9775b87c38f836e97c42'\n")
         test_fhr = fhr()
         test_fhr.input_yaml(test_data)
-        self.isinstance(test_fhr, fhr)
+        result = isinstance(test_fhr, fhr)
 
     def test_json(self):
         test_data = '{ "$schema":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json", "$id":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/examples/example.fhr.json", "schema":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.jso", "schemaVersion": 1.0, "taxon" : { "name":"Bombas huntii", "uri": "https://identifiers.org/taxonomy:9606" }, "genome": "Bombas huntii", "genomeSynonym": ["B. huntii"], "version":"0.0.1", "metadataAuthor": [ { "name":"Adam Wright", "uri":"https://orcid.org/0000-0002-5719-4024" } ], "assemblyAuthor": [ { "name":"David Molik", "url":"https://orcid.org/0000-0003-3192-6538" } ], "dateCreated":"2022-03-21", "accessionID": { "name":"PBARC", "url":"https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/" }, "instrument": ["Sequel IIe", "Nanopore"], "voucherSpecimen":"Located in Freezer 33, Drawer 137", "scholarlyArticle":"10.1371/journal.pntd.0008755", "assemblySoftware":"HiFiASM", "funding":"funding", "reuseConditions":"public domain", "documentation":"Built assembly from... ", "masking":"soft-masked", "identifier": ["beetlebase:TC010103"], "relatedLink": ["http://wfleabase.org/genome/Daphnia_pulex/dpulex_jgi060905/fasta/"], "checksum":"md5:7582b26fcb0a9775b87c38f836e97c42" }'
         test_fhr = fhr()
         test_fhr.input_json(test_data)
-        self.isinstance(test_fhr, fhr)
+        result = isinstance(test_fhr, fhr)
 
     def test_micodata(self):
         test_data = '<div itemscope itemtype="https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json" version="1"> <span itemprop="schema">https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json</span> <span itemprop="schemaVersion">1</span> <span itemprop="version">0.0.1</span> <span itemprop="genome">Bombas huntii</span> <span itemprop="genomeSynonym">B. huntii</span> <span itemprop="metadataAuthor"> <span itemprop="name">Adam Wright</span><span itemprop="uri">https://orcid.org/0000-0002-5719-4024"</span> </span> <span itemprop="assemblyAuthor"> <span itemprop="name">David Molik</span> <span itemprop="uri">https://orcid.org/0000-0003-3192-6538"</span> </span> <span itemprop="accessionID"> <span itemprop="name">PBARC</span> <span itemprop="url">https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/"</span> </span> <span itemprop="taxon"> <span itemprop="name">Bomnas huntii</span> <span itemprop="uri">https://identifiers.org/taxonomy:9606</span> </span> <span itemprop="assemblySoftware">HiFiASM</span> <span itemprop="voucherSpecimen">Located in Freezer 33, Drawer 137</span> <span itemprop="dateCreated">2022-03-21</span> <span itemprop="instrument">Sequel IIe</span> <span itemprop="instrument">Nanopore</span> <span itemprop="scholarlyArticle">https://doi.org/10.1371/journal.pntd.0008755</span> <span itemprop="documentation">Built assembly from...</span> <span itemprop="identifier">beetlebase:TC010103</span> <span itemprop="masking">soft-masked</span> <span itemprop="relatedLink">http://wfleabase.org/genome/Daphnia_pulex/dpulex_jgi060905/fasta/</span> <span itemprop="funding">some</span> <span itemprop="reuseConditions">public domain</span> <span itemprop="checksum">md5:7582b26fcb0a9775b87c38f836e97c42</span> </div>'
         test_fhr = fhr()
         test_fhr.input_microdata(test_data)
-        self.isinstance(test_fhr, fhr)
+        result = isinstance(test_fhr, fhr)
 
 
 #    def test_fasta(self): # noqa

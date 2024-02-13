@@ -71,11 +71,6 @@ class fhr:
             self.genomeSynonym = None
 
         try:
-            self.voucherSpecimen["name"] = data["voucherID"]
-        except KeyError:
-            self.voucherSpecimen["name"] = None
-
-        try:
             self.accessionID["url"] = data["accessionID"]["url"]
         except (KeyError, TypeError):
             self.accessionID["url"] = None
@@ -313,11 +308,6 @@ class fhr:
             self.genomeSynonym = data["genomeSynonym"]
         except KeyError:
             self.genomeSynonym = None
-
-        try:
-            self.voucherSpecimen["name"] = data["voucherID"]
-        except KeyError:
-            self.voucherSpecimen["name"] = None
 
         try:
             self.accessionID["url"] = data["accessionID"]["url"]

@@ -3,7 +3,7 @@ max-line-length = 120
 ignore = "E203, E266, E501, W503"
 
 [tool.poetry]
-name = "fhr_file_converter"
+name = "fhr"
 version = "0.1.1"
 description = "This tool is used to validate and convert between different FHR header serializations"
 authors = ["David Molik <david.molik@usda.gov>","Adam Wright <adam.wright@oicr.on.ca>"]
@@ -26,14 +26,14 @@ black = "^24.1.1"
 ruff = "^0.2.1"
 
 [tool.poetry.scripts]
-fhr-convert = "fhr.fhr_convert:main"
-fhr-validate = "fhr.fhr_validate:main"
-fhr-fasta-strip = "fhr.fasta.fhr_fasta_strip:main"
-fhr-fasta-combine = "fhr.fasta.fhr_fasta_combine:main"
-fhr-fasta-validate = "fhr.fasta.fhr_fasta_validate:main"
-fhr-gfa-strip = "fhr.gfa.fhr_gfa_strip:main"
-fhr-gfa-combine = "fhr.gfa.fhr_gfa_combine:main"
-fhr-gfa-validate = "fhr.gfa.fhr_gfa_validate:main"
+fhr-convert = "fhr_convert:main"
+fhr-validate = "fhr_validate:main"
+fhr-fasta-strip = "fasta.fhr_fasta_strip:main"
+fhr-fasta-combine = "fasta.fhr_fasta_combine:main"
+fhr-fasta-validate = "fasta.fhr_fasta_validate:main"
+fhr-gfa-strip = "gfa.fhr_gfa_strip:main"
+fhr-gfa-combine = "gfa.fhr_gfa_combine:main"
+fhr-gfa-validate = "gfa.fhr_gfa_validate:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
