@@ -3,10 +3,10 @@ max-line-length = 120
 ignore = "E203, E266, E501, W503"
 
 [tool.poetry]
-name = "fhr-file-converter"
-version = "0.1.0"
+name = "fhr_file_converter"
+version = "0.1.1"
 description = "This tool is used to validate and convert between different FHR header serializations"
-authors = ["David Molik <david.molik@usda.gov>"]
+authors = ["David Molik <david.molik@usda.gov>","Adam Wright <adam.wright@oicr.on.ca>"]
 license = "USDA-ARS"
 readme = "README.md"
 

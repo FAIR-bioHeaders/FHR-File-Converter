@@ -26,6 +26,7 @@ assemblySoftware: HiFiASM
 funding: funding
 reuseConditions: public domain
 documentation: 'Built assembly from... '
+masking: soft-masked
 identifier:
 - beetlebase:TC010103
 relatedLink:

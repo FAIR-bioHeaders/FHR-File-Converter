@@ -30,6 +30,7 @@
     "funding":"funding",
     "reuseConditions":"public domain",
     "documentation":"Built assembly from... ",
+    "masking":"soft-masked",
     "identifier": ["beetlebase:TC010103"],
     "relatedLink": ["http://wfleabase.org/genome/Daphnia_pulex/dpulex_jgi060905/fasta/"],
     "checksum":"md5:7582b26fcb0a9775b87c38f836e97c42"
