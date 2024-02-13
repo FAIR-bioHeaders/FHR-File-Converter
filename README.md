@@ -135,7 +135,7 @@ To run isort, use the following command:
 poetry run isort .
 ```
 
-###ruff
+### ruff
 ruff is a lightweight linter for Python that aims to detect common programming errors, stylistic issues, and code smells. It provides quick feedback on potential issues in your code.
 
 To run ruff, use the following command:
