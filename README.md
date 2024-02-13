@@ -165,7 +165,7 @@ poetry run install
 poetry run pytest
 ```
 
-## FHR-Citation
+## Citing FHR
 Information on Citations of FHR
 
 
