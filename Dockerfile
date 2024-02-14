@@ -1,17 +1,18 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9
+FROM python:3.11-buster as builder
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
+RUN pip install poetry==1.4.2
 
-# Copy the entire repository into the container
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock ./
+
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without dev --no-root
+
 COPY . .
 
-# Install Poetry
-RUN pip install poetry
-
-# Install project dependencies
-RUN poetry install --no-root
-
-# Define the command to run your application
-# CMD ["python", "lib/fhr/fhr_convert.py"]
+ENTRYPOINT ["poetry", "run", "fhr-convert", "--help"]
