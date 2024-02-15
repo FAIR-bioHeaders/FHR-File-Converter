@@ -27,7 +27,7 @@ jobs:
       run: poetry run pytest
 
     - name: Run linting checks
-      run: poetry run ruff
+      run: poetry run ruff check .
 
     - name: Run isort check
       run: poetry run isort . --check-only

@@ -138,7 +138,7 @@ class fhr:
                 "totalBasePairs": None,
                 "numberContigs": None,
                 "numberScaffolds": None,
-                "readTechnology": None
+                "readTechnology": None,
             }
 
         try:
@@ -377,7 +377,7 @@ class fhr:
                 "totalBasePairs": None,
                 "numberContigs": None,
                 "numberScaffolds": None,
-                "readTechnology": None
+                "readTechnology": None,
             }
 
         try:
