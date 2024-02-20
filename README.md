@@ -5,7 +5,13 @@ This is the fhr file converter, it can convert fhr inbetween json, fasta, microd
 
 ## Installation
 
-You can install the FHR file converter and its dependencies using Poetry:
+You can intall the FHR file converter via pypi:
+
+```bash 
+pip install fhr
+```
+
+You can also install the FHR file converter and its dependencies using Poetry (by first downloading the repo or release):
 
 ```bash
 poetry install
@@ -75,6 +81,16 @@ As such validating a yaml file named "important\_genome.fhr.yml" would be:
 `fhr-validate important_genome.fhr.yml`
 
 
+## Other FHR Tools
+
+FHR has several other command line tools:
+
+* `fhr_fasta_combine` - combine a fhr header in any serialization with an existing fasta file
+* `fhr_fasta_strip` - remove a fhr header out of a fasta file
+* `fhr_fasta_validate` - check an fhr containing fasta against its checksum 
+* `fhr_gfa_combine` - combine a fhr header in any serilaization with an existing gfa file
+* `fhr_gfa_strip` - remove an fhr header our of a gfa file
+* `fhr_gfa_validate` - check an fhr containing gfa against its checksum
 
 ## Using FHR in Python
 
