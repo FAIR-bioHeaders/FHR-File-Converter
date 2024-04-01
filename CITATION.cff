@@ -20,6 +20,9 @@ identifiers:
   - type: doi
     value: 10.1101/2023.11.29.569306
     description: Preprint DOI
+  - type: doi
+    value: 10.1093/bib/bbae122
+    description: Article DOI
 repository-code: 'https://github.com/FAIR-bioHeaders/FHR-File-Converter'
 url: 'https://github.com/FAIR-bioHeaders'
 repository-artifact: 'https://github.com/FAIR-bioHeaders/FHR-Specification'
