@@ -213,7 +213,7 @@ The APA citation for the [FHR specification](https://github.com/FAIR-bioHeaders/
 Molik, D., & Wright, A.  FHR Specification [Data set]. https://github.com/FAIR-bioHeaders/FHR-Specification
 ```
 
-Or in bibtex:
+Or [in bibtex](https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Citation/main/citation.bib):
 ```bibtex
 % Citation For FHR Specification
 @misc{FHR_Specification,
@@ -231,7 +231,7 @@ The APA citation for the [FHR Briefings in Bioinformatics](https://doi.org/10.10
 Adam Wright, Mark D Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, David C Molik, FAIR Header Reference genome: a TRUSTworthy standard, Briefings in Bioinformatics, Volume 25, Issue 3, May 2024, bbae122, https://doi.org/10.1093/bib/bbae122
 ```
 
-Or in bibtex:
+Or [in bibtex](https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Citation/main/citation.bib):
 ```bibtex
 % Citation For FHR 
 @article{10.1093/bib/bbae122,
