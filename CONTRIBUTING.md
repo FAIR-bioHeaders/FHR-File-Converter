@@ -27,7 +27,13 @@ Keep required metadata and runtime dependencies small.
 David and Adam retain schema authority. The [successor governance proposal](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/GOVERNANCE.md)
 is awaiting adoption; its voting/transition rules are not currently effective.
 Follow CODE_OF_CONDUCT and use the SECURITY policy for sensitive findings. The
-private reporting contacts in those drafts still need confirmation.
+the private reporting address is documented there; the independent conflict/appeal route still needs confirmation.
 
 Release preparation does not authorize publishing packages, merging PRs, or
 transferring repository ownership. Keep companion PRs linked for coordinated review.
+
+## Coordinated documentation and citations
+
+Guidance and README changes are tracked in [specification issue #23](https://github.com/FAIR-bioHeaders/FHR-Specification/issues/23). The private conduct/security contact is confirmed; finalize the independent conflict-reporting route before treating the policies as fully operational.
+
+Use Chicago bibliography entries with DOI resolver links in human-readable citations. Keep the published paper, preprint, specification and converter distinct; preserve concept DOI meaning and existing BibTeX keys. CFF/BibTeX remain machine-readable metadata. The file audit and companion PRs are recorded in [FHR-Citation/AUDIT.md](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/release-v0.3/AUDIT.md), tracked by [issue #25](https://github.com/FAIR-bioHeaders/FHR-Specification/issues/25).

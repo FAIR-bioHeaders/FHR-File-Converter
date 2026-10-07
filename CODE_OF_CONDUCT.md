@@ -12,11 +12,8 @@ consider the affected person's needs, document decisions privately, and recuse
 maintainers who are involved in a complaint. A reviewer uninvolved in the original
 decision should handle appeals.
 
-## Reporting and adoption gate
+## Private reporting and appeals
 
-This policy is prepared for maintainer review. A private reporting contact and
-independent escalation/appeal contact must be confirmed before adoption. Do not
-post personal allegations or sensitive information in public issues. Until those
-channels are confirmed, this document must not be represented as a fully
-operational reporting process. Contact-channel selection is a remaining release
-review item; the expectations above guide ordinary project interaction.
+Report conduct concerns privately to [molik+FAIRsecurityDisclosure@ksu.edu](mailto:molik+FAIRsecurityDisclosure@ksu.edu). Include relevant links, what happened, and any immediate safety or confidentiality concerns. Do not post personal allegations or sensitive information in public issues.
+
+Request an appeal through the same address; an uninvolved reviewer must handle it, and anyone involved in the complaint must recuse themselves. If the complaint concerns the mailbox recipient, do not send sensitive details there: an independent private reporting contact still needs maintainer confirmation. That remaining conflict-reporting route must be finalized before this policy is described as fully operational.
