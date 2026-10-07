@@ -176,9 +176,7 @@ class fhr:
     def _input_header(self, stream, prefix):
         text = _text(stream).replace("\r\n", "\n").replace("\r", "\n")
         lines = [
-            line[len(prefix) :]
-            for line in text.split("\n")
-            if line.startswith(prefix)
+            line[len(prefix) :] for line in text.split("\n") if line.startswith(prefix)
         ]
         if not lines:
             raise ValueError(f"No {prefix} FHR metadata header found")

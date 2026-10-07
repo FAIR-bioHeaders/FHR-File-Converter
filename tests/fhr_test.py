@@ -402,9 +402,7 @@ def test_cli_hardlinked_outputs_preserve_inputs(metadata, tmp_path, kind):
     strip_link = tmp_path / f"strip-link.{kind}"
     os.link(combined, strip_link)
     before = combined.read_bytes()
-    result = command(
-        tmp_path, f"{kind}/fhr_{kind}_strip.py", combined, strip_link
-    )
+    result = command(tmp_path, f"{kind}/fhr_{kind}_strip.py", combined, strip_link)
     assert result.returncode == 1
     assert combined.read_bytes() == before
     assert strip_link.read_bytes() == before
