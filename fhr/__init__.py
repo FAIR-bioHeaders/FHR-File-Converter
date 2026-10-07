@@ -100,9 +100,14 @@ class _MetadataHTML(HTMLParser):
         node = self.stack.pop()
         attrs = node["attrs"]
         kind = attrs.get("data-fhr-type")
-        text = attrs.get(
-            "content", attrs.get("href", attrs.get("src", "".join(node["text"])))
-        )
+        if tag == "time" and "datetime" in attrs:
+            text = attrs["datetime"]
+        elif tag in {"data", "meter"} and "value" in attrs:
+            text = attrs["value"]
+        else:
+            text = attrs.get(
+                "content", attrs.get("href", attrs.get("src", "".join(node["text"])))
+            )
         if kind != "string":
             text = text.strip()
         if kind == "array":
@@ -116,7 +121,7 @@ class _MetadataHTML(HTMLParser):
         if self.stack:
             if attrs.get("itemprop"):
                 self._attach(attrs["itemprop"], value)
-            else:
+            elif "itemscope" not in attrs:
                 self.stack[-1]["text"].extend(node["text"])
                 for key, items in node["values"].items():
                     self.stack[-1]["values"].setdefault(key, []).extend(items)

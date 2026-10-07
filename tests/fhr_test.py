@@ -422,3 +422,35 @@ def test_standard_microdata_properties(metadata):
     loaded = fhr()
     loaded.input_microdata(html)
     assert loaded.__dict__ == metadata
+
+
+def test_independent_microdata_scope_does_not_leak(metadata):
+    html = fhr(**metadata).output_microdata()
+    unrelated = (
+        '<section itemscope itemtype="https://schema.org/Person">'
+        '<div><span itemprop="name">Alice</span></div></section>'
+    )
+    html = html.replace("</div>", unrelated + "</div>")
+    loaded = fhr()
+    loaded.input_microdata(html)
+    loaded.fhr_validate()
+    assert loaded.__dict__ == metadata
+
+
+@pytest.mark.parametrize("tag", ["data", "meter"])
+def test_standard_microdata_machine_values(metadata, tag):
+    html = fhr(**metadata).output_microdata()
+    date = metadata["dateCreated"]
+    html = html.replace(
+        f'<span itemprop="dateCreated" data-fhr-type="string">{date}</span>',
+        f'<time itemprop="dateCreated" datetime="{date}">Human-readable date</time>',
+    )
+    version = metadata["schemaVersion"]
+    html = html.replace(
+        f'<span itemprop="schemaVersion" data-fhr-type="number">{version}</span>',
+        f'<{tag} itemprop="schemaVersion" value="{version}">Version one</{tag}>',
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    loaded.fhr_validate()
+    assert loaded.__dict__ == metadata
