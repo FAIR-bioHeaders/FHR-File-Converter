@@ -2,8 +2,7 @@
 
 Convert and validate FHR genome metadata in JSON, YAML, FASTA, GFA, and HTML
 microdata. See [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
-for the schema and metadata design. The v0.3 release targets version **0.3.0**;
-it is not published by preparing these changes.
+for the schema and metadata design. The v0.3 release is version **0.3.0**.
 
 ## Install
 

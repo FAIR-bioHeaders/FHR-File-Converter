@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — unreleased (coordinated FHR v0.3, from v0.2)
+## 0.3.0 — 2026-10-07 (coordinated FHR v0.3, from v0.2)
 
 - Package metadata moves from the checkout's historical 0.1.1 to the coordinated 0.3.0 target.
 - Package the schema and CLI entry points so installed tools work outside the checkout.
