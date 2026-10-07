@@ -48,7 +48,22 @@ class _MetadataHTML(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if tag in {"meta", "link", "br", "hr", "img", "input"}:
+        if tag in {
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr",
+        }:
             self._leaf(attrs)
             return
         root = "itemscope" in attrs and attrs.get("itemtype") == ITEM_TYPE
@@ -159,9 +174,10 @@ class fhr:
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
 
     def _input_header(self, stream, prefix):
+        text = _text(stream).replace("\r\n", "\n").replace("\r", "\n")
         lines = [
             line[len(prefix) :]
-            for line in _text(stream).splitlines()
+            for line in text.split("\n")
             if line.startswith(prefix)
         ]
         if not lines:
@@ -169,7 +185,10 @@ class fhr:
         self.input_yaml("\n".join(lines))
 
     def _output_header(self, prefix):
-        return "".join(prefix + line + "\n" for line in self.output_yaml().splitlines())
+        lines = self.output_yaml().split("\n")
+        if lines[-1] == "":
+            lines.pop()
+        return "".join(prefix + line + "\n" for line in lines)
 
     def input_fasta(self, stream):
         self._input_header(stream, ";~")

@@ -45,6 +45,16 @@ def write_metadata(data, path):
     )
 
 
+def _output_is_input(output, inputs):
+    output = Path(output)
+    inputs = [Path(path) for path in inputs]
+    if any(output.resolve() == path.resolve() for path in inputs):
+        return True
+    return output.exists() and any(
+        output.samefile(path) for path in inputs if path.exists()
+    )
+
+
 def strip_header(content, kind):
     prefix = b";~" if kind == "fasta" else b"#~"
     return b"".join(
@@ -65,7 +75,9 @@ def checksum(content, kind):
         for line in metadata
         if line.strip()
         and not line.lstrip().startswith(b"#")
-        and line.strip() not in {b"---", b"..."}
+        and not re.match(
+            rb"^(?:%|---(?:[ \t]|$)|\.\.\.(?:[ \t]|$))", line.lstrip(b" \t")
+        )
     ]
     root_indent = min(
         (len(line) - len(line.lstrip(b" \t")) for line in meaningful), default=0
@@ -131,7 +143,7 @@ def convert_main():
         args_parser.add_argument("input")
         args_parser.add_argument("output")
         args = args_parser.parse_args()
-        if Path(args.input).resolve() == Path(args.output).resolve():
+        if _output_is_input(args.output, [args.input]):
             raise ValueError("Output must differ from the input file")
         data = read_metadata(args.input)
         data.fhr_validate()
@@ -163,10 +175,7 @@ def combine_main(kind):
         if file_format(args.sequence) != kind:
             raise ValueError(f"Expected a {kind.upper()} sequence file")
         output = args.output or str(Path(args.sequence).with_suffix(f".fhr.{kind}"))
-        if Path(output).resolve() in {
-            Path(args.sequence).resolve(),
-            Path(args.metadata).resolve(),
-        }:
+        if _output_is_input(output, [args.sequence, args.metadata]):
             raise ValueError("Output must differ from the input files")
         content = combine(
             read_metadata(args.metadata), Path(args.sequence).read_bytes(), kind
@@ -188,7 +197,7 @@ def strip_main(kind):
             raise ValueError(f"Expected a {kind.upper()} file")
         content = strip_header(Path(args.input).read_bytes(), kind)
         if args.output:
-            if Path(args.output).resolve() == Path(args.input).resolve():
+            if _output_is_input(args.output, [args.input]):
                 raise ValueError("Output must differ from the input file")
             Path(args.output).write_bytes(content)
         else:

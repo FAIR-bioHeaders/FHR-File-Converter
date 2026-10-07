@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from copy import deepcopy
@@ -62,6 +63,7 @@ def test_minimal_and_optional_fields(metadata):
     [
         ("dateCreated", "2026-02-30"),
         ("seqcol_id", "invalid"),
+        ("seqcol_id", "A" * 32 + "\n"),
         ("relatedLink", ["not a URI"]),
         ("vitalStats", {"gcContent": 101}),
         ("assemblySoftware", [{"version": "1"}]),
@@ -256,6 +258,51 @@ def test_microdata_rejects_multiple_roots(metadata):
         fhr().input_microdata(instance.output_microdata() * 2)
 
 
+def test_microdata_recognizes_all_void_elements(metadata):
+    metadata["documentation"] = "leftright"
+    instance = fhr(**metadata)
+    html = instance.output_microdata().replace(
+        "leftright</span>",
+        "left"
+        + "".join(
+            f"<{tag}>"
+            for tag in (
+                "area",
+                "base",
+                "br",
+                "col",
+                "embed",
+                "hr",
+                "img",
+                "input",
+                "link",
+                "meta",
+                "param",
+                "source",
+                "track",
+                "wbr",
+            )
+        )
+        + "right</span>",
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.documentation == "leftright"
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_sequence_headers_preserve_unicode_line_separators(metadata, kind):
+    metadata["documentation"] = "before\u2028middle\u2029after"
+    instance = fhr(**metadata)
+    header = getattr(instance, "output_" + kind)()
+    assert "\u2028" in header
+    assert "\u2029" in header
+    loaded = fhr()
+    body = ">ctg\nACGT\n" if kind == "fasta" else "S\tctg\tACGT\n"
+    getattr(loaded, "input_" + kind)(header + body)
+    assert loaded.documentation == metadata["documentation"]
+
+
 def test_unsupported_hash_reports_runtime_requirement(monkeypatch):
     def unavailable(name):
         raise ValueError("unsupported hash")
@@ -282,6 +329,27 @@ def test_root_indentation_for_checksum_line():
     )
 
 
+@pytest.mark.parametrize(("kind", "prefix"), [("fasta", b";~"), ("gfa", b"#~")])
+def test_checksum_root_indentation_ignores_yaml_markers(kind, prefix):
+    content = (
+        prefix
+        + b"%YAML 1.2\n"
+        + prefix
+        + b"--- # metadata\n"
+        + prefix
+        + b" schema: example\n"
+        + prefix
+        + b" checksum: placeholder\n"
+        + b">ctg\nACGT\n"
+    )
+    digest = checksum(content, kind)
+    assert digest != checksum(content.replace(b"ACGT", b"ACGA"), kind)
+    assert digest != checksum(content.replace(b"%YAML 1.2", b"%YAML 1.1"), kind)
+    assert digest != checksum(
+        content.replace(b"--- # metadata", b"--- # changed"), kind
+    )
+
+
 def test_cli_same_path_preserves_input(metadata, tmp_path):
     source = tmp_path / "input.json"
     source.write_text(json.dumps(metadata))
@@ -289,6 +357,57 @@ def test_cli_same_path_preserves_input(metadata, tmp_path):
     result = command(tmp_path, "fhr_convert.py", source, source)
     assert result.returncode == 1
     assert source.read_bytes() == original
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_cli_hardlinked_outputs_preserve_inputs(metadata, tmp_path, kind):
+    source = tmp_path / "input.json"
+    source.write_text(json.dumps(metadata))
+    conversion_link = tmp_path / "conversion.yaml"
+    os.link(source, conversion_link)
+    original = source.read_bytes()
+    result = command(tmp_path, "fhr_convert.py", source, conversion_link)
+    assert result.returncode == 1
+    assert source.read_bytes() == original
+    assert conversion_link.read_bytes() == original
+
+    sequence = tmp_path / ("sequence." + kind)
+    sequence.write_bytes(b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n")
+    for linked_input in (source, sequence):
+        output = tmp_path / f"combined-{linked_input.name}.{kind}"
+        os.link(linked_input, output)
+        before = linked_input.read_bytes()
+        result = command(
+            tmp_path,
+            f"{kind}/fhr_{kind}_combine.py",
+            source,
+            sequence,
+            "-o",
+            output,
+        )
+        assert result.returncode == 1
+        assert linked_input.read_bytes() == before
+        assert output.read_bytes() == before
+
+    combined = tmp_path / f"combined.{kind}"
+    result = command(
+        tmp_path,
+        f"{kind}/fhr_{kind}_combine.py",
+        source,
+        sequence,
+        "-o",
+        combined,
+    )
+    assert result.returncode == 0, result.stderr
+    strip_link = tmp_path / f"strip-link.{kind}"
+    os.link(combined, strip_link)
+    before = combined.read_bytes()
+    result = command(
+        tmp_path, f"{kind}/fhr_{kind}_strip.py", combined, strip_link
+    )
+    assert result.returncode == 1
+    assert combined.read_bytes() == before
+    assert strip_link.read_bytes() == before
 
 
 def test_standard_microdata_properties(metadata):
