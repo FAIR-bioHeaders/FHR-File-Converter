@@ -1,5 +1,9 @@
 # FHR File Converter
 
+[![Converter tests](https://github.com/FAIR-bioHeaders/FHR-File-Converter/actions/workflows/pytest.yaml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FHR-File-Converter/actions/workflows/pytest.yaml)
+[![Specification DOI](https://img.shields.io/badge/Specification_DOI-10.5281%2Fzenodo.6762549-blue)](https://doi.org/10.5281/zenodo.6762549)
+[![File Converter DOI](https://img.shields.io/badge/File_Converter_DOI-10.5281%2Fzenodo.6762547-blue)](https://doi.org/10.5281/zenodo.6762547)
+
 Convert and validate FHR genome metadata in JSON, YAML, FASTA, GFA, and HTML
 microdata. See [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
 for the schema and metadata design. The v0.3 release is version **0.3.0**.
