@@ -1,252 +1,132 @@
-# FHR-File-Converter
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762547.svg)](https://doi.org/10.5281/zenodo.6762547)
+# FHR File Converter
 
-This is the fhr file converter, it can convert fhr inbetween json, fasta, microdata, and fasta header. If you would like a detailed specification of fhr, see [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
+Convert and validate FHR genome metadata in JSON, YAML, FASTA, GFA, and HTML
+microdata. See [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
+for the schema and metadata design. The v0.3 release targets version **0.3.0**;
+it is not published by preparing these changes.
 
-## Installation
+## Install
 
-You can intall the FHR file converter via pypi:
-
-```bash 
-pip install fhr
-```
-
-You can also install the FHR file converter and its dependencies using Poetry (by first downloading the repo or release):
+For a published release:
 
 ```bash
+python -m pip install fhr
+```
+
+For this checkout and its development checks (Python 3.9 or later):
+
+```bash
+python -m pip install poetry
 poetry install
+poetry run pytest
+poetry run ruff check .
+poetry run isort . --check-only
+poetry run black . --check
 ```
 
-## Usage
-
-
-### Commnand line Usage
-
-Using FHR on the command line:
+## Commands
 
 ```bash
-fhr-convert <input>.<yaml|json|fasta|html> <output>.<yaml|json|fasta|html>
+fhr-convert examples/example.fhr.yaml /tmp/example.fhr.json
+fhr-validate /tmp/example.fhr.json
+fhr-fasta-combine examples/example.fhr.yaml genome.fasta -o genome.fhr.fasta
+fhr-fasta-validate genome.fhr.fasta
+fhr-fasta-strip genome.fhr.fasta genome.stripped.fasta
+fhr-gfa-combine examples/example.fhr.yaml assembly.gfa -o assembly.fhr.gfa
+fhr-gfa-validate assembly.fhr.gfa
+fhr-gfa-strip assembly.fhr.gfa assembly.stripped.gfa
 ```
 
-Detailed Usage:
+`fhr-convert INPUT OUTPUT` detects `.json`, `.yaml`/`.yml`, `.fasta`/`.fa`/`.fna`,
+`.gfa`, and `.html` from extensions. It validates metadata before writing output;
+FASTA/GFA output contains a metadata header only. To include sequence data, use
+`combine METADATA SEQUENCE [-o OUTPUT]`, whose default output is `SEQUENCE.fhr.fasta`
+or `SEQUENCE.fhr.gfa` with the last extension replaced. Existing FHR header lines
+are replaced. Inputs are not overwritten by sequence helpers.
 
-```
-usage: fhr-convert [-h] [--version] <file> <file>
+`strip INPUT [OUTPUT]` writes to stdout if OUTPUT is omitted. Only FHR-prefixed
+lines are removed; other bytes, including ordinary comments and CRLF endings,
+are preserved. `fhr-validate` checks metadata, while FASTA/GFA validate commands
+also verify the exact-byte file checksum. Failures exit with status 1.
 
-Convert from one FHR supported file type to another
-
-positional arguments:
-  <file>      input followed by output
-
-optional arguments:
-  -h, --help  show this help message and exit
-  --version   show program's version number and exit
-
-positional <file> input and output files
-    input files can be one of:
-        <input>.yml
-        <input>.fasta  - fasta contining a fhr header
-        <input>.html   - html containing microdata
-
-    output files can be one of:
-        <output>.yml
-        <output>.fasta - fasta output type will be made as a fasta header without sequences
-        <output>.html  - microdata output type will be made into generic html output
-```
-
-## Validating an FHR file on command line
-
-
-```bash
-fhr-validate <input>.<yaml|json|fasta|html>
-```
-
-Detailed Usage:
-
-```
-usage: fhr-validate [-h] [--version] <file>
-
-Validate a fhr containing file
-
- positional <file> input and output files
-                        input files can be one of:
-                            <input>.yml
-                            <input>.fasta  - fasta contining a fhr header
-                            <input>.html   - html containing microdata
-```
-
-
-As such validating a yaml file named "important\_genome.fhr.yml" would be:
-
-`fhr-validate important_genome.fhr.yml`
-
-
-## Other FHR Tools
-
-FHR has several other command line tools:
-
-* `fhr_fasta_combine` - combine a fhr header in any serialization with an existing fasta file
-* `fhr_fasta_strip` - remove a fhr header out of a fasta file
-* `fhr_fasta_validate` - check an fhr containing fasta against its checksum 
-* `fhr_gfa_combine` - combine a fhr header in any serilaization with an existing gfa file
-* `fhr_gfa_strip` - remove an fhr header our of a gfa file
-* `fhr_gfa_validate` - check an fhr containing gfa against its checksum
-
-## Using FHR in Python
-
-To use FHR libabry in Python
+## Python
 
 ```python
->>> from fhr import fhr
->>> file = open("example.yaml")
->>> data = fhr()
->>> data.input_yaml(file.read())
->>> data.output_fasta()
-";~schema: https://raw.githubusercontent.com/FFRGS/FFRGS-Specification/main/fhr.json\n;~schemaVersion: 1\n;~genome: Bombas huntii\n;~version: 0.0.1\n;~author:;~  name:Adam Wright\n;~  url:https://wormbase.org/resource/person/WBPerson30813\n;~assembler:;~  name:David Molik\n;~  url:https:/david.molik.co/person\n;~place:;~  name:PBARC\n;~  url:https://www.ars.usda.gov/pacific-west-area/hilo-hi/daniel-k-inouye-us-pacific-basin-agricultural-research-center/\n;~taxa: Bombas huntii\n;~assemblySoftware: HiFiASM\n;~physicalSample: Located in Freezer 33, Drawer 137\n;~dateCreated: 2022-03-21\n;~instrument: ['Sequel IIe', 'Nanopore']\n;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755\n;~documentation: Built assembly from... \n;~identifier: ['gkx10242566416842']\n;~relatedLink: ['https/david.molik.co/genome']\n;~funding: some\n;~reuseConditions: public domain\n"
+from fhr import fhr
+
+metadata = fhr()
+with open("examples/example.fhr.yaml", encoding="utf-8") as stream:
+    metadata.input_yaml(stream)
+metadata.fhr_validate()
+print(metadata.output_json())
 ```
 
-## Checksums
+Input methods accept text, UTF-8 bytes, or readable streams. Optional fields stay
+absent until supplied. The mapping is preserved across supported format round
+trips; HTML values are escaped and explicitly typed. Keywords can initialize an
+instance (`fhr(genome="example")`), and fields remain accessible as attributes.
+The installed schema is loaded from package resources rather than the working
+directory, so commands work outside the checkout. No schema is downloaded at runtime.
 
-The FHR stores checksums, allowing the FASTA header of the reference genome to contain the checksum for the FASTA file without the header.
+Checksum helpers require SHA-512/256 support in the Python build. Some Apple
+system Python builds omit it; use an OpenSSL-enabled Python distribution.
+Metadata conversion and validation do not require that hash implementation.
 
-To utilize the checksum, strip the FASTA header:
+## v0.3 compatibility and identity
 
-```bash
-cat example.fasta | grep -E -v '^;~\s?checksum'  > example.check.fasta
-```
+- Required fields and `schemaVersion: 1` remain unchanged; the package is 0.3.0.
+- `assemblySoftware` accepts a legacy string or optional structured software
+  objects with name, URI, version, and command options. `assemblyProtocol` is a URI.
+- `vitalStats.N90` is base pairs; `vitalStats.gcContent` is 0–100 percent.
+- Optional `seqcol_id` stores a supplied 32-character base64url top-level refget
+  digest. The converter preserves it; it does not compute or verify SeqCol identity.
+- Checksums use base64 SHA-512/256 of all original file bytes except the one scalar
+  checksum header line, including its newline. Metadata is covered. MD5 hex and
+  payload-only checksums from old examples are not valid v0.3 checksums; recombine
+  metadata with the original sequence file to calculate the new value.
+- HTML exports use FHR item scopes and `data-fhr-type` annotations for lossless
+  arrays, numbers, objects, and strings. External microdata must represent nested
+  items properly; incomplete legacy markup may need regeneration.
+- Incomplete constructors now emit missing fields rather than empty defaults.
+  Validate after loading to obtain actionable schema errors. Obsolete positional
+  constructor arguments should be converted to keywords.
 
-To strip the checksum:
+See the [format reference](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/docs/FORMAT.md)
+and [release notes](CHANGELOG.md). JSON/YAML/HTML example identifiers are synthetic.
+The FASTA/GFA fixtures contain verified FHR checksums; their SeqCol IDs are placeholders.
+Sequence helpers currently read the file into memory; stream processing is future work.
 
-
-```bash
-cat example.fasta | grep -E ';~\s?checksum' | sed 's/^;~checksum://g' | sed '/\'//g'
-```
-
-## Docker Support
-
-You can also run the FHR file converter in a Docker container. To build the Docker image:
+## Docker
 
 ```bash
 docker build -t fhr-file-converter .
+docker run --rm fhr-file-converter --help
 ```
 
-And then run the Docker container:
-
-```bash
-docker run -it --rm fhr-file-converter
-```
-
-
-## Running Code Quality Checks
-
-Ensuring code quality is crucial for maintaining a healthy and sustainable codebase. The following tools help enforce coding standards and best practices:
-
-### isort
-
-`isort` is a tool that sorts Python imports alphabetically within each section and separated by a blank line. It ensures consistent import styles across your project.
-
-To run isort, use the following command:
-
-```bash
-poetry run isort .
-```
-
-### ruff
-ruff is a lightweight linter for Python that aims to detect common programming errors, stylistic issues, and code smells. It provides quick feedback on potential issues in your code.
-
-To run ruff, use the following command:
-
-```bash
-poetry run ruff .
-```
-
-### black
-
-`black` is an uncompromising Python code formatter. It reformats entire files in place to ensure a consistent and readable code style. It's opinionated and strives for the smallest diffs possible.
-
-To run black, use the following command:
-
-```bash
-poetry run black .
-```
-
-Running these code quality checks regularly helps maintain a clean and consistent codebase, making it easier to collaborate with others and ensuring code readability and maintainability. These checks are required to pass in order to pull changes into the main branch. 
-
-
-### pytest
-
-Make sure you install depedencies first and then run the tests with poetry
-```bash
-poetry run install
-poetry run pytest
-```
+Mount inputs/outputs into the container for conversion. See
+[CONTRIBUTING](CONTRIBUTING.md), [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md),
+[SECURITY](SECURITY.md), and [AGENTS](AGENTS.md) for project guidance.
 
 ## Citing FHR
-Information on Citations of FHR
 
+Chicago bibliography entries are used below. Cite the published paper for a
+general description of FHR; cite the specification or converter when using that
+resource directly. The software and specification links are concept DOIs; for a
+specific release, use the corresponding version DOI from Zenodo. Authors and
+years follow the records resolved by the concept DOIs at the v0.3 documentation
+update, and can change as later records are published.
 
-### Citing the Validation Tool
-cite the validation tool when directly interacting with the tool or library
-The APA citation for the [FHR validation/converter software](https://github.com/FAIR-bioHeaders/FHR-File-Converter) is:
+### Published paper
 
-```
-Molik, D., & Wright, A. FHR File Converster [Computer software]. https://github.com/FAIR-bioHeaders/FHR-File-Converter
-```
+Wright, Adam, Mark D. Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L. Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, and David C. Molik. “FAIR Header Reference Genome: A TRUSTworthy Standard.” *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122. https://doi.org/10.1093/bib/bbae122.
 
-Or in bibtex:
-```bibtex
-% Citation For FHR Validation/Converter Software
-@software{FHR_File_Converter,
-    author = {Molik, David and Wright, Adam},
-    year = {2023},
-    license = {PDDL-1.0},
-    title = {{FHR File Converster}},
-    url = {https://github.com/FAIR-bioHeaders/FHR-File-Converter},
-    doi = {10.5281/zenodo.6762547}
-}
-```
-### Citing the Specification
-cite the specification when directly interacting with the specification (pull requests, comments on schema)
-The APA citation for the [FHR specification](https://github.com/FAIR-bioHeaders/FHR-Specification) is:
+### Specification
 
-```
-Molik, D., & Wright, A.  FHR Specification [Data set]. https://github.com/FAIR-bioHeaders/FHR-Specification
-```
+Molik, David. *FHR Specification*. Data set. 2022. https://doi.org/10.5281/zenodo.6762549.
 
-Or [in bibtex](https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Citation/main/citation.bib):
-```bibtex
-% Citation For FHR Specification
-@misc{FHR_Specification,
-    author = {Molik, David and Wright, Adam},
-    year = {2023},
-    title = {{FHR Specification}},
-    url = {https://github.com/FAIR-bioHeaders/FHR-Specification},
-    doi = {10.5281/zenodo.6762549}
-}
-```
-### Citing FHR
-The APA citation for the [FHR Briefings in Bioinformatics](https://doi.org/10.1093/bib/bbae122) is:
+### Converter
 
-```
-Adam Wright, Mark D Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, David C Molik, FAIR Header Reference genome: a TRUSTworthy standard, Briefings in Bioinformatics, Volume 25, Issue 3, May 2024, bbae122, https://doi.org/10.1093/bib/bbae122
-```
+Molik, David, and Adam Wright. *FHR File Converter*. Computer software. 2024. https://doi.org/10.5281/zenodo.6762547.
 
-Or [in bibtex](https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Citation/main/citation.bib):
-```bibtex
-% Citation For FHR 
-@article{10.1093/bib/bbae122,
-    author = {Wright, Adam and Wilkinson, Mark D and Mungall, Christopher and Cain, Scott and Richards, Stephen and Sternberg, Paul and Provin, Ellen and Jacobs, Jonathan L and Geib, Scott and Raciti, Daniela and Yook, Karen and Stein, Lincoln and Molik, David C},
-    title = "{FAIR Header Reference genome: a TRUSTworthy standard}",
-    journal = {Briefings in Bioinformatics},
-    volume = {25},
-    number = {3},
-    pages = {bbae122},
-    year = {2024},
-    month = {03},
-    abstract = "{The lack of interoperable data standards among reference genome data-sharing platforms inhibits cross-platform analysis while increasing the risk of data provenance loss. Here, we describe the FAIR bioHeaders Reference genome (FHR), a metadata standard guided by the principles of Findability, Accessibility, Interoperability and Reuse (FAIR) in addition to the principles of Transparency, Responsibility, User focus, Sustainability and Technology. The objective of FHR is to provide an extensive set of data serialisation methods and minimum data field requirements while still maintaining extensibility, flexibility and expressivity in an increasingly decentralised genomic data ecosystem. The effort needed to implement FHR is low; FHR’s design philosophy ensures easy implementation while retaining the benefits gained from recording both machine and human-readable provenance.}",
-    issn = {1477-4054},
-    doi = {10.1093/bib/bbae122},
-    url = {https://doi.org/10.1093/bib/bbae122},
-    eprint = {https://academic.oup.com/bib/article-pdf/25/3/bbae122/57108923/bbae122.pdf},
-}
-```
+Machine-readable entries are maintained in
+[FHR-Citation](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/citation.bib).

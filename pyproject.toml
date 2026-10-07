@@ -4,37 +4,52 @@ ignore = "E203, E266, E501, W503"
 
 [tool.poetry]
 name = "fhr"
-version = "0.1.1"
+version = "0.3.0"
 description = "This tool is used to validate and convert between different FHR header serializations"
 authors = ["David Molik <david.molik@usda.gov>","Adam Wright <adam.wright@oicr.on.ca>"]
 license = "USDA-ARS"
 readme = "README.md"
+packages = [{include = "fhr"}]
+include = ["fhr/fhr_schema.json"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-argparse = "^1.4.0"
-microdata = "^0.8.0"
-jsonschema = "^4.21.1"
+jsonschema = {version = "^4.21.1", extras = ["format"]}
 pyyaml = "^6.0.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
 types-pyyaml = "^6.0.12.12"
 types-jsonschema = "^4.21.0.20240118"
 isort = "^5.13.2"
-black = "^24.1.1"
+black = [
+    { version = "^26.3.1", python = ">=3.10" },
+    { version = "24.2.0", python = "<3.10" },
+]
 ruff = "^0.2.1"
-
-[tool.poetry.scripts]
-fhr-convert = "fhr_convert:main"
-fhr-validate = "fhr_validate:main"
-fhr-fasta-strip = "fasta.fhr_fasta_strip:main"
-fhr-fasta-combine = "fasta.fhr_fasta_combine:main"
-fhr-fasta-validate = "fasta.fhr_fasta_validate:main"
-fhr-gfa-strip = "gfa.fhr_gfa_strip:main"
-fhr-gfa-combine = "gfa.fhr_gfa_combine:main"
-fhr-gfa-validate = "gfa.fhr_gfa_validate:main"
-
-[tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 
+[tool.poetry.scripts]
+fhr-convert = "fhr.cli:convert_main"
+fhr-validate = "fhr.cli:validate_main"
+fhr-fasta-strip = "fhr.cli:fasta_strip_main"
+fhr-fasta-combine = "fhr.cli:fasta_combine_main"
+fhr-fasta-validate = "fhr.cli:fasta_validate_main"
+fhr-gfa-strip = "fhr.cli:gfa_strip_main"
+fhr-gfa-combine = "fhr.cli:gfa_combine_main"
+fhr-gfa-validate = "fhr.cli:gfa_validate_main"
+
+
+
+[build-system]
+requires = ["poetry-core>=1.8,<3"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+target-version = ["py39"]
+
+[tool.ruff]
+select = ["E4", "E7", "E9", "F"]

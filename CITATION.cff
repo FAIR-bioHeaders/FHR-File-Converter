@@ -1,52 +1,81 @@
 cff-version: 1.2.0
-title: FHR File Converster
-message: 'If you use this software, please cite it as below.'
+title: FHR File Converter
+message: For a general description of FHR, cite the preferred paper; cite this resource
+  DOI for direct use.
 type: software
 authors:
-  - given-names: David
-    family-names: Molik
-    email: david.molik@usda.gov
-    affiliation: USDA ARS ABADRU
-    orcid: 'https://orcid.org/0000-0003-3192-6538'
-  - given-names: Adam
-    family-names: Wright
-    email: AWright@oicr.on.ca
-    affiliation: OICR
-    orcid: 'https://orcid.org/0000-0002-5719-4024'
+- given-names: David
+  family-names: Molik
+  email: david.molik@usda.gov
+  affiliation: USDA ARS ABADRU
+  orcid: https://orcid.org/0000-0003-3192-6538
+- given-names: Adam
+  family-names: Wright
+  email: AWright@oicr.on.ca
+  affiliation: OICR
+  orcid: https://orcid.org/0000-0002-5719-4024
 identifiers:
-  - type: doi
-    value: 10.5281/zenodo.6762547
-    description: Zenodo DOI
-  - type: doi
-    value: 10.1101/2023.11.29.569306
-    description: Preprint DOI
-repository-code: 'https://github.com/FAIR-bioHeaders/FHR-File-Converter'
-url: 'https://github.com/FAIR-bioHeaders'
-repository-artifact: 'https://github.com/FAIR-bioHeaders/FHR-Specification'
-abstract: >-
-  The lack of interoperable data standards among reference
-  genome data-sharing platforms inhibits cross-platform
-  analysis while increasing the risk of data provenance
-  loss. Here, we describe the FAIR-bioHeaders Reference
-  genome (FHR), a metadata standard guided by the principles
-  of Findability, Accessibility, Interoperability, and Reuse
-  (FAIR) in addition to the principles of Transparency,
-  Responsibility, User focus, Sustainability, and Technology
-  (TRUST). The objective of FHR is to provide an extensive
-  set of data serialisation methods and minimum data field
-  requirements while still maintaining extensibility,
-  flexibility, and expressivity in an increasingly
-  decentralised genomic data ecosystem. The effort needed to
-  implement FHR is low; FHR’s design philosophy ensures easy
-  implementation while retaining the benefits gained from
+- type: doi
+  value: 10.5281/zenodo.6762547
+  description: Zenodo concept DOI for this resource
+repository-code: https://github.com/FAIR-bioHeaders/FHR-File-Converter
+url: https://github.com/FAIR-bioHeaders/FHR-File-Converter
+repository-artifact: https://github.com/FAIR-bioHeaders/FHR-File-Converter
+abstract: The lack of interoperable data standards among reference genome data-sharing
+  platforms inhibits cross-platform analysis while increasing the risk of data provenance
+  loss. Here, we describe the FAIR-bioHeaders Reference genome (FHR), a metadata standard
+  guided by the principles of Findability, Accessibility, Interoperability, and Reuse
+  (FAIR) in addition to the principles of Transparency, Responsibility, User focus,
+  Sustainability, and Technology (TRUST). The objective of FHR is to provide an extensive
+  set of data serialisation methods and minimum data field requirements while still
+  maintaining extensibility, flexibility, and expressivity in an increasingly decentralised
+  genomic data ecosystem. The effort needed to implement FHR is low; FHR’s design
+  philosophy ensures easy implementation while retaining the benefits gained from
   recording both machine and human-readable provenance.
 keywords:
-  - FAIR
-  - TRUST
-  - fasta
-  - yaml
-  - json
-  - gfa
-  - microdata
-  - genome assembly
+- FAIR
+- TRUST
+- fasta
+- yaml
+- json
+- gfa
+- microdata
+- genome assembly
 license: PDDL-1.0
+doi: 10.5281/zenodo.6762547
+preferred-citation:
+  type: article
+  title: 'FAIR Header Reference genome: a TRUSTworthy standard'
+  authors:
+  - given-names: Adam
+    family-names: Wright
+  - given-names: Mark D
+    family-names: Wilkinson
+  - given-names: Christopher
+    family-names: Mungall
+  - given-names: Scott
+    family-names: Cain
+  - given-names: Stephen
+    family-names: Richards
+  - given-names: Paul
+    family-names: Sternberg
+  - given-names: Ellen
+    family-names: Provin
+  - given-names: Jonathan L
+    family-names: Jacobs
+  - given-names: Scott
+    family-names: Geib
+  - given-names: Daniela
+    family-names: Raciti
+  - given-names: Karen
+    family-names: Yook
+  - given-names: Lincoln
+    family-names: Stein
+  - given-names: David C
+    family-names: Molik
+  doi: 10.1093/bib/bbae122
+  journal: Briefings in Bioinformatics
+  volume: '25'
+  issue: '3'
+  start: bbae122
+  year: 2024

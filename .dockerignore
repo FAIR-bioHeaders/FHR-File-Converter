@@ -24,3 +24,9 @@ venv/
 
 # Exclude any other temporary or irrelevant files
 
+
+# Local build/test artifacts
+.venv
+__pycache__
+.pytest_cache
+dist
