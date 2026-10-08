@@ -6,7 +6,7 @@
 
 Convert and validate FHR genome metadata in JSON, YAML, FASTA, GFA, and HTML
 microdata. See [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
-for the schema and metadata design. The v0.3 release is version **0.3.0**.
+for the schema and metadata design. The current v0.3 release is version **0.3.1**.
 
 ## Install
 
@@ -77,7 +77,7 @@ Metadata conversion and validation do not require that hash implementation.
 
 ## v0.3 compatibility and identity
 
-- Required fields and `schemaVersion: 1` remain unchanged; the package is 0.3.0.
+- Required fields and `schemaVersion: 1` remain unchanged; the package is 0.3.1.
 - `assemblySoftware` accepts a legacy string or optional structured software
   objects with name, URI, version, and command options. `assemblyProtocol` is a URI.
 - `vitalStats.N90` is base pairs; `vitalStats.gcContent` is 0–100 percent.
@@ -87,6 +87,16 @@ Metadata conversion and validation do not require that hash implementation.
   checksum header line, including its newline. Metadata is covered. MD5 hex and
   payload-only checksums from old examples are not valid v0.3 checksums; recombine
   metadata with the original sequence file to calculate the new value.
+- The checksum value must be a single-line scalar on the checksum line. Header
+  lines must be UTF-8 and must not contain U+0085, U+2028, or U+2029. FASTA/GFA
+  files must not begin with a UTF-8 byte order mark. Other sequence bytes may use
+  any encoding.
+- Metadata must be JSON-compatible: duplicate keys, YAML anchors, aliases, and
+  merge keys are rejected.
+- `;~`/`#~` lines must form the leading header block, before the first FASTA `>`
+  line or the first GFA record line; ordinary comments and blank lines may be
+  mixed in. A `;~`/`#~` line after sequence data, including a concatenated
+  second file, is an error.
 - HTML exports use FHR item scopes and `data-fhr-type` annotations for lossless
   arrays, numbers, objects, and strings. External microdata must represent nested
   items properly; incomplete legacy markup may need regeneration.

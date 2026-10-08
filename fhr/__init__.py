@@ -1,6 +1,9 @@
 """FHR metadata parsing, serialization, and validation."""
 
+import codecs
 import json
+import re
+from collections.abc import Hashable
 from copy import deepcopy
 from datetime import date, datetime
 from html import escape
@@ -10,20 +13,129 @@ from importlib.resources import files
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 SCHEMA = json.loads(
     files(__package__).joinpath("fhr_schema.json").read_text(encoding="utf-8")
 )
 ITEM_TYPE = SCHEMA["$id"]
+# YAML treats these as line breaks, but FASTA/GFA line splitting does not.
+YAML_ONLY_LINE_BREAKS = "\x85\u2028\u2029"
+
+
+def _read(stream):
+    return stream.read() if hasattr(stream, "read") else stream
 
 
 def _text(stream):
-    value = stream.read() if hasattr(stream, "read") else stream
+    value = _read(stream)
     if isinstance(value, bytes):
-        return value.decode("utf-8")
+        value = value.decode("utf-8")
     if not isinstance(value, str):
         raise TypeError("Expected text or a readable stream")
-    return value
+    # A UTF-8 byte order mark is an encoding signature, not metadata.
+    return value[1:] if value.startswith("\ufeff") else value
+
+
+def split_lines(content):
+    """Split FASTA/GFA bytes into lines, keeping each original terminator."""
+    if content.startswith(codecs.BOM_UTF8):
+        raise ValueError("FASTA/GFA files must not begin with a UTF-8 byte order mark")
+    return content.splitlines(keepends=True)
+
+
+def header_lines(lines, prefix):
+    """Return the FHR lines of the leading header block, rejecting any later ones.
+
+    The block ends at the first record: a FASTA ``>`` line, or a nonblank GFA line
+    that is not a ``#`` comment. Ordinary comments and blank lines may be mixed in.
+    """
+    in_header = True
+    found = []
+    for number, line in enumerate(lines, 1):
+        if line.startswith(prefix):
+            if not in_header:
+                raise ValueError(
+                    f"FHR header line after sequence data at line {number}"
+                )
+            found.append(line)
+        elif in_header:
+            if prefix == b";~":
+                in_header = not line.startswith(b">")
+            else:
+                in_header = line.startswith(b"#") or not line.strip()
+    return found
+
+
+def header_text(line, prefix):
+    """Return the YAML text of one FHR header line given as bytes."""
+    text = line[len(prefix) :].rstrip(b"\r\n").decode("utf-8")
+    if any(char in text for char in YAML_ONLY_LINE_BREAKS):
+        raise ValueError("FHR header lines must not contain U+0085, U+2028, or U+2029")
+    return text
+
+
+class _Loader(yaml.SafeLoader):
+    """Load JSON-compatible YAML without aliases, merge keys, or duplicate keys."""
+
+    def compose_node(self, parent, index):
+        event = self.peek_event()
+        if isinstance(event, yaml.AliasEvent) or getattr(event, "anchor", None):
+            raise yaml.composer.ComposerError(
+                None,
+                None,
+                "YAML anchors and aliases are not allowed in FHR metadata",
+                event.start_mark,
+            )
+        return super().compose_node(parent, index)
+
+    def construct_mapping(self, node, deep=False):
+        if isinstance(node, yaml.MappingNode):
+            keys = set()
+            for key_node, _ in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    raise yaml.constructor.ConstructorError(
+                        None,
+                        None,
+                        "YAML merge keys are not allowed in FHR metadata",
+                        key_node.start_mark,
+                    )
+                key = self.construct_object(key_node, deep=True)
+                if not isinstance(key, Hashable):
+                    continue  # SafeConstructor reports unhashable keys.
+                if key in keys:
+                    raise yaml.constructor.ConstructorError(
+                        "while constructing a mapping",
+                        node.start_mark,
+                        f"found duplicate key {key!r}",
+                        key_node.start_mark,
+                    )
+                keys.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
+def load_yaml(text):
+    return yaml.load(text, Loader=_Loader)
+
+
+class _Dumper(yaml.SafeDumper):
+    """Escape characters that YAML, but not FASTA/GFA, reads as line breaks."""
+
+    def represent_str(self, data):
+        if any(char in data for char in YAML_ONLY_LINE_BREAKS):
+            return self.represent_scalar("tag:yaml.org,2002:str", data, style='"')
+        return super().represent_str(data)
+
+
+_Dumper.add_representer(str, _Dumper.represent_str)
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate JSON object key: {key!r}")
+        result[key] = value
+    return result
 
 
 def _json_value(value):
@@ -38,55 +150,200 @@ def _json_value(value):
     return value
 
 
+_VOID_ELEMENTS = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+}
+# Elements that stop the HTML search for an element to close implicitly.
+_HTML_SCOPE = {
+    "applet",
+    "button",
+    "caption",
+    "html",
+    "marquee",
+    "object",
+    "table",
+    "td",
+    "template",
+    "th",
+}
+_CLOSES_P = {
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "center",
+    "dd",
+    "details",
+    "dialog",
+    "dir",
+    "div",
+    "dl",
+    "dt",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "hgroup",
+    "hr",
+    "li",
+    "listing",
+    "main",
+    "menu",
+    "nav",
+    "ol",
+    "p",
+    "pre",
+    "search",
+    "section",
+    "summary",
+    "table",
+    "ul",
+    "xmp",
+}
+_TABLE_SECTIONS = {"tbody", "tfoot", "thead"}
+# Start tag -> (open elements it implicitly closes, elements bounding the search).
+_IMPLIED_END_TAGS = {
+    "li": ({"li"}, {"ol", "ul"}),
+    "dd": ({"dd", "dt"}, {"dl"}),
+    "dt": ({"dd", "dt"}, {"dl"}),
+    "option": ({"option"}, {"datalist", "optgroup", "select"}),
+    "optgroup": ({"optgroup", "option"}, {"datalist", "select"}),
+    "tr": ({"td", "th", "tr"}, _TABLE_SECTIONS),
+    "td": ({"td", "th"}, {"tr"}),
+    "th": ({"td", "th"}, {"tr"}),
+    **{tag: (_TABLE_SECTIONS | {"td", "th", "tr"}, set()) for tag in _TABLE_SECTIONS},
+}
+_MICRODATA_ATTRIBUTES = {
+    "meta": "content",
+    "audio": "src",
+    "embed": "src",
+    "iframe": "src",
+    "img": "src",
+    "source": "src",
+    "track": "src",
+    "video": "src",
+    "a": "href",
+    "area": "href",
+    "link": "href",
+    "object": "data",
+    "data": "value",
+    "meter": "value",
+    "time": "datetime",
+}
+_JSON_TYPES = {
+    "integer": lambda value: isinstance(value, int) and not isinstance(value, bool),
+    "number": lambda value: isinstance(value, (int, float))
+    and not isinstance(value, bool),
+    "boolean": lambda value: isinstance(value, bool),
+    "null": lambda value: value is None,
+}
+
+
+def _tokens(value):
+    """Split an HTML attribute on ASCII whitespace."""
+    return re.findall(r"[^\t\n\f\r ]+", value or "")
+
+
+def _attributes(pairs):
+    """Keep the first of duplicate attributes, as HTML parsers do."""
+    result = {}
+    for name, value in pairs:
+        result.setdefault(name, value)
+    return result
+
+
 class _MetadataHTML(HTMLParser):
-    """Parse FHR item scopes, using explicit JSON types for lossless values."""
+    """Parse the FHR item scope, using explicit JSON types for lossless values."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
+        # Every open element; only "active" ones are inside the FHR item scope.
         self.stack = []
         self.result = None
 
     def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if tag in {
-            "area",
-            "base",
-            "br",
-            "col",
-            "embed",
-            "hr",
-            "img",
-            "input",
-            "link",
-            "meta",
-            "param",
-            "source",
-            "track",
-            "wbr",
-        }:
-            self._leaf(attrs)
+        self._imply_end_tags(tag)
+        attrs = _attributes(attrs)
+        if tag in _VOID_ELEMENTS:
+            self._leaf(tag, attrs)
             return
-        root = "itemscope" in attrs and attrs.get("itemtype") == ITEM_TYPE
-        if not self.stack and not root:
-            return
-        if root and (self.result is not None or self.stack):
+        root = "itemscope" in attrs and ITEM_TYPE in _tokens(attrs.get("itemtype"))
+        active = bool(self.stack) and self.stack[-1]["active"]
+        if root and (self.result is not None or active):
             raise ValueError("Multiple FHR item scopes found")
-        self.stack.append({"tag": tag, "attrs": attrs, "text": [], "values": {}})
+        self.stack.append(
+            {
+                "tag": tag,
+                "attrs": attrs,
+                "active": root or active,
+                "text": [],
+                "values": {},
+            }
+        )
 
     def handle_startendtag(self, tag, attrs):
-        self._leaf(dict(attrs))
+        self._imply_end_tags(tag)
+        self._leaf(tag, _attributes(attrs))
 
-    def _leaf(self, attrs):
-        if self.stack and attrs.get("itemprop"):
-            value = attrs.get("content", attrs.get("href", attrs.get("src", "")))
-            self._attach(attrs["itemprop"], value)
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index]["tag"] == tag:
+                self._close(index)
+                return
 
     def handle_data(self, text):
-        if self.stack:
+        if self.stack and self.stack[-1]["active"]:
             self.stack[-1]["text"].append(text)
 
-    def _attach(self, key, value):
-        self.stack[-1]["values"].setdefault(key, []).append(value)
+    def _imply_end_tags(self, tag):
+        rules = []
+        if tag in _IMPLIED_END_TAGS:
+            rules.append(_IMPLIED_END_TAGS[tag])
+        if tag in _CLOSES_P:
+            rules.append(({"p"}, set()))
+        for closes, bounds in rules:
+            for index in range(len(self.stack) - 1, -1, -1):
+                name = self.stack[index]["tag"]
+                if name in closes:
+                    self._close(index)
+                    break
+                if name in bounds or name in _HTML_SCOPE:
+                    break
+
+    def _close(self, index):
+        while len(self.stack) > index:
+            self._finish(self.stack.pop())
+
+    def _leaf(self, tag, attrs):
+        if self.stack and self.stack[-1]["active"]:
+            value = attrs.get(_MICRODATA_ATTRIBUTES.get(tag, ""))
+            for name in _tokens(attrs.get("itemprop")):
+                self._attach(self.stack[-1], name, value or "")
+
+    @staticmethod
+    def _attach(node, key, value):
+        node["values"].setdefault(key, []).append(value)
 
     @staticmethod
     def _object(values):
@@ -94,39 +351,41 @@ class _MetadataHTML(HTMLParser):
             key: items[0] if len(items) == 1 else items for key, items in values.items()
         }
 
-    def handle_endtag(self, tag):
-        if not self.stack or self.stack[-1]["tag"] != tag:
+    def _finish(self, node):
+        if not node["active"]:
             return
-        node = self.stack.pop()
-        attrs = node["attrs"]
+        tag, attrs = node["tag"], node["attrs"]
         kind = attrs.get("data-fhr-type")
-        if tag == "time" and "datetime" in attrs:
-            text = attrs["datetime"]
-        elif tag in {"data", "meter"} and "value" in attrs:
-            text = attrs["value"]
-        else:
-            text = attrs.get(
-                "content", attrs.get("href", attrs.get("src", "".join(node["text"])))
-            )
+        text = attrs.get(_MICRODATA_ATTRIBUTES.get(tag, ""))
+        if text is None:
+            text = "".join(node["text"])
         if kind != "string":
             text = text.strip()
         if kind == "array":
             value = node["values"].get("item", [])
         elif kind == "object" or "itemscope" in attrs or node["values"]:
             value = self._object(node["values"])
-        elif kind in {"integer", "number", "boolean", "null"}:
+        elif kind in _JSON_TYPES:
             value = json.loads(text)
+            if not _JSON_TYPES[kind](value):
+                raise ValueError(f"Microdata value {text!r} is not a JSON {kind}")
         else:
             value = text
-        if self.stack:
-            if attrs.get("itemprop"):
-                self._attach(attrs["itemprop"], value)
-            elif "itemscope" not in attrs:
-                self.stack[-1]["text"].extend(node["text"])
-                for key, items in node["values"].items():
-                    self.stack[-1]["values"].setdefault(key, []).extend(items)
-        else:
+        parent = self.stack[-1] if self.stack and self.stack[-1]["active"] else None
+        if parent is None:
             self.result = value
+        elif _tokens(attrs.get("itemprop")):
+            for name in _tokens(attrs.get("itemprop")):
+                self._attach(parent, name, value)
+        elif "itemscope" not in attrs:
+            parent["text"].extend(node["text"])
+            for key, items in node["values"].items():
+                parent["values"].setdefault(key, []).extend(items)
+
+    def close(self):
+        super().close()
+        if any(node["active"] for node in self.stack):
+            raise ValueError("No complete FHR microdata item scope found")
 
 
 def _html_value(key, value):
@@ -167,25 +426,34 @@ class fhr:
         self.__dict__.update(deepcopy(normalized))
 
     def input_yaml(self, stream):
-        self._input(yaml.safe_load(_text(stream)))
+        self._input(load_yaml(_text(stream)))
 
     def output_yaml(self):
-        return yaml.safe_dump(self.__dict__, sort_keys=False, allow_unicode=True)
+        return yaml.dump(
+            self.__dict__, Dumper=_Dumper, sort_keys=False, allow_unicode=True
+        )
 
     def input_json(self, stream):
-        self._input(json.loads(_text(stream)))
+        self._input(json.loads(_text(stream), object_pairs_hook=_unique_object))
 
     def output_json(self):
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
 
     def _input_header(self, stream, prefix):
-        text = _text(stream).replace("\r\n", "\n").replace("\r", "\n")
+        content = _read(stream)
+        if isinstance(content, str):
+            content = content.encode("utf-8")
+        if not isinstance(content, bytes):
+            raise TypeError("Expected bytes, text, or a readable stream")
+        # Match checksum line handling: split bytes, decode only header lines.
+        marker = prefix.encode("ascii")
         lines = [
-            line[len(prefix) :] for line in text.split("\n") if line.startswith(prefix)
+            header_text(line, marker)
+            for line in header_lines(split_lines(content), marker)
         ]
         if not lines:
             raise ValueError(f"No {prefix} FHR metadata header found")
-        self.input_yaml("\n".join(lines))
+        self._input(load_yaml("\n".join(lines)))
 
     def _output_header(self, prefix):
         lines = self.output_yaml().split("\n")
@@ -209,7 +477,7 @@ class fhr:
         parser = _MetadataHTML()
         parser.feed(_text(stream))
         parser.close()
-        if parser.stack or parser.result is None:
+        if parser.result is None:
             raise ValueError("No complete FHR microdata item scope found")
         data = parser.result
         # Standard microdata scalar values are strings; restore schema-defined types.

@@ -8,6 +8,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+import yaml
 from jsonschema.exceptions import ValidationError
 
 from fhr import SCHEMA, fhr
@@ -209,7 +210,7 @@ def test_installed_entry_points_outside_checkout(tmp_path):
             text=True,
         )
         assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "0.3.0"
+        assert result.stdout.strip() == "0.3.1"
     result = subprocess.run(
         [str(bin_path / "fhr-validate"), str(ROOT / "examples/minimal.fhr.json")],
         cwd=tmp_path,
@@ -295,8 +296,10 @@ def test_sequence_headers_preserve_unicode_line_separators(metadata, kind):
     metadata["documentation"] = "before\u2028middle\u2029after"
     instance = fhr(**metadata)
     header = getattr(instance, "output_" + kind)()
-    assert "\u2028" in header
-    assert "\u2029" in header
+    # YAML reads raw U+2028/U+2029 as line breaks, so they must be escaped.
+    assert "\u2028" not in header
+    assert "\u2029" not in header
+    assert "\\L" in header and "\\P" in header
     loaded = fhr()
     body = ">ctg\nACGT\n" if kind == "fasta" else "S\tctg\tACGT\n"
     getattr(loaded, "input_" + kind)(header + body)
@@ -454,3 +457,275 @@ def test_standard_microdata_machine_values(metadata, tag):
     loaded.input_microdata(html)
     loaded.fhr_validate()
     assert loaded.__dict__ == metadata
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_duplicate_header_keys_are_rejected(metadata, kind):
+    prefix = b";~" if kind == "fasta" else b"#~"
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = combine(fhr(**metadata), body, kind)
+    repeated = prefix + b"genome: repeated\n" + combined
+    with pytest.raises(yaml.YAMLError, match="duplicate key"):
+        getattr(fhr(), "input_" + kind)(repeated)
+    nested = combined.replace(
+        prefix + b"taxon:\n", prefix + b"taxon:\n" + prefix + b"  name: first\n"
+    )
+    with pytest.raises(yaml.YAMLError, match="duplicate key"):
+        getattr(fhr(), "input_" + kind)(nested)
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_header_lines_after_sequence_data_are_rejected(metadata, kind):
+    prefix = b";~" if kind == "fasta" else b"#~"
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = combine(fhr(**metadata), body, kind)
+    late = combined + prefix + b"documentation: after the sequence\n"
+    concatenated = combined + combined
+    for content in (late, concatenated):
+        with pytest.raises(ValueError, match="after sequence data at line"):
+            getattr(fhr(), "input_" + kind)(content)
+        with pytest.raises(ValueError, match="after sequence data at line"):
+            checksum(content, kind)
+        with pytest.raises(ValueError, match="after sequence data at line"):
+            strip_header(content, kind)
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_comments_and_blank_lines_may_precede_header_lines(metadata, kind):
+    comment = b";" if kind == "fasta" else b"#"
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = combine(fhr(**metadata), body, kind)
+    content = comment + b" ordinary comment\n\n" + combined
+    loaded = fhr()
+    getattr(loaded, "input_" + kind)(content)
+    assert loaded.genome == metadata["genome"]
+    checksum(content, kind)
+    assert strip_header(content, kind) == comment + b" ordinary comment\n\n" + body
+
+
+def test_duplicate_keys_are_rejected_in_yaml_and_json():
+    with pytest.raises(yaml.YAMLError, match="duplicate key"):
+        fhr().input_yaml("genome: one\ngenome: two\n")
+    with pytest.raises(ValueError, match="Duplicate JSON object key"):
+        fhr().input_json('{"genome": "one", "genome": "two"}')
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "a: &a [x, x]\nb: [*a, *a]\n",
+        "a: &a {x: 1}\nb: *a\n",
+        "base: {genome: x}\n<<: {genome: y}\n",
+    ],
+)
+def test_yaml_anchors_aliases_and_merge_keys_are_rejected(text):
+    with pytest.raises(yaml.YAMLError, match="not allowed"):
+        fhr().input_yaml(text)
+
+
+def test_yaml_alias_expansion_is_not_attempted():
+    lines = ["a0: &a0 [x, x, x, x, x, x, x, x, x, x]"]
+    lines += [
+        f"a{i}: &a{i} [" + ", ".join([f"*a{i - 1}"] * 10) + "]" for i in range(1, 9)
+    ]
+    with pytest.raises(yaml.YAMLError, match="not allowed"):
+        fhr().input_fasta("".join(f";~{line}\n" for line in lines))
+
+
+def _replace_checksum_line(combined, prefix, replacement):
+    lines = combined.split(b"\n")
+    index = next(
+        i for i, line in enumerate(lines) if line.startswith(prefix + b"checksum:")
+    )
+    value = lines[index].split(b": ", 1)[1]
+    lines[index] = replacement(value)
+    return b"\n".join(lines)
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        lambda value: b";~checksum: >-\n;~  " + value,
+        lambda value: b";~checksum: |\n;~  " + value,
+        lambda value: b";~checksum:\n;~  " + value,
+        lambda value: b';~checksum: "' + value[:-1] + b'\\\n;~="',
+        lambda value: b";~checksum: " + value[:22] + b"\n;~  " + value[22:],
+    ],
+)
+def test_checksum_value_must_be_on_its_line(metadata, replacement):
+    combined = combine(fhr(**metadata), b">ctg\nACGT\n", "fasta")
+    changed = _replace_checksum_line(combined, b";~", replacement)
+    with pytest.raises(ValueError, match="single-line scalar"):
+        checksum(changed, "fasta")
+
+
+@pytest.mark.parametrize("separator", ["\x85", "\u2028", "\u2029"])
+def test_yaml_only_line_breaks_cannot_hide_metadata(metadata, separator):
+    # YAML would read text after the separator as an uncovered root property.
+    del metadata["voucherSpecimen"]
+    combined = combine(fhr(**metadata), b">ctg\nACGT\n", "fasta")
+    smuggled = _replace_checksum_line(
+        combined,
+        b";~",
+        lambda value: b";~checksum: "
+        + value
+        + (separator + "voucherSpecimen: changed").encode("utf-8"),
+    )
+    with pytest.raises(ValueError, match="U\\+2028"):
+        fhr().input_fasta(smuggled)
+    with pytest.raises(ValueError, match="U\\+2028"):
+        checksum(smuggled, "fasta")
+
+
+@pytest.mark.parametrize("value", ["a\x85b", "a\u2028b", "a\u2029b"])
+def test_yaml_only_line_breaks_round_trip_escaped(metadata, value):
+    metadata["documentation"] = value
+    for kind in ("yaml", "fasta", "gfa"):
+        output = getattr(fhr(**metadata), "output_" + kind)()
+        assert not any(char in output for char in "\x85\u2028\u2029")
+        loaded = fhr()
+        getattr(loaded, "input_" + kind)(output)
+        assert loaded.documentation == value
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_sequence_byte_order_mark_is_rejected(metadata, kind):
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = b"\xef\xbb\xbf" + combine(fhr(**metadata), body, kind)
+    for action in (
+        lambda: getattr(fhr(), "input_" + kind)(combined),
+        lambda: checksum(combined, kind),
+        lambda: strip_header(combined, kind),
+        lambda: combine(fhr(**metadata), b"\xef\xbb\xbf" + body, kind),
+    ):
+        with pytest.raises(ValueError, match="byte order mark"):
+            action()
+
+
+def test_metadata_byte_order_mark_is_ignored(metadata, tmp_path):
+    from fhr.cli import read_metadata
+
+    for name, text in (
+        ("bom.json", fhr(**metadata).output_json()),
+        ("bom.yaml", fhr(**metadata).output_yaml()),
+        ("bom.html", fhr(**metadata).output_microdata()),
+    ):
+        path = tmp_path / name
+        path.write_bytes(b"\xef\xbb\xbf" + text.encode("utf-8"))
+        assert read_metadata(path).__dict__ == metadata
+        assert command(tmp_path, "fhr_validate.py", path).returncode == 0
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_non_utf8_sequence_bytes_outside_header(metadata, tmp_path, kind):
+    body = b">ctg caf\xe9\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\tCO:Z:\xe9\n"
+    combined = tmp_path / ("combined." + kind)
+    combined.write_bytes(combine(fhr(**metadata), body, kind))
+    result = command(tmp_path, f"{kind}/fhr_{kind}_validate.py", combined)
+    assert result.returncode == 0, result.stderr
+
+
+def test_microdata_implied_end_tags(metadata):
+    html = fhr(**metadata).output_microdata()
+    html = "<html><body><p>Intro" + html.replace(
+        "</div>\n",
+        "<p>note<p>second note<ul><li>one<li>two</ul>"
+        "<table><tr><td>a<td>b<tr><td>c</table></div>",
+    )
+    html += "<p>trailing paragraph"
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_implied_end_tags_keep_sibling_properties(metadata):
+    del metadata["voucherSpecimen"], metadata["funding"]
+    html = fhr(**metadata).output_microdata()
+    html = html.replace(
+        "</div>\n",
+        '<p itemprop="voucherSpecimen">voucher<p itemprop="funding">funds</div>',
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.voucherSpecimen == "voucher"
+    assert loaded.funding == "funds"
+
+
+def test_microdata_itemtype_token_list(metadata):
+    html = (
+        fhr(**metadata)
+        .output_microdata()
+        .replace('itemtype="', 'itemtype="https://schema.org/Dataset\n ', 1)
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_scope_closed_by_ancestor_does_not_leak(metadata):
+    html = fhr(**metadata).output_microdata()
+    html = (
+        "<section>"
+        + html.replace("</div>\n", "")
+        + "</section><span itemprop='voucherSpecimen'>leak</span>"
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_ignores_content_attribute_on_ordinary_elements(metadata):
+    html = fhr(**metadata).output_microdata()
+    genome = metadata["genome"]
+    html = html.replace(
+        f'<span itemprop="genome" data-fhr-type="string">{genome}</span>',
+        f'<span itemprop="genome" content="other">{genome}</span>',
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.genome == genome
+
+
+def test_microdata_typed_values_must_match_type(metadata):
+    html = (
+        fhr(**metadata)
+        .output_microdata()
+        .replace('data-fhr-type="number">1.0<', 'data-fhr-type="number">[1.0]<')
+    )
+    with pytest.raises(ValueError, match="not a JSON number"):
+        fhr().input_microdata(html)
+
+
+def test_microdata_uses_first_duplicate_attribute(metadata):
+    html = fhr(**metadata).output_microdata()
+    html = html.replace(
+        '<span itemprop="genome"', '<span itemprop="genome" itemprop="voucherSpecimen"'
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_unclosed_scope_is_rejected(metadata):
+    html = fhr(**metadata).output_microdata().replace("</div>\n", "")
+    with pytest.raises(ValueError, match="No complete"):
+        fhr().input_microdata(html)
+
+
+def test_cli_validation_error_is_concise(tmp_path):
+    source = tmp_path / "bad.json"
+    source.write_text('{"genome": "missing everything"}')
+    result = command(tmp_path, "fhr_validate.py", source)
+    assert result.returncode == 1
+    error = result.stderr.decode()
+    assert error.startswith("FHR: schema validation failed at $")
+    assert "$schema" not in error and len(error.splitlines()) == 1
+
+
+@pytest.mark.parametrize("name,start", [("deep.json", ""), ("deep.yaml", "a: ")])
+def test_cli_deep_nesting_is_an_error(tmp_path, name, start):
+    source = tmp_path / name
+    source.write_text(start + "[" * 100000 + "]" * 100000)
+    result = command(tmp_path, "fhr_validate.py", source)
+    assert result.returncode == 1
+    assert result.stderr.decode() == "FHR: metadata is nested too deeply\n"
