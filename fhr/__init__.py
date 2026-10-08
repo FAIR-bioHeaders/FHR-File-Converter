@@ -13,7 +13,7 @@ from importlib.resources import files
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 SCHEMA = json.loads(
     files(__package__).joinpath("fhr_schema.json").read_text(encoding="utf-8")
 )

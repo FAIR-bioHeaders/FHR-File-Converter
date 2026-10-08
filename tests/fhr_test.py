@@ -210,7 +210,7 @@ def test_installed_entry_points_outside_checkout(tmp_path):
             text=True,
         )
         assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "0.3.0"
+        assert result.stdout.strip() == "0.3.1"
     result = subprocess.run(
         [str(bin_path / "fhr-validate"), str(ROOT / "examples/minimal.fhr.json")],
         cwd=tmp_path,

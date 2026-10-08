@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 — unreleased (patch release of v0.3)
 
 - Reject duplicate mapping keys in FASTA/GFA headers, YAML, and JSON; a later
   `;~`/`#~` line can no longer silently override an earlier header field.
