@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 — 2026-10-08 (patch release of v0.3)
 
 - Stream FASTA/GFA validate, strip, combine, and convert in 1 MiB chunks with
   bounded memory (#24): about 35 MB peak instead of about 5x the file size, and
@@ -10,6 +10,8 @@
 - Add `fhr.sequence_parts`, `fhr.read_chunks`, `fhr.cli.SequenceScan`,
   `fhr.cli.strip_parts`, and `fhr.cli.write_output` for streaming use; the bytes
   API uses the same code.
+- Build and publish releases from a version tag: the GitHub release, and PyPI
+  through trusted publishing. This is the first PyPI release since 0.1.1.
 
 ## 0.3.1 — 2026-10-08 (patch release of v0.3)
 
