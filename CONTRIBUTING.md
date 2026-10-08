@@ -39,4 +39,17 @@ transferring repository ownership. Keep companion PRs linked for coordinated rev
 
 Guidance and README changes are tracked in [specification issue #23](https://github.com/FAIR-bioHeaders/FHR-Specification/issues/23). Both private conduct/security contacts and the conflict/appeal routing are documented in the policies.
 
-Use Chicago bibliography entries with DOI resolver links in human-readable citations. Keep the published paper, preprint, specification and converter distinct; preserve concept DOI meaning and existing BibTeX keys. CFF/BibTeX remain machine-readable metadata. The file audit and companion PRs are recorded in [FHR-Citation/AUDIT.md](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/release-v0.3/AUDIT.md), tracked by [issue #25](https://github.com/FAIR-bioHeaders/FHR-Specification/issues/25).
+Use Chicago bibliography entries with DOI resolver links in human-readable citations. Keep the published paper, preprint, specification and converter distinct; preserve concept DOI meaning and existing BibTeX keys. CFF/BibTeX remain machine-readable metadata. The file audit and companion PRs are recorded in [FHR-Citation/AUDIT.md](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/AUDIT.md), tracked by [issue #25](https://github.com/FAIR-bioHeaders/FHR-Specification/issues/25).
+
+## Releasing
+
+1. In one PR, set the version in `pyproject.toml`, `fhr/__init__.py`,
+   `tests/fhr_test.py`, README and `CITATION.cff` (with `date-released`), and
+   turn the CHANGELOG `Unreleased` heading into `## X.Y.Z — YYYY-MM-DD`.
+2. After it merges, tag main: `git tag -a vX.Y.Z -m "FHR File Converter vX.Y.Z"`
+   and push the tag.
+3. The [release workflow](.github/workflows/release.yml) checks the tag against
+   the package version, runs the tests, builds the wheel and sdist, creates the
+   GitHub release from the CHANGELOG entry (Zenodo archives it), and publishes to
+   PyPI through trusted publishing in the `pypi` environment.
+4. Add the new Zenodo version DOI to `CITATION.cff`.
