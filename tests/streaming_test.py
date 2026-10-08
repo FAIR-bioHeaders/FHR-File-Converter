@@ -2,6 +2,7 @@
 
 import base64
 import codecs
+import gzip
 import hashlib
 import io
 import json
@@ -360,7 +361,7 @@ def test_cli_failures_leave_no_partial_output(metadata, tmp_path, kind):
     ]
 
 
-def _peak_rss_kb(arguments, cwd):
+def _peak_rss_kb(arguments, cwd, stdin=None):
     """Run a command in a child process and return its peak RSS in KiB."""
     script = (
         "import resource, subprocess, sys\n"
@@ -368,13 +369,15 @@ def _peak_rss_kb(arguments, cwd):
         "assert result.returncode == 0, result\n"
         "print(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)\n"
     )
-    result = subprocess.run(
-        [sys.executable, "-c", script, *map(str, arguments)],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
+    with open(stdin or os.devnull, "rb") as source:
+        result = subprocess.run(
+            [sys.executable, "-c", script, *map(str, arguments)],
+            cwd=cwd,
+            stdin=source,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
     return int(result.stdout)
 
 
@@ -386,21 +389,28 @@ def _sha256(path):
     return digest.hexdigest()
 
 
-@pytest.mark.skipif(
+MEMORY_TEST = pytest.mark.skipif(
     os.environ.get("FHR_MEMORY_TEST") != "1",
     reason="set FHR_MEMORY_TEST=1 to run the large-file memory test",
 )
+
+
+def _write_large_fasta(stream, size):
+    line = (b"ACGTTGCA" * 8)[:60] + b"\n"
+    block = line * 10000
+    written = 0
+    while written < size:
+        stream.write(b">chr%d\n" % written)
+        stream.write(block)
+        written += len(block)
+
+
+@MEMORY_TEST
 def test_large_fasta_memory_is_bounded(tmp_path):
     size = int(os.environ.get("FHR_MEMORY_TEST_MB", "300")) * 10**6
     raw = tmp_path / "raw.fasta"
-    line = (b"ACGTTGCA" * 8)[:60] + b"\n"
-    block = line * 10000
     with open(raw, "wb") as stream:
-        written = 0
-        while written < size:
-            stream.write(b">chr%d\n" % written)
-            stream.write(block)
-            written += len(block)
+        _write_large_fasta(stream, size)
     combined = tmp_path / "raw.fhr.fasta"
     stripped = tmp_path / "stripped.fasta"
     commands = {
@@ -417,6 +427,43 @@ def test_large_fasta_memory_is_bounded(tmp_path):
     limit = 256 * 1024
     for name, (script, *args) in commands.items():
         peak = _peak_rss_kb([sys.executable, ROOT / script, *args], tmp_path)
+        print(f"{name}: peak RSS {peak // 1024} MiB for {size // 10**6} MB")
+        assert peak < limit, name
+    assert _sha256(stripped) == _sha256(raw)
+
+
+@MEMORY_TEST
+def test_large_gzip_fasta_memory_is_bounded(tmp_path):
+    size = int(os.environ.get("FHR_MEMORY_TEST_MB", "300")) * 10**6
+    raw = tmp_path / "raw.fasta"
+    with open(raw, "wb") as stream:
+        _write_large_fasta(stream, size)
+    compressed = tmp_path / "raw.fasta.gz"
+    with gzip.open(compressed, "wb", compresslevel=1) as stream:
+        _write_large_fasta(stream, size)
+    combined = tmp_path / "raw.fhr.fasta.gz"
+    stripped = tmp_path / "stripped.fasta"
+    metadata = ROOT / "examples/example.fhr.yaml"
+    commands = {
+        "combine gz to BGZF": ["fasta/fhr_fasta_combine.py", metadata, compressed],
+        "validate BGZF": ["fasta/fhr_fasta_validate.py", combined],
+        "strip BGZF": ["fasta/fhr_fasta_strip.py", combined, stripped],
+        "strip BGZF to stdout": ["fasta/fhr_fasta_strip.py", combined],
+        "convert BGZF": ["fhr_convert.py", combined, tmp_path / "output.json"],
+    }
+    piped = {
+        "validate BGZF from stdin": (["fasta/fhr_fasta_validate.py", "-"], combined),
+        "strip BGZF from stdin": (["fasta/fhr_fasta_strip.py", "-"], combined),
+        "combine gz from stdin": (
+            ["fasta/fhr_fasta_combine.py", metadata, "-"],
+            compressed,
+        ),
+    }
+    limit = 256 * 1024
+    runs = [(name, arguments, None) for name, arguments in commands.items()]
+    runs += [(name, arguments, stdin) for name, (arguments, stdin) in piped.items()]
+    for name, (script, *args), stdin in runs:
+        peak = _peak_rss_kb([sys.executable, ROOT / script, *args], tmp_path, stdin)
         print(f"{name}: peak RSS {peak // 1024} MiB for {size // 10**6} MB")
         assert peak < limit, name
     assert _sha256(stripped) == _sha256(raw)

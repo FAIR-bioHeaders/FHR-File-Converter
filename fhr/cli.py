@@ -2,12 +2,16 @@
 
 import argparse
 import base64
+import gzip
 import hashlib
 import os
 import re
 import stat
+import struct
 import sys
 import tempfile
+import zlib
+from contextlib import contextmanager
 from copy import deepcopy
 from itertools import chain
 from pathlib import Path
@@ -39,26 +43,209 @@ FORMATS = {
 }
 
 
+# Output paths with these extensions are written as BGZF; input compression is
+# detected from the gzip magic bytes, not the extension.
+COMPRESSED_SUFFIXES = (".gz", ".bgz")
+FORMAT_NAMES = {
+    "json": "json",
+    "yaml": "yaml",
+    "fasta": "fasta",
+    "gfa": "gfa",
+    "html": "microdata",
+}
+GZIP_MAGIC = b"\x1f\x8b"
+STANDARD_STREAM = "-"
+
+
+def is_compressed_path(path):
+    return Path(path).suffix.lower() in COMPRESSED_SUFFIXES
+
+
+def _uncompressed_path(path):
+    path = Path(path)
+    return path.with_suffix("") if is_compressed_path(path) else path
+
+
 def file_format(path):
     try:
-        return FORMATS[Path(path).suffix.lower()]
+        return FORMATS[_uncompressed_path(path).suffix.lower()]
     except KeyError:
         raise ValueError(f"Unsupported file extension: {path}") from None
 
 
-def read_metadata(path, content=None):
+class _PrefixedStream:
+    """A readable stream that returns ``prefix`` before the rest of ``stream``."""
+
+    def __init__(self, prefix, stream):
+        self.prefix = prefix
+        self.stream = stream
+
+    def read(self, size=-1):
+        if not self.prefix:
+            return self.stream.read(size)
+        if size is None or size < 0:
+            data, self.prefix = self.prefix + self.stream.read(), b""
+            return data
+        data, self.prefix = self.prefix[:size], self.prefix[size:]
+        if len(data) < size:
+            data += self.stream.read(size - len(data)) or b""
+        return data
+
+
+class _GzipStream:
+    """Decompress gzip or BGZF data, reporting corrupt input as ``ValueError``."""
+
+    def __init__(self, stream, name):
+        self.gzip = gzip.GzipFile(fileobj=stream, mode="rb")
+        self.name = name
+
+    def read(self, size=-1):
+        try:
+            return self.gzip.read(size)
+        except (EOFError, zlib.error, gzip.BadGzipFile) as error:
+            reason = str(error) or type(error).__name__
+            raise ValueError(f"Invalid gzip input {self.name}: {reason}") from None
+
+
+@contextmanager
+def open_input(path):
+    """Open ``path`` (``-`` for stdin) for reading bytes.
+
+    Gzip and BGZF input, recognized by its magic bytes, is decompressed as it is
+    read, so checksums cover the decompressed FASTA/GFA bytes.
+    """
+    if path == STANDARD_STREAM:
+        stream, name = sys.stdin.buffer, "<stdin>"
+        context = None
+    else:
+        stream = context = Path(path).open("rb")
+        name = os.fspath(path)
+    try:
+        magic = b""
+        while len(magic) < len(GZIP_MAGIC):
+            data = stream.read(len(GZIP_MAGIC) - len(magic))
+            if not data:
+                break
+            magic += data
+        result = _PrefixedStream(magic, stream)
+        yield _GzipStream(result, name) if magic == GZIP_MAGIC else result
+    finally:
+        if context is not None:
+            context.close()
+
+
+BGZF_BLOCK_SIZE = 0xFF00  # Uncompressed bytes per block, as in htslib.
+BGZF_MAX_BLOCK = 0x10000  # Compressed block size limit, header and trailer included.
+BGZF_EOF = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
+
+
+class BgzfWriter:
+    """Write BGZF (blocked gzip, as read by htslib and ``samtools faidx``).
+
+    Each block of at most ``BGZF_BLOCK_SIZE`` bytes is a gzip member whose ``BC``
+    extra subfield gives its total size minus one; the standard empty block
+    marks the end of the file. ``close`` writes the remaining data and the end
+    marker but does not close the underlying stream.
+    """
+
+    def __init__(self, stream, level=zlib.Z_DEFAULT_COMPRESSION):
+        self.stream = stream
+        self.level = level
+        self.buffer = b""
+
+    def write(self, data):
+        size = len(data)
+        data = bytes(data)
+        if self.buffer:
+            needed = BGZF_BLOCK_SIZE - len(self.buffer)
+            self.buffer += data[:needed]
+            data = data[needed:]
+            if len(self.buffer) < BGZF_BLOCK_SIZE:
+                return size
+            self._block(self.buffer)
+            self.buffer = b""
+        start = 0
+        while len(data) - start >= BGZF_BLOCK_SIZE:
+            self._block(data[start : start + BGZF_BLOCK_SIZE])
+            start += BGZF_BLOCK_SIZE
+        self.buffer = data[start:]
+        return size
+
+    def writelines(self, lines):
+        for line in lines:
+            self.write(line)
+
+    def _block(self, data):
+        compressor = zlib.compressobj(self.level, zlib.DEFLATED, -15)
+        compressed = compressor.compress(data) + compressor.flush()
+        if 18 + len(compressed) + 8 > BGZF_MAX_BLOCK:  # Incompressible: split.
+            half = len(data) // 2
+            self._block(data[:half])
+            self._block(data[half:])
+            return
+        header = struct.pack(
+            "<4BI2BH2BHH",
+            0x1F,
+            0x8B,
+            8,  # Deflate.
+            4,  # FEXTRA.
+            0,  # MTIME.
+            0,
+            0xFF,  # Unknown OS.
+            6,  # XLEN.
+            ord("B"),
+            ord("C"),
+            2,
+            18 + len(compressed) + 8 - 1,  # BSIZE.
+        )
+        trailer = struct.pack("<II", zlib.crc32(data), len(data))
+        self.stream.write(header + compressed + trailer)
+
+    def close(self):
+        if self.buffer:
+            self._block(self.buffer)
+            self.buffer = b""
+        self.stream.write(BGZF_EOF)
+
+
+def read_metadata(path, content=None, format_name=None):
+    method = "input_" + (format_name or file_format(path))
     data = fhr()
     if content is None:
-        with Path(path).open("rb") as stream:
-            getattr(data, "input_" + file_format(path))(stream)
+        with open_input(path) as stream:
+            getattr(data, method)(stream)
     else:
-        getattr(data, "input_" + file_format(path))(content)
+        getattr(data, method)(content)
     return data
 
 
-def write_metadata(data, path):
-    content = getattr(data, "output_" + file_format(path))()
-    write_output(path, lambda output: output.write(content), "w", encoding="utf-8")
+def write_metadata(data, path, format_name=None):
+    content = getattr(data, "output_" + (format_name or file_format(path)))()
+    if path == STANDARD_STREAM or is_compressed_path(path):
+        write_to(path, lambda output: output.write(content.encode("utf-8")))
+    else:
+        write_output(path, lambda output: output.write(content), "w", encoding="utf-8")
+
+
+def write_to(path, write):
+    """Call ``write`` with a binary file object for ``path`` (``-`` for stdout).
+
+    Paths ending in ``.gz`` or ``.bgz`` receive BGZF and other paths plain bytes,
+    written atomically by ``write_output``. Stdout is never compressed.
+    """
+    if path == STANDARD_STREAM:
+        write(sys.stdout.buffer)
+        sys.stdout.buffer.flush()
+    elif is_compressed_path(path):
+
+        def compressed(output):
+            stream = BgzfWriter(output)
+            write(stream)
+            stream.close()
+
+        write_output(path, compressed)
+    else:
+        write_output(path, write)
 
 
 def write_output(path, write, mode="wb", **options):
@@ -104,8 +291,10 @@ def write_output(path, write, mode="wb", **options):
 
 
 def _output_is_input(output, inputs):
+    if output == STANDARD_STREAM:
+        return False
     output = Path(output)
-    inputs = [Path(path) for path in inputs]
+    inputs = [Path(path) for path in inputs if path != STANDARD_STREAM]
     if any(output.resolve() == path.resolve() for path in inputs):
         return True
     return output.exists() and any(
@@ -125,7 +314,7 @@ def strip_parts(chunks, kind):
 
 
 def _stripped(path, kind):
-    with Path(path).open("rb") as stream:
+    with open_input(path) as stream:
         yield from strip_parts(read_chunks(stream), kind)
 
 
@@ -275,6 +464,11 @@ def run(action):
     except RecursionError:
         print("FHR: metadata is nested too deeply", file=sys.stderr)
         return 1
+    except BrokenPipeError:
+        # The reader of stdout exited; avoid another error when Python exits.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        print("FHR: output pipe closed", file=sys.stderr)
+        return 1
     except (
         OSError,
         ValueError,
@@ -286,19 +480,45 @@ def run(action):
         return 1
 
 
+def _format_option(args_parser, flag, dest, description):
+    args_parser.add_argument(
+        flag,
+        dest=dest,
+        choices=sorted(FORMAT_NAMES),
+        help=description + " (default: from the file extension; required for -)",
+    )
+
+
+def _format(path, name):
+    if name:
+        return FORMAT_NAMES[name]
+    if path == STANDARD_STREAM:
+        raise ValueError("Give the format of - with --from or --to")
+    return file_format(path)
+
+
+def _check_sequence_path(path, kind, what):
+    if path != STANDARD_STREAM and file_format(path) != kind:
+        raise ValueError(f"Expected a {kind.upper()} {what}")
+
+
 def convert_main():
     def action():
         args_parser = parser(
             "Convert FHR metadata between JSON, YAML, FASTA, GFA, and HTML"
         )
-        args_parser.add_argument("input")
-        args_parser.add_argument("output")
+        args_parser.add_argument("input", help="input file, or - for stdin")
+        args_parser.add_argument("output", help="output file, or - for stdout")
+        _format_option(args_parser, "--from", "input_format", "input format")
+        _format_option(args_parser, "--to", "output_format", "output format")
         args = args_parser.parse_args()
+        input_format = _format(args.input, args.input_format)
+        output_format = _format(args.output, args.output_format)
         if _output_is_input(args.output, [args.input]):
             raise ValueError("Output must differ from the input file")
-        data = read_metadata(args.input)
+        data = read_metadata(args.input, format_name=input_format)
         data.fhr_validate()
-        write_metadata(data, args.output)
+        write_metadata(data, args.output, output_format)
 
     return run(action)
 
@@ -306,12 +526,24 @@ def convert_main():
 def validate_main():
     def action():
         args_parser = parser("Validate FHR metadata against the bundled schema")
-        args_parser.add_argument("input")
+        args_parser.add_argument("input", help="input file, or - for stdin")
+        _format_option(args_parser, "--from", "input_format", "input format")
         args = args_parser.parse_args()
-        read_metadata(args.input).fhr_validate()
+        input_format = _format(args.input, args.input_format)
+        read_metadata(args.input, format_name=input_format).fhr_validate()
         print("FHR metadata is valid.")
 
     return run(action)
+
+
+def _default_combine_output(sequence, kind):
+    if sequence == STANDARD_STREAM:
+        return STANDARD_STREAM
+    path = Path(sequence)
+    output = _uncompressed_path(path).with_suffix(f".fhr.{kind}")
+    if is_compressed_path(path):
+        output = output.with_name(output.name + path.suffix)
+    return str(output)
 
 
 def combine_main(kind):
@@ -320,23 +552,40 @@ def combine_main(kind):
             f"Combine metadata with {kind.upper()} and calculate its FHR checksum"
         )
         args_parser.add_argument("metadata")
-        args_parser.add_argument("sequence")
-        args_parser.add_argument("-o", "--output")
+        args_parser.add_argument("sequence", help="sequence file, or - for stdin")
+        args_parser.add_argument("-o", "--output", help="output file, or - for stdout")
         args = args_parser.parse_args()
-        if file_format(args.sequence) != kind:
-            raise ValueError(f"Expected a {kind.upper()} sequence file")
-        output = args.output or str(Path(args.sequence).with_suffix(f".fhr.{kind}"))
+        _check_sequence_path(args.sequence, kind, "sequence file")
+        output = args.output or _default_combine_output(args.sequence, kind)
         if _output_is_input(output, [args.sequence, args.metadata]):
             raise ValueError("Output must differ from the input files")
         data = read_metadata(args.metadata)
-        # Hash the stripped sequence, then read it again to write it.
-        header = combined_header(data, _stripped(args.sequence, kind), kind)
+        if args.sequence != STANDARD_STREAM:
+            # Hash the stripped sequence, then read it again to write it.
+            header = combined_header(data, _stripped(args.sequence, kind), kind)
 
-        def write(output):
-            output.write(header)
-            output.writelines(_stripped(args.sequence, kind))
+            def write(output):
+                output.write(header)
+                output.writelines(_stripped(args.sequence, kind))
 
-        write_output(output, write)
+            write_to(output, write)
+            return
+        # Stdin can be read only once: spool the stripped sequence while hashing.
+        with tempfile.TemporaryFile() as spool:
+
+            def spooled():
+                for data in _stripped(STANDARD_STREAM, kind):
+                    spool.write(data)
+                    yield data
+
+            header = combined_header(data, spooled(), kind)
+            spool.seek(0)
+
+            def write(output):
+                output.write(header)
+                output.writelines(read_chunks(spool))
+
+            write_to(output, write)
 
     return run(action)
 
@@ -346,23 +595,20 @@ def strip_main(kind):
         args_parser = parser(
             f"Strip FHR metadata from {kind.upper()} without changing other bytes"
         )
-        args_parser.add_argument("input")
-        args_parser.add_argument("output", nargs="?")
+        args_parser.add_argument("input", help="input file, or - for stdin")
+        args_parser.add_argument(
+            "output", nargs="?", help="output file, or - for stdout (the default)"
+        )
         args = args_parser.parse_args()
-        if file_format(args.input) != kind:
-            raise ValueError(f"Expected a {kind.upper()} file")
-        if args.output:
-            if _output_is_input(args.output, [args.input]):
-                _drain(_stripped(args.input, kind))  # Report input errors first.
-                raise ValueError("Output must differ from the input file")
-            write_output(
-                args.output,
-                lambda output: output.writelines(_stripped(args.input, kind)),
-            )
-        else:
+        _check_sequence_path(args.input, kind, "file")
+        output = args.output or STANDARD_STREAM
+        if _output_is_input(output, [args.input]):
+            _drain(_stripped(args.input, kind))  # Report input errors first.
+            raise ValueError("Output must differ from the input file")
+        if output == STANDARD_STREAM and args.input != STANDARD_STREAM:
             # Find input errors before writing anything to stdout.
             _drain(_stripped(args.input, kind))
-            sys.stdout.buffer.writelines(_stripped(args.input, kind))
+        write_to(output, lambda stream: stream.writelines(_stripped(args.input, kind)))
 
     return run(action)
 
@@ -370,11 +616,10 @@ def strip_main(kind):
 def checksum_main(kind):
     def action():
         args_parser = parser(f"Validate {kind.upper()} metadata and its FHR checksum")
-        args_parser.add_argument("input")
+        args_parser.add_argument("input", help="input file, or - for stdin")
         args = args_parser.parse_args()
-        if file_format(args.input) != kind:
-            raise ValueError(f"Expected a {kind.upper()} file")
-        with Path(args.input).open("rb") as stream:
+        _check_sequence_path(args.input, kind, "file")
+        with open_input(args.input) as stream:
             scan = SequenceScan(read_chunks(stream), kind)
         data = fhr()
         data._input_header_lines(scan.header, scan.prefix)
