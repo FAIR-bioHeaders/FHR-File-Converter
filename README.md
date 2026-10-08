@@ -6,7 +6,7 @@
 
 Convert and validate FHR genome metadata in JSON, YAML, FASTA, GFA, and HTML
 microdata. See [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
-for the schema and metadata design. The current v0.3 release is version **0.3.2**.
+for the schema and metadata design. The current v0.3 release is version **0.3.3**.
 
 ## Install
 
@@ -117,7 +117,7 @@ Metadata conversion and validation do not require that hash implementation.
 
 ## v0.3 compatibility and identity
 
-- Required fields and `schemaVersion: 1` remain unchanged; the package is 0.3.2.
+- Required fields and `schemaVersion: 1` remain unchanged; the package is 0.3.3.
 - `assemblySoftware` accepts a legacy string or optional structured software
   objects with name, URI, version, and command options. `assemblyProtocol` is a URI.
 - `vitalStats.N90` is base pairs; `vitalStats.gcContent` is 0–100 percent.
