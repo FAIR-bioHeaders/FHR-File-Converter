@@ -8,10 +8,11 @@ multiple serializations, provenance tied closely to data, compatibility, FAIR,
 and TRUST. Practical interpretation: preserve user metadata and sequence bytes,
 keep required fields/dependencies small, and prefer interoperable incremental
 changes over speculative frameworks. These are implementation guidelines inferred
-from the paper, not quotations or an adopted governance model.
+from the paper, not quotations or governance rules.
 
-David and Adam control the schema until the proposed governance is explicitly
-adopted. Do not treat the proposed steering group as current authority.
+David and Adam are the maintainers and jointly hold schema and release authority
+(GOVERNANCE.md). The documented steering-group option is not active; do not treat
+it as current authority.
 
 ## Repository map
 
