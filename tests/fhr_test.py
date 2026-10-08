@@ -671,3 +671,22 @@ def test_microdata_unclosed_scope_is_rejected(metadata):
     html = fhr(**metadata).output_microdata().replace("</div>\n", "")
     with pytest.raises(ValueError, match="No complete"):
         fhr().input_microdata(html)
+
+
+def test_cli_validation_error_is_concise(tmp_path):
+    source = tmp_path / "bad.json"
+    source.write_text('{"genome": "missing everything"}')
+    result = command(tmp_path, "fhr_validate.py", source)
+    assert result.returncode == 1
+    error = result.stderr.decode()
+    assert error.startswith("FHR: schema validation failed at $")
+    assert "$schema" not in error and len(error.splitlines()) == 1
+
+
+@pytest.mark.parametrize("name,start", [("deep.json", ""), ("deep.yaml", "a: ")])
+def test_cli_deep_nesting_is_an_error(tmp_path, name, start):
+    source = tmp_path / name
+    source.write_text(start + "[" * 100000 + "]" * 100000)
+    result = command(tmp_path, "fhr_validate.py", source)
+    assert result.returncode == 1
+    assert result.stderr.decode() == "FHR: metadata is nested too deeply\n"

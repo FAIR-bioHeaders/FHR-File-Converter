@@ -143,13 +143,21 @@ def parser(description):
 def run(action):
     try:
         return action() or 0
+    except ValidationError as error:
+        print(
+            f"FHR: schema validation failed at {error.json_path}: {error.message}",
+            file=sys.stderr,
+        )
+        return 1
+    except RecursionError:
+        print("FHR: metadata is nested too deeply", file=sys.stderr)
+        return 1
     except (
         OSError,
         ValueError,
         TypeError,
         AttributeError,
         yaml.YAMLError,
-        ValidationError,
     ) as error:
         print(f"FHR: {error}", file=sys.stderr)
         return 1
