@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 from jsonschema.exceptions import ValidationError
 
-from . import __version__, fhr
+from . import __version__, fhr, header_text, load_yaml, split_lines
 
 FORMATS = {
     ".json": "json",
@@ -32,10 +32,11 @@ def file_format(path):
         raise ValueError(f"Unsupported file extension: {path}") from None
 
 
-def read_metadata(path):
+def read_metadata(path, content=None):
     data = fhr()
-    with Path(path).open(encoding="utf-8") as stream:
-        getattr(data, "input_" + file_format(path))(stream)
+    if content is None:
+        content = Path(path).read_bytes()
+    getattr(data, "input_" + file_format(path))(content)
     return data
 
 
@@ -58,9 +59,7 @@ def _output_is_input(output, inputs):
 def strip_header(content, kind):
     prefix = b";~" if kind == "fasta" else b"#~"
     return b"".join(
-        line
-        for line in content.splitlines(keepends=True)
-        if not line.startswith(prefix)
+        line for line in split_lines(content) if not line.startswith(prefix)
     )
 
 
@@ -68,8 +67,9 @@ def checksum(content, kind):
     """Hash all original bytes except the one scalar checksum metadata line."""
     prefix = b";~" if kind == "fasta" else b"#~"
     pattern = re.compile(b"^" + re.escape(prefix) + rb"[ \t]*checksum[ \t]*:")
-    lines = content.splitlines(keepends=True)
-    metadata = [line[len(prefix) :] for line in lines if line.startswith(prefix)]
+    lines = split_lines(content)
+    metadata_lines = [line for line in lines if line.startswith(prefix)]
+    metadata = [line[len(prefix) :] for line in metadata_lines]
     meaningful = [
         line
         for line in metadata
@@ -89,8 +89,28 @@ def checksum(content, kind):
         yaml_line = line[len(prefix) :]
         return len(yaml_line) - len(yaml_line.lstrip(b" \t")) == root_indent
 
-    if sum(is_checksum(line) for line in lines) != 1:
+    matches = [line for line in lines if is_checksum(line)]
+    if len(matches) != 1:
         raise ValueError("Expected exactly one scalar checksum header line")
+    # Decode and parse exactly as input_fasta/input_gfa would.
+    header = load_yaml("\n".join(header_text(line, prefix) for line in metadata_lines))
+    # The excluded line must hold the whole value; continuation lines are hashed.
+    try:
+        value = load_yaml(header_text(matches[0], prefix))
+    except yaml.YAMLError:
+        value = None
+    if not (
+        isinstance(value, dict)
+        and list(value) == ["checksum"]
+        and isinstance(value["checksum"], str)
+        and value["checksum"]
+        and isinstance(header, dict)
+        and header.get("checksum") == value["checksum"]
+    ):
+        raise ValueError(
+            "The checksum header line must contain the complete checksum value "
+            "as a single-line scalar"
+        )
     try:
         digest = hashlib.new("sha512_256")
     except ValueError:
@@ -213,9 +233,10 @@ def checksum_main(kind):
         args = args_parser.parse_args()
         if file_format(args.input) != kind:
             raise ValueError(f"Expected a {kind.upper()} file")
-        data = read_metadata(args.input)
+        content = Path(args.input).read_bytes()
+        data = read_metadata(args.input, content)
         data.fhr_validate()
-        if data.checksum != checksum(Path(args.input).read_bytes(), kind):
+        if data.checksum != checksum(content, kind):
             raise ValueError("Checksum verification failed")
         print("Checksum verified.")
 

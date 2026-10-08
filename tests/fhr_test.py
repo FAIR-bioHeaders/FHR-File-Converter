@@ -296,8 +296,10 @@ def test_sequence_headers_preserve_unicode_line_separators(metadata, kind):
     metadata["documentation"] = "before\u2028middle\u2029after"
     instance = fhr(**metadata)
     header = getattr(instance, "output_" + kind)()
-    assert "\u2028" in header
-    assert "\u2029" in header
+    # YAML reads raw U+2028/U+2029 as line breaks, so they must be escaped.
+    assert "\u2028" not in header
+    assert "\u2029" not in header
+    assert "\\L" in header and "\\P" in header
     loaded = fhr()
     body = ">ctg\nACGT\n" if kind == "fasta" else "S\tctg\tACGT\n"
     getattr(loaded, "input_" + kind)(header + body)
@@ -499,3 +501,96 @@ def test_yaml_alias_expansion_is_not_attempted():
     ]
     with pytest.raises(yaml.YAMLError, match="not allowed"):
         fhr().input_fasta("".join(f";~{line}\n" for line in lines))
+
+
+def _replace_checksum_line(combined, prefix, replacement):
+    lines = combined.split(b"\n")
+    index = next(
+        i for i, line in enumerate(lines) if line.startswith(prefix + b"checksum:")
+    )
+    value = lines[index].split(b": ", 1)[1]
+    lines[index] = replacement(value)
+    return b"\n".join(lines)
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        lambda value: b";~checksum: >-\n;~  " + value,
+        lambda value: b";~checksum: |\n;~  " + value,
+        lambda value: b";~checksum:\n;~  " + value,
+        lambda value: b';~checksum: "' + value[:-1] + b'\\\n;~="',
+        lambda value: b";~checksum: " + value[:22] + b"\n;~  " + value[22:],
+    ],
+)
+def test_checksum_value_must_be_on_its_line(metadata, replacement):
+    combined = combine(fhr(**metadata), b">ctg\nACGT\n", "fasta")
+    changed = _replace_checksum_line(combined, b";~", replacement)
+    with pytest.raises(ValueError, match="single-line scalar"):
+        checksum(changed, "fasta")
+
+
+@pytest.mark.parametrize("separator", ["\x85", "\u2028", "\u2029"])
+def test_yaml_only_line_breaks_cannot_hide_metadata(metadata, separator):
+    # YAML would read text after the separator as an uncovered root property.
+    del metadata["voucherSpecimen"]
+    combined = combine(fhr(**metadata), b">ctg\nACGT\n", "fasta")
+    smuggled = _replace_checksum_line(
+        combined,
+        b";~",
+        lambda value: b";~checksum: "
+        + value
+        + (separator + "voucherSpecimen: changed").encode("utf-8"),
+    )
+    with pytest.raises(ValueError, match="U\\+2028"):
+        fhr().input_fasta(smuggled)
+    with pytest.raises(ValueError, match="U\\+2028"):
+        checksum(smuggled, "fasta")
+
+
+@pytest.mark.parametrize("value", ["a\x85b", "a\u2028b", "a\u2029b"])
+def test_yaml_only_line_breaks_round_trip_escaped(metadata, value):
+    metadata["documentation"] = value
+    for kind in ("yaml", "fasta", "gfa"):
+        output = getattr(fhr(**metadata), "output_" + kind)()
+        assert not any(char in output for char in "\x85\u2028\u2029")
+        loaded = fhr()
+        getattr(loaded, "input_" + kind)(output)
+        assert loaded.documentation == value
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_sequence_byte_order_mark_is_rejected(metadata, kind):
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = b"\xef\xbb\xbf" + combine(fhr(**metadata), body, kind)
+    for action in (
+        lambda: getattr(fhr(), "input_" + kind)(combined),
+        lambda: checksum(combined, kind),
+        lambda: strip_header(combined, kind),
+        lambda: combine(fhr(**metadata), b"\xef\xbb\xbf" + body, kind),
+    ):
+        with pytest.raises(ValueError, match="byte order mark"):
+            action()
+
+
+def test_metadata_byte_order_mark_is_ignored(metadata, tmp_path):
+    from fhr.cli import read_metadata
+
+    for name, text in (
+        ("bom.json", fhr(**metadata).output_json()),
+        ("bom.yaml", fhr(**metadata).output_yaml()),
+        ("bom.html", fhr(**metadata).output_microdata()),
+    ):
+        path = tmp_path / name
+        path.write_bytes(b"\xef\xbb\xbf" + text.encode("utf-8"))
+        assert read_metadata(path).__dict__ == metadata
+        assert command(tmp_path, "fhr_validate.py", path).returncode == 0
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_non_utf8_sequence_bytes_outside_header(metadata, tmp_path, kind):
+    body = b">ctg caf\xe9\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\tCO:Z:\xe9\n"
+    combined = tmp_path / ("combined." + kind)
+    combined.write_bytes(combine(fhr(**metadata), body, kind))
+    result = command(tmp_path, f"{kind}/fhr_{kind}_validate.py", combined)
+    assert result.returncode == 0, result.stderr

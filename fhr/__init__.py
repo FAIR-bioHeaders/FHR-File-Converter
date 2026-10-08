@@ -1,5 +1,6 @@
 """FHR metadata parsing, serialization, and validation."""
 
+import codecs
 import json
 from collections.abc import Hashable
 from copy import deepcopy
@@ -16,15 +17,37 @@ SCHEMA = json.loads(
     files(__package__).joinpath("fhr_schema.json").read_text(encoding="utf-8")
 )
 ITEM_TYPE = SCHEMA["$id"]
+# YAML treats these as line breaks, but FASTA/GFA line splitting does not.
+YAML_ONLY_LINE_BREAKS = "\x85\u2028\u2029"
+
+
+def _read(stream):
+    return stream.read() if hasattr(stream, "read") else stream
 
 
 def _text(stream):
-    value = stream.read() if hasattr(stream, "read") else stream
+    value = _read(stream)
     if isinstance(value, bytes):
-        return value.decode("utf-8")
+        value = value.decode("utf-8")
     if not isinstance(value, str):
         raise TypeError("Expected text or a readable stream")
-    return value
+    # A UTF-8 byte order mark is an encoding signature, not metadata.
+    return value[1:] if value.startswith("\ufeff") else value
+
+
+def split_lines(content):
+    """Split FASTA/GFA bytes into lines, keeping each original terminator."""
+    if content.startswith(codecs.BOM_UTF8):
+        raise ValueError("FASTA/GFA files must not begin with a UTF-8 byte order mark")
+    return content.splitlines(keepends=True)
+
+
+def header_text(line, prefix):
+    """Return the YAML text of one FHR header line given as bytes."""
+    text = line[len(prefix) :].rstrip(b"\r\n").decode("utf-8")
+    if any(char in text for char in YAML_ONLY_LINE_BREAKS):
+        raise ValueError("FHR header lines must not contain U+0085, U+2028, or U+2029")
+    return text
 
 
 class _Loader(yaml.SafeLoader):
@@ -68,6 +91,18 @@ class _Loader(yaml.SafeLoader):
 
 def load_yaml(text):
     return yaml.load(text, Loader=_Loader)
+
+
+class _Dumper(yaml.SafeDumper):
+    """Escape characters that YAML, but not FASTA/GFA, reads as line breaks."""
+
+    def represent_str(self, data):
+        if any(char in data for char in YAML_ONLY_LINE_BREAKS):
+            return self.represent_scalar("tag:yaml.org,2002:str", data, style='"')
+        return super().represent_str(data)
+
+
+_Dumper.add_representer(str, _Dumper.represent_str)
 
 
 def _unique_object(pairs):
@@ -223,7 +258,9 @@ class fhr:
         self._input(load_yaml(_text(stream)))
 
     def output_yaml(self):
-        return yaml.safe_dump(self.__dict__, sort_keys=False, allow_unicode=True)
+        return yaml.dump(
+            self.__dict__, Dumper=_Dumper, sort_keys=False, allow_unicode=True
+        )
 
     def input_json(self, stream):
         self._input(json.loads(_text(stream), object_pairs_hook=_unique_object))
@@ -232,13 +269,21 @@ class fhr:
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
 
     def _input_header(self, stream, prefix):
-        text = _text(stream).replace("\r\n", "\n").replace("\r", "\n")
+        content = _read(stream)
+        if isinstance(content, str):
+            content = content.encode("utf-8")
+        if not isinstance(content, bytes):
+            raise TypeError("Expected bytes, text, or a readable stream")
+        # Match checksum line handling: split bytes, decode only header lines.
+        marker = prefix.encode("ascii")
         lines = [
-            line[len(prefix) :] for line in text.split("\n") if line.startswith(prefix)
+            header_text(line, marker)
+            for line in split_lines(content)
+            if line.startswith(marker)
         ]
         if not lines:
             raise ValueError(f"No {prefix} FHR metadata header found")
-        self.input_yaml("\n".join(lines))
+        self._input(load_yaml("\n".join(lines)))
 
     def _output_header(self, prefix):
         lines = self.output_yaml().split("\n")
