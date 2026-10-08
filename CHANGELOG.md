@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.3 — 2026-10-08 (patch release of v0.3)
 
 - Read gzip, multi-member gzip, and BGZF FASTA/GFA (and metadata) input, detected
   by magic bytes and decompressed as it streams. Checksums cover the decompressed
