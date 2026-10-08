@@ -87,6 +87,12 @@ Metadata conversion and validation do not require that hash implementation.
   checksum header line, including its newline. Metadata is covered. MD5 hex and
   payload-only checksums from old examples are not valid v0.3 checksums; recombine
   metadata with the original sequence file to calculate the new value.
+- The checksum value must be a single-line scalar on the checksum line. Header
+  lines must be UTF-8 and must not contain U+0085, U+2028, or U+2029. FASTA/GFA
+  files must not begin with a UTF-8 byte order mark. Other sequence bytes may use
+  any encoding.
+- Metadata must be JSON-compatible: duplicate keys, YAML anchors, aliases, and
+  merge keys are rejected. Every `;~`/`#~` line in the file is part of the header.
 - HTML exports use FHR item scopes and `data-fhr-type` annotations for lossless
   arrays, numbers, objects, and strings. External microdata must represent nested
   items properly; incomplete legacy markup may need regeneration.

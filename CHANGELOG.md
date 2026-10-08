@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+- Reject duplicate mapping keys in FASTA/GFA headers, YAML, and JSON; a later
+  `;~`/`#~` line can no longer silently override an earlier header field.
+- Reject YAML anchors, aliases, and merge keys (unbounded alias expansion and
+  YAML 1.1-only merge semantics).
+- Parse FASTA/GFA headers from the same byte lines that are hashed; only header
+  lines must be UTF-8. Header lines must not contain U+0085, U+2028, or U+2029,
+  which YAML reads as line breaks; the YAML writer escapes them.
+- Require the checksum value on the checksum line itself as a single-line scalar.
+- Reject FASTA/GFA files that begin with a UTF-8 byte order mark; ignore one at
+  the start of JSON, YAML, or HTML metadata.
+- Read microdata with HTML implied end tags, whitespace-separated `itemtype` and
+  `itemprop` lists, first-wins duplicate attributes, and microdata value attributes
+  only on their defining elements. Typed values must match `data-fhr-type`.
+- Report schema errors as a JSON path and message; report excessive nesting as an error.
+- Development dependencies: pytest 9.0.3+ on Python 3.10+ (CVE-2025-71176) and
+  black 24.3.0+ on Python 3.9 (CVE-2024-21503). pytest 9 does not support 3.9.
+
 ## 0.3.0 — 2026-10-07 (coordinated FHR v0.3, from v0.2)
 
 - Package metadata moves from the checkout's historical 0.1.1 to the coordinated 0.3.0 target.
