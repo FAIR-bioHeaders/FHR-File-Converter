@@ -8,6 +8,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+import yaml
 from jsonschema.exceptions import ValidationError
 
 from fhr import SCHEMA, fhr
@@ -454,3 +455,47 @@ def test_standard_microdata_machine_values(metadata, tag):
     loaded.input_microdata(html)
     loaded.fhr_validate()
     assert loaded.__dict__ == metadata
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_duplicate_header_keys_are_rejected(metadata, kind):
+    prefix = b";~" if kind == "fasta" else b"#~"
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = combine(fhr(**metadata), body, kind)
+    late = combined + prefix + b"genome: injected after the sequence\n"
+    with pytest.raises(yaml.YAMLError, match="duplicate key"):
+        getattr(fhr(), "input_" + kind)(late)
+    nested = combined.replace(
+        prefix + b"taxon:\n", prefix + b"taxon:\n" + prefix + b"  name: first\n"
+    )
+    with pytest.raises(yaml.YAMLError, match="duplicate key"):
+        getattr(fhr(), "input_" + kind)(nested)
+
+
+def test_duplicate_keys_are_rejected_in_yaml_and_json():
+    with pytest.raises(yaml.YAMLError, match="duplicate key"):
+        fhr().input_yaml("genome: one\ngenome: two\n")
+    with pytest.raises(ValueError, match="Duplicate JSON object key"):
+        fhr().input_json('{"genome": "one", "genome": "two"}')
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "a: &a [x, x]\nb: [*a, *a]\n",
+        "a: &a {x: 1}\nb: *a\n",
+        "base: {genome: x}\n<<: {genome: y}\n",
+    ],
+)
+def test_yaml_anchors_aliases_and_merge_keys_are_rejected(text):
+    with pytest.raises(yaml.YAMLError, match="not allowed"):
+        fhr().input_yaml(text)
+
+
+def test_yaml_alias_expansion_is_not_attempted():
+    lines = ["a0: &a0 [x, x, x, x, x, x, x, x, x, x]"]
+    lines += [
+        f"a{i}: &a{i} [" + ", ".join([f"*a{i - 1}"] * 10) + "]" for i in range(1, 9)
+    ]
+    with pytest.raises(yaml.YAMLError, match="not allowed"):
+        fhr().input_fasta("".join(f";~{line}\n" for line in lines))

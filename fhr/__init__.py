@@ -1,6 +1,7 @@
 """FHR metadata parsing, serialization, and validation."""
 
 import json
+from collections.abc import Hashable
 from copy import deepcopy
 from datetime import date, datetime
 from html import escape
@@ -24,6 +25,58 @@ def _text(stream):
     if not isinstance(value, str):
         raise TypeError("Expected text or a readable stream")
     return value
+
+
+class _Loader(yaml.SafeLoader):
+    """Load JSON-compatible YAML without aliases, merge keys, or duplicate keys."""
+
+    def compose_node(self, parent, index):
+        event = self.peek_event()
+        if isinstance(event, yaml.AliasEvent) or getattr(event, "anchor", None):
+            raise yaml.composer.ComposerError(
+                None,
+                None,
+                "YAML anchors and aliases are not allowed in FHR metadata",
+                event.start_mark,
+            )
+        return super().compose_node(parent, index)
+
+    def construct_mapping(self, node, deep=False):
+        if isinstance(node, yaml.MappingNode):
+            keys = set()
+            for key_node, _ in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    raise yaml.constructor.ConstructorError(
+                        None,
+                        None,
+                        "YAML merge keys are not allowed in FHR metadata",
+                        key_node.start_mark,
+                    )
+                key = self.construct_object(key_node, deep=True)
+                if not isinstance(key, Hashable):
+                    continue  # SafeConstructor reports unhashable keys.
+                if key in keys:
+                    raise yaml.constructor.ConstructorError(
+                        "while constructing a mapping",
+                        node.start_mark,
+                        f"found duplicate key {key!r}",
+                        key_node.start_mark,
+                    )
+                keys.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
+def load_yaml(text):
+    return yaml.load(text, Loader=_Loader)
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate JSON object key: {key!r}")
+        result[key] = value
+    return result
 
 
 def _json_value(value):
@@ -167,13 +220,13 @@ class fhr:
         self.__dict__.update(deepcopy(normalized))
 
     def input_yaml(self, stream):
-        self._input(yaml.safe_load(_text(stream)))
+        self._input(load_yaml(_text(stream)))
 
     def output_yaml(self):
         return yaml.safe_dump(self.__dict__, sort_keys=False, allow_unicode=True)
 
     def input_json(self, stream):
-        self._input(json.loads(_text(stream)))
+        self._input(json.loads(_text(stream), object_pairs_hook=_unique_object))
 
     def output_json(self):
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
