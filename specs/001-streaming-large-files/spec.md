@@ -76,8 +76,9 @@ under the memory limit.
 - A very long single sequence line (unwrapped chromosome) must not be held whole.
 - A header far larger than normal must hit a size cap with a clear error rather
   than exhausting memory.
-- FHR lines that appear after sequence data (see the pending leading-block
-  question in FHR-Specification docs/FORMAT.md).
+- FHR lines after sequence data are invalid, because FHR lines must form the
+  leading header block. Header parsing can finish at the first record line, but
+  the remaining stream must still be checked for late `;~`/`#~` lines.
 - Input from a pipe or stdin, where a second pass is impossible.
 
 ## Requirements *(mandatory)*
