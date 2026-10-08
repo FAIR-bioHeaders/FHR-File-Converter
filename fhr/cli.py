@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 from jsonschema.exceptions import ValidationError
 
-from . import __version__, fhr, header_text, load_yaml, split_lines
+from . import __version__, fhr, header_lines, header_text, load_yaml, split_lines
 
 FORMATS = {
     ".json": "json",
@@ -58,9 +58,9 @@ def _output_is_input(output, inputs):
 
 def strip_header(content, kind):
     prefix = b";~" if kind == "fasta" else b"#~"
-    return b"".join(
-        line for line in split_lines(content) if not line.startswith(prefix)
-    )
+    lines = split_lines(content)
+    header_lines(lines, prefix)
+    return b"".join(line for line in lines if not line.startswith(prefix))
 
 
 def checksum(content, kind):
@@ -68,7 +68,7 @@ def checksum(content, kind):
     prefix = b";~" if kind == "fasta" else b"#~"
     pattern = re.compile(b"^" + re.escape(prefix) + rb"[ \t]*checksum[ \t]*:")
     lines = split_lines(content)
-    metadata_lines = [line for line in lines if line.startswith(prefix)]
+    metadata_lines = header_lines(lines, prefix)
     metadata = [line[len(prefix) :] for line in metadata_lines]
     meaningful = [
         line

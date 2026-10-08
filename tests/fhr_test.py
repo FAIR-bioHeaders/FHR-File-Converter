@@ -464,14 +464,43 @@ def test_duplicate_header_keys_are_rejected(metadata, kind):
     prefix = b";~" if kind == "fasta" else b"#~"
     body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
     combined = combine(fhr(**metadata), body, kind)
-    late = combined + prefix + b"genome: injected after the sequence\n"
+    repeated = prefix + b"genome: repeated\n" + combined
     with pytest.raises(yaml.YAMLError, match="duplicate key"):
-        getattr(fhr(), "input_" + kind)(late)
+        getattr(fhr(), "input_" + kind)(repeated)
     nested = combined.replace(
         prefix + b"taxon:\n", prefix + b"taxon:\n" + prefix + b"  name: first\n"
     )
     with pytest.raises(yaml.YAMLError, match="duplicate key"):
         getattr(fhr(), "input_" + kind)(nested)
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_header_lines_after_sequence_data_are_rejected(metadata, kind):
+    prefix = b";~" if kind == "fasta" else b"#~"
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = combine(fhr(**metadata), body, kind)
+    late = combined + prefix + b"documentation: after the sequence\n"
+    concatenated = combined + combined
+    for content in (late, concatenated):
+        with pytest.raises(ValueError, match="after sequence data at line"):
+            getattr(fhr(), "input_" + kind)(content)
+        with pytest.raises(ValueError, match="after sequence data at line"):
+            checksum(content, kind)
+        with pytest.raises(ValueError, match="after sequence data at line"):
+            strip_header(content, kind)
+
+
+@pytest.mark.parametrize("kind", ["fasta", "gfa"])
+def test_comments_and_blank_lines_may_precede_header_lines(metadata, kind):
+    comment = b";" if kind == "fasta" else b"#"
+    body = b">ctg\nACGT\n" if kind == "fasta" else b"S\tctg\tACGT\n"
+    combined = combine(fhr(**metadata), body, kind)
+    content = comment + b" ordinary comment\n\n" + combined
+    loaded = fhr()
+    getattr(loaded, "input_" + kind)(content)
+    assert loaded.genome == metadata["genome"]
+    checksum(content, kind)
+    assert strip_header(content, kind) == comment + b" ordinary comment\n\n" + body
 
 
 def test_duplicate_keys_are_rejected_in_yaml_and_json():

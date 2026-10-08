@@ -10,6 +10,8 @@
   lines must be UTF-8. Header lines must not contain U+0085, U+2028, or U+2029,
   which YAML reads as line breaks; the YAML writer escapes them.
 - Require the checksum value on the checksum line itself as a single-line scalar.
+- Require FHR lines to form the leading header block; reject `;~`/`#~` lines
+  after the first FASTA `>` line or GFA record line, including concatenated files.
 - Reject FASTA/GFA files that begin with a UTF-8 byte order mark; ignore one at
   the start of JSON, YAML, or HTML metadata.
 - Read microdata with HTML implied end tags, whitespace-separated `itemtype` and

@@ -92,7 +92,11 @@ Metadata conversion and validation do not require that hash implementation.
   files must not begin with a UTF-8 byte order mark. Other sequence bytes may use
   any encoding.
 - Metadata must be JSON-compatible: duplicate keys, YAML anchors, aliases, and
-  merge keys are rejected. Every `;~`/`#~` line in the file is part of the header.
+  merge keys are rejected.
+- `;~`/`#~` lines must form the leading header block, before the first FASTA `>`
+  line or the first GFA record line; ordinary comments and blank lines may be
+  mixed in. A `;~`/`#~` line after sequence data, including a concatenated
+  second file, is an error.
 - HTML exports use FHR item scopes and `data-fhr-type` annotations for lossless
   arrays, numbers, objects, and strings. External microdata must represent nested
   items properly; incomplete legacy markup may need regeneration.

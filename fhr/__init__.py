@@ -43,6 +43,29 @@ def split_lines(content):
     return content.splitlines(keepends=True)
 
 
+def header_lines(lines, prefix):
+    """Return the FHR lines of the leading header block, rejecting any later ones.
+
+    The block ends at the first record: a FASTA ``>`` line, or a nonblank GFA line
+    that is not a ``#`` comment. Ordinary comments and blank lines may be mixed in.
+    """
+    in_header = True
+    found = []
+    for number, line in enumerate(lines, 1):
+        if line.startswith(prefix):
+            if not in_header:
+                raise ValueError(
+                    f"FHR header line after sequence data at line {number}"
+                )
+            found.append(line)
+        elif in_header:
+            if prefix == b";~":
+                in_header = not line.startswith(b">")
+            else:
+                in_header = line.startswith(b"#") or not line.strip()
+    return found
+
+
 def header_text(line, prefix):
     """Return the YAML text of one FHR header line given as bytes."""
     text = line[len(prefix) :].rstrip(b"\r\n").decode("utf-8")
@@ -426,8 +449,7 @@ class fhr:
         marker = prefix.encode("ascii")
         lines = [
             header_text(line, marker)
-            for line in split_lines(content)
-            if line.startswith(marker)
+            for line in header_lines(split_lines(content), marker)
         ]
         if not lines:
             raise ValueError(f"No {prefix} FHR metadata header found")
