@@ -594,3 +594,80 @@ def test_non_utf8_sequence_bytes_outside_header(metadata, tmp_path, kind):
     combined.write_bytes(combine(fhr(**metadata), body, kind))
     result = command(tmp_path, f"{kind}/fhr_{kind}_validate.py", combined)
     assert result.returncode == 0, result.stderr
+
+
+def test_microdata_implied_end_tags(metadata):
+    html = fhr(**metadata).output_microdata()
+    html = "<html><body><p>Intro" + html.replace(
+        "</div>\n",
+        "<p>note<p>second note<ul><li>one<li>two</ul>"
+        "<table><tr><td>a<td>b<tr><td>c</table></div>",
+    )
+    html += "<p>trailing paragraph"
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_implied_end_tags_keep_sibling_properties(metadata):
+    del metadata["voucherSpecimen"], metadata["funding"]
+    html = fhr(**metadata).output_microdata()
+    html = html.replace(
+        "</div>\n",
+        '<p itemprop="voucherSpecimen">voucher<p itemprop="funding">funds</div>',
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.voucherSpecimen == "voucher"
+    assert loaded.funding == "funds"
+
+
+def test_microdata_itemtype_token_list(metadata):
+    html = (
+        fhr(**metadata)
+        .output_microdata()
+        .replace('itemtype="', 'itemtype="https://schema.org/Dataset\n ', 1)
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_scope_closed_by_ancestor_does_not_leak(metadata):
+    html = fhr(**metadata).output_microdata()
+    html = (
+        "<section>"
+        + html.replace("</div>\n", "")
+        + "</section><span itemprop='voucherSpecimen'>leak</span>"
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
+def test_microdata_ignores_content_attribute_on_ordinary_elements(metadata):
+    html = fhr(**metadata).output_microdata()
+    genome = metadata["genome"]
+    html = html.replace(
+        f'<span itemprop="genome" data-fhr-type="string">{genome}</span>',
+        f'<span itemprop="genome" content="other">{genome}</span>',
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.genome == genome
+
+
+def test_microdata_typed_values_must_match_type(metadata):
+    html = (
+        fhr(**metadata)
+        .output_microdata()
+        .replace('data-fhr-type="number">1.0<', 'data-fhr-type="number">[1.0]<')
+    )
+    with pytest.raises(ValueError, match="not a JSON number"):
+        fhr().input_microdata(html)
+
+
+def test_microdata_unclosed_scope_is_rejected(metadata):
+    html = fhr(**metadata).output_microdata().replace("</div>\n", "")
+    with pytest.raises(ValueError, match="No complete"):
+        fhr().input_microdata(html)

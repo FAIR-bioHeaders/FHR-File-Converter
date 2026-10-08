@@ -2,6 +2,7 @@
 
 import codecs
 import json
+import re
 from collections.abc import Hashable
 from copy import deepcopy
 from datetime import date, datetime
@@ -126,55 +127,192 @@ def _json_value(value):
     return value
 
 
+_VOID_ELEMENTS = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+}
+# Elements that stop the HTML search for an element to close implicitly.
+_HTML_SCOPE = {
+    "applet",
+    "button",
+    "caption",
+    "html",
+    "marquee",
+    "object",
+    "table",
+    "td",
+    "template",
+    "th",
+}
+_CLOSES_P = {
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "center",
+    "dd",
+    "details",
+    "dialog",
+    "dir",
+    "div",
+    "dl",
+    "dt",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "hgroup",
+    "hr",
+    "li",
+    "listing",
+    "main",
+    "menu",
+    "nav",
+    "ol",
+    "p",
+    "pre",
+    "search",
+    "section",
+    "summary",
+    "table",
+    "ul",
+    "xmp",
+}
+_TABLE_SECTIONS = {"tbody", "tfoot", "thead"}
+# Start tag -> (open elements it implicitly closes, elements bounding the search).
+_IMPLIED_END_TAGS = {
+    "li": ({"li"}, {"ol", "ul"}),
+    "dd": ({"dd", "dt"}, {"dl"}),
+    "dt": ({"dd", "dt"}, {"dl"}),
+    "option": ({"option"}, {"datalist", "optgroup", "select"}),
+    "optgroup": ({"optgroup", "option"}, {"datalist", "select"}),
+    "tr": ({"td", "th", "tr"}, _TABLE_SECTIONS),
+    "td": ({"td", "th"}, {"tr"}),
+    "th": ({"td", "th"}, {"tr"}),
+    **{tag: (_TABLE_SECTIONS | {"td", "th", "tr"}, set()) for tag in _TABLE_SECTIONS},
+}
+_MICRODATA_ATTRIBUTES = {
+    "meta": "content",
+    "audio": "src",
+    "embed": "src",
+    "iframe": "src",
+    "img": "src",
+    "source": "src",
+    "track": "src",
+    "video": "src",
+    "a": "href",
+    "area": "href",
+    "link": "href",
+    "object": "data",
+    "data": "value",
+    "meter": "value",
+    "time": "datetime",
+}
+_JSON_TYPES = {
+    "integer": lambda value: isinstance(value, int) and not isinstance(value, bool),
+    "number": lambda value: isinstance(value, (int, float))
+    and not isinstance(value, bool),
+    "boolean": lambda value: isinstance(value, bool),
+    "null": lambda value: value is None,
+}
+
+
+def _tokens(value):
+    """Split an HTML attribute on ASCII whitespace."""
+    return re.findall(r"[^\t\n\f\r ]+", value or "")
+
+
 class _MetadataHTML(HTMLParser):
-    """Parse FHR item scopes, using explicit JSON types for lossless values."""
+    """Parse the FHR item scope, using explicit JSON types for lossless values."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
+        # Every open element; only "active" ones are inside the FHR item scope.
         self.stack = []
         self.result = None
 
     def handle_starttag(self, tag, attrs):
+        self._imply_end_tags(tag)
         attrs = dict(attrs)
-        if tag in {
-            "area",
-            "base",
-            "br",
-            "col",
-            "embed",
-            "hr",
-            "img",
-            "input",
-            "link",
-            "meta",
-            "param",
-            "source",
-            "track",
-            "wbr",
-        }:
-            self._leaf(attrs)
+        if tag in _VOID_ELEMENTS:
+            self._leaf(tag, attrs)
             return
-        root = "itemscope" in attrs and attrs.get("itemtype") == ITEM_TYPE
-        if not self.stack and not root:
-            return
-        if root and (self.result is not None or self.stack):
+        root = "itemscope" in attrs and ITEM_TYPE in _tokens(attrs.get("itemtype"))
+        active = bool(self.stack) and self.stack[-1]["active"]
+        if root and (self.result is not None or active):
             raise ValueError("Multiple FHR item scopes found")
-        self.stack.append({"tag": tag, "attrs": attrs, "text": [], "values": {}})
+        self.stack.append(
+            {
+                "tag": tag,
+                "attrs": attrs,
+                "active": root or active,
+                "text": [],
+                "values": {},
+            }
+        )
 
     def handle_startendtag(self, tag, attrs):
-        self._leaf(dict(attrs))
+        self._imply_end_tags(tag)
+        self._leaf(tag, dict(attrs))
 
-    def _leaf(self, attrs):
-        if self.stack and attrs.get("itemprop"):
-            value = attrs.get("content", attrs.get("href", attrs.get("src", "")))
-            self._attach(attrs["itemprop"], value)
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index]["tag"] == tag:
+                self._close(index)
+                return
 
     def handle_data(self, text):
-        if self.stack:
+        if self.stack and self.stack[-1]["active"]:
             self.stack[-1]["text"].append(text)
 
-    def _attach(self, key, value):
-        self.stack[-1]["values"].setdefault(key, []).append(value)
+    def _imply_end_tags(self, tag):
+        rules = []
+        if tag in _IMPLIED_END_TAGS:
+            rules.append(_IMPLIED_END_TAGS[tag])
+        if tag in _CLOSES_P:
+            rules.append(({"p"}, set()))
+        for closes, bounds in rules:
+            for index in range(len(self.stack) - 1, -1, -1):
+                name = self.stack[index]["tag"]
+                if name in closes:
+                    self._close(index)
+                    break
+                if name in bounds or name in _HTML_SCOPE:
+                    break
+
+    def _close(self, index):
+        while len(self.stack) > index:
+            self._finish(self.stack.pop())
+
+    def _leaf(self, tag, attrs):
+        if self.stack and self.stack[-1]["active"]:
+            value = attrs.get(_MICRODATA_ATTRIBUTES.get(tag, ""))
+            for name in _tokens(attrs.get("itemprop")):
+                self._attach(self.stack[-1], name, value or "")
+
+    @staticmethod
+    def _attach(node, key, value):
+        node["values"].setdefault(key, []).append(value)
 
     @staticmethod
     def _object(values):
@@ -182,39 +320,41 @@ class _MetadataHTML(HTMLParser):
             key: items[0] if len(items) == 1 else items for key, items in values.items()
         }
 
-    def handle_endtag(self, tag):
-        if not self.stack or self.stack[-1]["tag"] != tag:
+    def _finish(self, node):
+        if not node["active"]:
             return
-        node = self.stack.pop()
-        attrs = node["attrs"]
+        tag, attrs = node["tag"], node["attrs"]
         kind = attrs.get("data-fhr-type")
-        if tag == "time" and "datetime" in attrs:
-            text = attrs["datetime"]
-        elif tag in {"data", "meter"} and "value" in attrs:
-            text = attrs["value"]
-        else:
-            text = attrs.get(
-                "content", attrs.get("href", attrs.get("src", "".join(node["text"])))
-            )
+        text = attrs.get(_MICRODATA_ATTRIBUTES.get(tag, ""))
+        if text is None:
+            text = "".join(node["text"])
         if kind != "string":
             text = text.strip()
         if kind == "array":
             value = node["values"].get("item", [])
         elif kind == "object" or "itemscope" in attrs or node["values"]:
             value = self._object(node["values"])
-        elif kind in {"integer", "number", "boolean", "null"}:
+        elif kind in _JSON_TYPES:
             value = json.loads(text)
+            if not _JSON_TYPES[kind](value):
+                raise ValueError(f"Microdata value {text!r} is not a JSON {kind}")
         else:
             value = text
-        if self.stack:
-            if attrs.get("itemprop"):
-                self._attach(attrs["itemprop"], value)
-            elif "itemscope" not in attrs:
-                self.stack[-1]["text"].extend(node["text"])
-                for key, items in node["values"].items():
-                    self.stack[-1]["values"].setdefault(key, []).extend(items)
-        else:
+        parent = self.stack[-1] if self.stack and self.stack[-1]["active"] else None
+        if parent is None:
             self.result = value
+        elif _tokens(attrs.get("itemprop")):
+            for name in _tokens(attrs.get("itemprop")):
+                self._attach(parent, name, value)
+        elif "itemscope" not in attrs:
+            parent["text"].extend(node["text"])
+            for key, items in node["values"].items():
+                parent["values"].setdefault(key, []).extend(items)
+
+    def close(self):
+        super().close()
+        if any(node["active"] for node in self.stack):
+            raise ValueError("No complete FHR microdata item scope found")
 
 
 def _html_value(key, value):
@@ -307,7 +447,7 @@ class fhr:
         parser = _MetadataHTML()
         parser.feed(_text(stream))
         parser.close()
-        if parser.stack or parser.result is None:
+        if parser.result is None:
             raise ValueError("No complete FHR microdata item scope found")
         data = parser.result
         # Standard microdata scalar values are strings; restore schema-defined types.
