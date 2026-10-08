@@ -28,8 +28,8 @@ for changed behavior, including minimal metadata and relevant invalid cases.
 Document checksum semantics and migration rather than silently changing identity.
 Keep required metadata and runtime dependencies small.
 
-David and Adam retain schema authority. The [successor governance proposal](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/GOVERNANCE.md)
-is awaiting adoption; its voting/transition rules are not currently effective.
+David and Adam are the maintainers and jointly hold schema and release authority
+([GOVERNANCE](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/GOVERNANCE.md)). The steering-group option described there is not active.
 Follow CODE_OF_CONDUCT and use the SECURITY policy for sensitive findings. Private reporting addresses and independent conflict/appeal routing are documented there.
 
 Release preparation does not authorize publishing packages, merging PRs, or
