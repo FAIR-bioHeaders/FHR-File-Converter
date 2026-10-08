@@ -24,6 +24,9 @@ identifiers:
 - type: doi
   value: 10.5281/zenodo.23245793
   description: Zenodo version DOI for v0.3.2
+- type: doi
+  value: 10.5281/zenodo.23246552
+  description: Zenodo version DOI for v0.3.3
 repository-code: https://github.com/FAIR-bioHeaders/FHR-File-Converter
 url: https://github.com/FAIR-bioHeaders/FHR-File-Converter
 repository-artifact: https://github.com/FAIR-bioHeaders/FHR-File-Converter
