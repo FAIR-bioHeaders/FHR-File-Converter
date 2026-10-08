@@ -242,6 +242,14 @@ def _tokens(value):
     return re.findall(r"[^\t\n\f\r ]+", value or "")
 
 
+def _attributes(pairs):
+    """Keep the first of duplicate attributes, as HTML parsers do."""
+    result = {}
+    for name, value in pairs:
+        result.setdefault(name, value)
+    return result
+
+
 class _MetadataHTML(HTMLParser):
     """Parse the FHR item scope, using explicit JSON types for lossless values."""
 
@@ -253,7 +261,7 @@ class _MetadataHTML(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         self._imply_end_tags(tag)
-        attrs = dict(attrs)
+        attrs = _attributes(attrs)
         if tag in _VOID_ELEMENTS:
             self._leaf(tag, attrs)
             return
@@ -273,7 +281,7 @@ class _MetadataHTML(HTMLParser):
 
     def handle_startendtag(self, tag, attrs):
         self._imply_end_tags(tag)
-        self._leaf(tag, dict(attrs))
+        self._leaf(tag, _attributes(attrs))
 
     def handle_endtag(self, tag):
         for index in range(len(self.stack) - 1, -1, -1):

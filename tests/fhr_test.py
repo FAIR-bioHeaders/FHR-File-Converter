@@ -667,6 +667,16 @@ def test_microdata_typed_values_must_match_type(metadata):
         fhr().input_microdata(html)
 
 
+def test_microdata_uses_first_duplicate_attribute(metadata):
+    html = fhr(**metadata).output_microdata()
+    html = html.replace(
+        '<span itemprop="genome"', '<span itemprop="genome" itemprop="voucherSpecimen"'
+    )
+    loaded = fhr()
+    loaded.input_microdata(html)
+    assert loaded.__dict__ == metadata
+
+
 def test_microdata_unclosed_scope_is_rejected(metadata):
     html = fhr(**metadata).output_microdata().replace("</div>\n", "")
     with pytest.raises(ValueError, match="No complete"):
