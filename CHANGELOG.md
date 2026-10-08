@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Read gzip, multi-member gzip, and BGZF FASTA/GFA (and metadata) input, detected
+  by magic bytes and decompressed as it streams. Checksums cover the decompressed
+  bytes, so plain and compressed copies validate with the same checksum. Corrupt
+  or truncated gzip input is a concise `FHR:` error. Plain-file behaviour is
+  unchanged.
+- Write BGZF when an output path ends in `.gz` or `.bgz`, with a small
+  standard-library writer (`fhr.cli.BgzfWriter`). Combine without `-o` keeps a
+  compressed input's extension. Stdout is never compressed.
+- Accept `-` for stdin and stdout in validate, strip, combine, and convert;
+  add `--from`/`--to` format options to `fhr-convert` and `--from` to
+  `fhr-validate`. Combine spools stdin to a temporary file in `TMPDIR`.
+- Add `fhr.cli.open_input` and `fhr.cli.write_to` for compressed and standard
+  stream input and output. No new dependencies.
+
 ## 0.3.2 — 2026-10-08 (patch release of v0.3)
 
 - Stream FASTA/GFA validate, strip, combine, and convert in 1 MiB chunks with

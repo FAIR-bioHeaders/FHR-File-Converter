@@ -58,6 +58,40 @@ combine reads it twice. FHR header lines are limited to 16 MiB in total. Outputs
 are written to a temporary file in the destination directory and then renamed,
 so a failed command leaves no partial output.
 
+### Compressed files and pipes
+
+```bash
+fhr-fasta-combine examples/example.fhr.yaml genome.fa.gz    # writes genome.fhr.fasta.gz
+fhr-fasta-validate genome.fhr.fasta.gz
+fhr-fasta-strip genome.fhr.fasta.gz genome.stripped.fa.gz
+zcat genome.fa.gz | fhr-fasta-combine examples/example.fhr.yaml - > genome.fhr.fasta
+curl -sL https://example.org/genome.fhr.fasta.gz | fhr-fasta-validate -
+fhr-convert genome.fhr.fasta.gz - --to json
+fhr-convert - metadata.yaml --from json < metadata.json
+```
+
+Gzip input, including multi-member gzip and BGZF, is recognized by its magic
+bytes rather than its extension and decompressed as it streams. The checksum
+covers the decompressed FASTA/GFA bytes, so `genome.fa` and any gzip or BGZF
+compression of it have the same checksum. A corrupt or truncated gzip file is an
+error. Formats are taken from the extension before `.gz` or `.bgz`.
+
+Outputs whose path ends in `.gz` or `.bgz` are written as BGZF, which `gzip`,
+`zcat`, `bgzip`, and htslib read. A combine without `-o` keeps the input's
+compression extension. Other outputs, and stdout, are never compressed. Note that
+`samtools faidx` rejects FASTA files containing `;` lines, compressed or not, so
+index a stripped copy for random access.
+
+`-` reads stdin or writes stdout: the input of validate, strip, combine (the
+sequence), `fhr-convert`, and `fhr-validate`, and the output of strip, convert,
+and `combine -o`. Combine of stdin writes stdout by default. `fhr-convert` and
+`fhr-validate` need `--from FORMAT` for stdin and `fhr-convert` needs `--to
+FORMAT` for stdout (`json`, `yaml`, `fasta`, `gfa`, or `html`). Stdin is read
+once: combine spools the stripped sequence to a temporary file in `TMPDIR` (as
+large as the sequence) while hashing it. Strip from stdin to stdout writes as it
+reads, so an error late in the input can follow partial output; check the exit
+status. Strip of a file to stdout still checks the whole file before writing.
+
 ## Python
 
 ```python
