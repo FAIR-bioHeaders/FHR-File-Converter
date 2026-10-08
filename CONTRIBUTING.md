@@ -18,6 +18,10 @@ poetry run isort . --check-only
 poetry run black . --check
 ```
 
+For changes to FASTA/GFA processing, also run the opt-in large-file memory test,
+which writes about 1 GB of temporary files: `FHR_MEMORY_TEST=1 poetry run pytest
+-s -k memory` (set `FHR_MEMORY_TEST_MB` to change the 300 MB input size).
+
 Changes to metadata must coordinate `fhr.json`, the LinkML model, both converter
 schema copies, serializers, examples, and documentation. Add regression tests
 for changed behavior, including minimal metadata and relevant invalid cases.

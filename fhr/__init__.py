@@ -9,6 +9,7 @@ from datetime import date, datetime
 from html import escape
 from html.parser import HTMLParser
 from importlib.resources import files
+from itertools import chain
 
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
@@ -20,6 +21,11 @@ SCHEMA = json.loads(
 ITEM_TYPE = SCHEMA["$id"]
 # YAML treats these as line breaks, but FASTA/GFA line splitting does not.
 YAML_ONLY_LINE_BREAKS = "\x85\u2028\u2029"
+# FASTA/GFA files are read in chunks; only FHR header lines are held whole.
+CHUNK_SIZE = 2**20
+MAX_HEADER_BYTES = 16 * 2**20
+HEADER, DATA, END = "header", "data", "end"
+_MAYBE_BLANK = "maybe blank"
 
 
 def _read(stream):
@@ -43,27 +49,175 @@ def split_lines(content):
     return content.splitlines(keepends=True)
 
 
+def _bytes(value):
+    if isinstance(value, str):
+        value = value.encode("utf-8")
+    if not isinstance(value, bytes):
+        raise TypeError("Expected bytes, text, or a readable stream")
+    return value
+
+
+def read_chunks(stream, size=CHUNK_SIZE):
+    """Yield bytes chunks from bytes, text, or a readable stream."""
+    if hasattr(stream, "read"):
+        while True:
+            chunk = stream.read(size)
+            if not chunk:
+                return
+            yield _bytes(chunk)
+    content = _bytes(stream)
+    for start in range(0, len(content), size):
+        yield content[start : start + size]
+
+
+def sequence_parts(chunks, prefix):
+    """Yield ``(kind, bytes)`` parts of FASTA/GFA bytes given as chunks, in order.
+
+    Lines are split as ``bytes.splitlines(keepends=True)`` splits the whole input.
+    Each FHR line of the leading header block is one ``HEADER`` part; all other
+    bytes are ``DATA`` parts of any size, and ``END`` (empty) marks the first
+    record. The block ends at a FASTA ``>`` line, or a nonblank GFA line that is
+    not a ``#`` comment; ordinary comments and blank lines may be mixed in. Later
+    FHR lines are rejected. Only header lines are held whole, up to
+    ``MAX_HEADER_BYTES`` in total.
+    """
+    fasta = prefix == b";~"
+    pending = b""  # Unprocessed header block bytes: at most two.
+    started = False
+    in_header = True
+    line = None  # Kind of the current header block line; None at a line start.
+    parts = []
+    header_size = 0
+    lines = 0  # Line terminators before the unprocessed bytes.
+    tail = b""  # Last bytes after the header block, to find split prefixes.
+    after_cr = False
+    for chunk in chain(chunks, [None]):
+        final = chunk is None
+        if in_header:
+            if final:
+                data = pending
+            elif pending:
+                data = pending + chunk
+            else:
+                data = chunk
+            if not started:
+                if len(data) < len(codecs.BOM_UTF8) and not final:
+                    pending = data
+                    continue
+                if data.startswith(codecs.BOM_UTF8):
+                    raise ValueError(
+                        "FASTA/GFA files must not begin with a UTF-8 byte order mark"
+                    )
+                started = True
+            position, size = 0, len(data)
+            # Next \n and \r at or after position, or size if there is none.
+            newline = carriage_return = -1
+            while position < size:
+                if line is None:
+                    if size - position < len(prefix) and not final:
+                        break
+                    if data.startswith(prefix, position):
+                        line = HEADER
+                    elif fasta and data.startswith(b">", position):
+                        in_header = False
+                        break
+                    elif fasta or data.startswith(b"#", position):
+                        line = DATA
+                    else:
+                        line = _MAYBE_BLANK
+                if newline < position:
+                    newline = data.find(b"\n", position)
+                    newline = size if newline < 0 else newline
+                if carriage_return < position:
+                    carriage_return = data.find(b"\r", position)
+                    carriage_return = size if carriage_return < 0 else carriage_return
+                end = min(newline, carriage_return) + 1
+                complete = end <= size
+                if not complete:
+                    end = size
+                elif end - 1 == carriage_return:  # Perhaps \r\n.
+                    if end < size:
+                        end += data[end] == 10
+                    elif not final:
+                        end -= 1
+                        complete = False
+                piece = data[position:end]
+                if line is _MAYBE_BLANK and piece.strip():
+                    in_header = False  # A GFA record line.
+                    break
+                if line is HEADER:
+                    header_size += len(piece)
+                    if header_size > MAX_HEADER_BYTES:
+                        raise ValueError(
+                            "FHR header lines exceed the "
+                            f"{MAX_HEADER_BYTES // 2**20} MiB size limit"
+                        )
+                    parts.append(piece)
+                elif piece:
+                    yield DATA, piece
+                position = end
+                if not complete:
+                    break
+                lines += 1
+                if line is HEADER:
+                    yield HEADER, b"".join(parts)
+                    parts = []
+                line = None
+            if in_header:
+                pending = data[position:]
+                if final and line is HEADER:
+                    yield HEADER, b"".join(parts)
+                continue
+            yield END, b""
+            chunk = data[position:]
+            pending = b""
+        elif final:
+            break
+        if not chunk:
+            continue
+        # After the header block, a line starts after each \n or \r.
+        late = [
+            match - len(tail) + 1
+            for match in (
+                (tail + chunk[: len(prefix)]).find(b"\n" + prefix),
+                (tail + chunk[: len(prefix)]).find(b"\r" + prefix),
+            )
+            if 0 <= match < len(tail)
+        ]
+        if prefix[-1:] in chunk:  # A fast check that is usually false.
+            late += [
+                match + 1
+                for match in (chunk.find(b"\n" + prefix), chunk.find(b"\r" + prefix))
+                if match >= 0
+            ]
+        if late:
+            start = min(late)
+            if start > 0:
+                lines += _count_lines(chunk[:start], after_cr)
+            raise ValueError(f"FHR header line after sequence data at line {lines + 1}")
+        lines += _count_lines(chunk, after_cr)
+        after_cr = chunk.endswith(b"\r")
+        tail = (tail + chunk[-len(prefix) :])[-len(prefix) :]
+        yield DATA, chunk
+
+
+def _count_lines(data, after_cr):
+    """Count line terminators, given whether the previous byte was \\r."""
+    count = data.count(b"\n")
+    if b"\r" in data:
+        count += data.count(b"\r") - data.count(b"\r\n")
+    if after_cr and data.startswith(b"\n"):
+        count -= 1  # The second byte of a \r\n split between chunks.
+    return count
+
+
 def header_lines(lines, prefix):
     """Return the FHR lines of the leading header block, rejecting any later ones.
 
     The block ends at the first record: a FASTA ``>`` line, or a nonblank GFA line
     that is not a ``#`` comment. Ordinary comments and blank lines may be mixed in.
     """
-    in_header = True
-    found = []
-    for number, line in enumerate(lines, 1):
-        if line.startswith(prefix):
-            if not in_header:
-                raise ValueError(
-                    f"FHR header line after sequence data at line {number}"
-                )
-            found.append(line)
-        elif in_header:
-            if prefix == b";~":
-                in_header = not line.startswith(b">")
-            else:
-                in_header = line.startswith(b"#") or not line.strip()
-    return found
+    return [part for kind, part in sequence_parts(lines, prefix) if kind is HEADER]
 
 
 def header_text(line, prefix):
@@ -440,20 +594,22 @@ class fhr:
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
 
     def _input_header(self, stream, prefix):
-        content = _read(stream)
-        if isinstance(content, str):
-            content = content.encode("utf-8")
-        if not isinstance(content, bytes):
-            raise TypeError("Expected bytes, text, or a readable stream")
         # Match checksum line handling: split bytes, decode only header lines.
         marker = prefix.encode("ascii")
-        lines = [
-            header_text(line, marker)
-            for line in header_lines(split_lines(content), marker)
-        ]
+        self._input_header_lines(
+            [
+                line
+                for kind, line in sequence_parts(read_chunks(stream), marker)
+                if kind is HEADER
+            ],
+            marker,
+        )
+
+    def _input_header_lines(self, lines, prefix):
+        """Load metadata from FHR header lines given as bytes with ``prefix``."""
         if not lines:
-            raise ValueError(f"No {prefix} FHR metadata header found")
-        self._input(load_yaml("\n".join(lines)))
+            raise ValueError(f"No {prefix.decode('ascii')} FHR metadata header found")
+        self._input(load_yaml("\n".join(header_text(line, prefix) for line in lines)))
 
     def _output_header(self, prefix):
         lines = self.output_yaml().split("\n")
