@@ -52,6 +52,12 @@ lines are removed; other bytes, including ordinary comments and CRLF endings,
 are preserved. `fhr-validate` checks metadata, while FASTA/GFA validate commands
 also verify the exact-byte file checksum. Failures exit with status 1.
 
+FASTA/GFA commands stream their input in 1 MiB chunks, so memory use does not grow
+with file size (about 35 MB peak for a 1 GB FASTA). Validate reads the file once;
+combine reads it twice. FHR header lines are limited to 16 MiB in total. Outputs
+are written to a temporary file in the destination directory and then renamed,
+so a failed command leaves no partial output.
+
 ## Python
 
 ```python
@@ -107,7 +113,6 @@ Metadata conversion and validation do not require that hash implementation.
 See the [format reference](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/docs/FORMAT.md)
 and [release notes](CHANGELOG.md). JSON/YAML/HTML example identifiers are synthetic.
 The FASTA/GFA fixtures contain verified FHR checksums; their SeqCol IDs are placeholders.
-Sequence helpers currently read the file into memory; stream processing is future work.
 
 ## Docker
 

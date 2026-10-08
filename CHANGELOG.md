@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Stream FASTA/GFA validate, strip, combine, and convert in 1 MiB chunks with
+  bounded memory (#24): about 35 MB peak instead of about 5x the file size, and
+  faster. Checksums and outputs are unchanged.
+- Limit FHR header lines to 16 MiB in total, with a clear error.
+- Write all command outputs atomically through a temporary file and rename.
+- Add `fhr.sequence_parts`, `fhr.read_chunks`, `fhr.cli.SequenceScan`,
+  `fhr.cli.strip_parts`, and `fhr.cli.write_output` for streaming use; the bytes
+  API uses the same code.
+
 ## 0.3.1 — 2026-10-08 (patch release of v0.3)
 
 - Reject duplicate mapping keys in FASTA/GFA headers, YAML, and JSON; a later
