@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-10-08
 
 0.4.0 renames the project; FHR metadata, checksums, and file handling are
 unchanged, and every 0.3 command and import keeps working.
