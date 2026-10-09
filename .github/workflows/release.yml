@@ -9,12 +9,20 @@ name: Release
 on:
   push:
     tags: ['v*.*.*']
+  # Re-publish an existing release's files to PyPI, uploading only what PyPI is
+  # missing. Use this when the pypi job failed after the GitHub release was made.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish to PyPI (for example v0.4.0)
+        required: true
 
 permissions:
   contents: read
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -73,6 +81,7 @@ jobs:
 
   github-release:
     needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -104,6 +113,7 @@ jobs:
 
   pypi:
     needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Uploads every file in dist/: both fair-bioheaders and fhr. Each PyPI project
@@ -119,3 +129,30 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          skip-existing: true
+
+  pypi-existing-release:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/fair-bioheaders/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download the release's wheels and sdists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern '*.whl' --pattern '*.tar.gz' --dir dist
+          ls dist
+          test "$(ls dist | wc -l)" -eq 4
+          sha256sum dist/*
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          skip-existing: true
