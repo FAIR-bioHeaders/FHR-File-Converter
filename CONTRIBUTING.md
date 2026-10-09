@@ -65,3 +65,7 @@ requires `fair-bioheaders==X.Y.Z` and declares the `fhr-*` commands.
    this repository, `release.yml`, and the `pypi` environment as a trusted
    publisher.
 4. Add the new Zenodo version DOI to `CITATION.cff`.
+
+## License of contributions
+
+New project contributions from March 2025 onward use [MPL-2.0](LICENSE). David Molik left USDA in February 2025. Historical USDA public-domain material remains public domain within the United States; its original notice is preserved in LICENSE. Previously granted permissions and third-party terms remain intact. The project includes both historical material and subsequent MPL-2.0 contributions; file notices and history identify provenance. New contributions must have the rights needed for their declared license; retain source notices.

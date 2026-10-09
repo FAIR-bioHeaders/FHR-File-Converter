@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Document the MPL-2.0 transition for new project contributions from March 2025 onward, preserve historical permissions and third-party notices, and align README/package/citation licensing. No runtime behavior changes.
+
 ## 0.4.0 — 2026-10-08
 
 0.4.0 renames the project; FHR metadata, checksums, and file handling are

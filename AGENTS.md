@@ -48,3 +48,14 @@ Update examples, README, citations, and release notes alongside behavior changes
 Keep cross-repo PR links current. Publishing, adoption of governance, and reporting
 contact confirmation are separate maintainer actions. Do not fabricate contacts
 or claim a policy has been adopted.
+
+## Licensing policy (2026-10-09)
+
+New FAIR BioHeaders project contributions from March 2025 onward use MPL-2.0.
+David Molik left USDA in February 2025. Preserve historical USDA public-domain
+material, previously granted permissions, and third-party licenses/notices;
+do not label all current contributors as government employees. See LICENSE
+for scope. Do not rewrite historical releases or silently relicense upstream
+material. Keep README badges, package metadata and citation metadata consistent.
+Keep `compat/fhr/LICENSE` identical to the root LICENSE so the compatibility
+distribution ships the complete MPL and historical USDA notice.
