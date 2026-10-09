@@ -27,9 +27,9 @@ identifiers:
 - type: doi
   value: 10.5281/zenodo.23246552
   description: Zenodo version DOI for v0.3.3
-repository-code: https://github.com/FAIR-bioHeaders/FHR-File-Converter
-url: https://github.com/FAIR-bioHeaders/FHR-File-Converter
-repository-artifact: https://github.com/FAIR-bioHeaders/FHR-File-Converter
+repository-code: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools
+url: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools
+repository-artifact: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools
 abstract: The lack of interoperable data standards among reference genome data-sharing
   platforms inhibits cross-platform analysis while increasing the risk of data provenance
   loss. Here, we describe the FAIR-bioHeaders Reference genome (FHR), a metadata standard
@@ -89,5 +89,5 @@ preferred-citation:
   start: bbae122
   year: 2024
 
-version: 0.3.3
+version: 0.4.0
 date-released: 2026-10-08

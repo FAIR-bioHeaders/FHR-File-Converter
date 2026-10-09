@@ -1,0 +1,44 @@
+# Compatibility distribution: "fhr" was renamed "fair-bioheaders" in 0.4.0.
+# It contains no modules and depends on exactly the same fair-bioheaders
+# version, which provides the bioheaders package, the deprecated fhr module, and
+# all commands. Keep both versions equal; the release workflow checks them.
+
+[project]
+name = "fhr"
+version = "0.4.0"
+description = "Renamed to fair-bioheaders: installing fhr installs fair-bioheaders"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "David Molik", email = "david.molik@usda.gov"},
+    {name = "Adam Wright", email = "adam.wright@oicr.on.ca"},
+]
+license = {text = "USDA-ARS"}
+dependencies = ["fair-bioheaders==0.4.0"]
+
+# The same fhr-* commands as fair-bioheaders. When pip upgrades fhr 0.3, it
+# installs fair-bioheaders first and then removes fhr 0.3, deleting the fhr-*
+# scripts that both installed; declaring them here writes them again.
+[project.scripts]
+fhr-convert = "bioheaders.cli:convert_main"
+fhr-validate = "bioheaders.cli:validate_main"
+fhr-fasta-strip = "bioheaders.cli:fasta_strip_main"
+fhr-fasta-combine = "bioheaders.cli:fasta_combine_main"
+fhr-fasta-validate = "bioheaders.cli:fasta_validate_main"
+fhr-gfa-strip = "bioheaders.cli:gfa_strip_main"
+fhr-gfa-combine = "bioheaders.cli:gfa_combine_main"
+fhr-gfa-validate = "bioheaders.cli:gfa_validate_main"
+
+[project.urls]
+Homepage = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools"
+Repository = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools"
+
+# Poetry cannot build a distribution without packages, so this uses setuptools:
+# build it with "python -m build compat/fhr" (or "uv build compat/fhr").
+[tool.setuptools]
+packages = []
+py-modules = []
+
+[build-system]
+requires = ["setuptools>=69,<81"]
+build-backend = "setuptools.build_meta"

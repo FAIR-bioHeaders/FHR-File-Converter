@@ -1,4 +1,4 @@
-"""FHR metadata parsing, serialization, and validation."""
+"""FAIR-bioHeaders tools: FHR metadata parsing, serialization, and validation."""
 
 import codecs
 import json
@@ -14,7 +14,7 @@ from itertools import chain
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-__version__ = "0.3.3"
+__version__ = "0.4.0"
 SCHEMA = json.loads(
     files(__package__).joinpath("fhr_schema.json").read_text(encoding="utf-8")
 )

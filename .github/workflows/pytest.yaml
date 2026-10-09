@@ -34,5 +34,8 @@ jobs:
           poetry run ruff check .
           poetry run isort . --check-only
           poetry run black . --check
-      - name: Build wheel and source distribution
-        run: poetry build
+      - name: Build wheels and source distributions
+        run: |
+          poetry build
+          python -m pip install build
+          python -m build compat/fhr --outdir dist

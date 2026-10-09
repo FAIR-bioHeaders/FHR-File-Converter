@@ -16,7 +16,7 @@ it as current authority.
 
 ## Repository map
 
-`fhr/__init__.py` holds the mapping, input/output methods, and packaged schema loading. `fhr/cli.py` implements all installed commands; old top-level and FASTA/GFA files are compatibility wrappers. `fhr/fhr_schema.json` is included in distributions; root `fhr_schema.json` is a compatibility copy. `tests/fhr_test.py` covers semantic round trips, validation, and exact-byte sequence helpers. Poetry config defines eight entry points.
+`bioheaders/__init__.py` holds the mapping, input/output methods, and packaged schema loading. `bioheaders/cli.py` implements all installed commands: the `bioheaders` subcommands and the eight `fhr-*` entry points share one implementation per command. `fhr.py` is the deprecated `fhr` import name (an alias of `bioheaders`, warning once); the `fhr/` directory is not a package and only keeps `cli.py` and `fhr_schema.json` for FHR-Specification's checkout checks. Old top-level and FASTA/GFA scripts are compatibility wrappers. `bioheaders/fhr_schema.json` is included in distributions; root and `fhr/` `fhr_schema.json` are compatibility copies. `compat/fhr` builds the code-free `fhr` distribution that requires the same `fair-bioheaders` version. `tests/fhr_test.py` covers semantic round trips, validation, and exact-byte sequence helpers; `tests/bioheaders_test.py` covers the `bioheaders` command and the `fhr` compatibility names. Poetry config defines nine entry points; the `fhr-*` commands are public API and must not print deprecation notices.
 
 ## Verification
 
@@ -32,7 +32,7 @@ poetry run black . --check
 
 For schema changes, inspect compatibility of valid existing instances, required
 fields, types, unknown-property policy, patterns, URI/date formats, and optional
-values. Synchronize the published schema and both converter copies. Review the
+values. Synchronize the published schema and all three converter copies. Review the
 schema diff before intentionally updating `.github/schema-baseline.json`; never
 refresh it simply to hide a failed check. For serialization changes, test all
 formats and HTML escaping/typed values. For sequence tools, test metadata and

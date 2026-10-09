@@ -1,0 +1,828 @@
+"""Shared command implementations for FHR metadata and sequence files."""
+
+import argparse
+import base64
+import gzip
+import hashlib
+import os
+import re
+import stat
+import struct
+import sys
+import tempfile
+import zlib
+from contextlib import contextmanager
+from copy import deepcopy
+from itertools import chain
+from pathlib import Path
+
+import yaml
+from jsonschema.exceptions import ValidationError
+
+from . import (
+    DATA,
+    END,
+    HEADER,
+    __version__,
+    fhr,
+    header_text,
+    load_yaml,
+    read_chunks,
+    sequence_parts,
+)
+
+FORMATS = {
+    ".json": "json",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".fa": "fasta",
+    ".fasta": "fasta",
+    ".fna": "fasta",
+    ".gfa": "gfa",
+    ".html": "microdata",
+}
+
+
+# Output paths with these extensions are written as BGZF; input compression is
+# detected from the gzip magic bytes, not the extension.
+COMPRESSED_SUFFIXES = (".gz", ".bgz")
+FORMAT_NAMES = {
+    "json": "json",
+    "yaml": "yaml",
+    "fasta": "fasta",
+    "gfa": "gfa",
+    "html": "microdata",
+}
+GZIP_MAGIC = b"\x1f\x8b"
+STANDARD_STREAM = "-"
+
+
+def is_compressed_path(path):
+    return Path(path).suffix.lower() in COMPRESSED_SUFFIXES
+
+
+def _uncompressed_path(path):
+    path = Path(path)
+    return path.with_suffix("") if is_compressed_path(path) else path
+
+
+def file_format(path):
+    try:
+        return FORMATS[_uncompressed_path(path).suffix.lower()]
+    except KeyError:
+        raise ValueError(f"Unsupported file extension: {path}") from None
+
+
+class _PrefixedStream:
+    """A readable stream that returns ``prefix`` before the rest of ``stream``."""
+
+    def __init__(self, prefix, stream):
+        self.prefix = prefix
+        self.stream = stream
+
+    def read(self, size=-1):
+        if not self.prefix:
+            return self.stream.read(size)
+        if size is None or size < 0:
+            data, self.prefix = self.prefix + self.stream.read(), b""
+            return data
+        data, self.prefix = self.prefix[:size], self.prefix[size:]
+        if len(data) < size:
+            data += self.stream.read(size - len(data)) or b""
+        return data
+
+
+class _GzipStream:
+    """Decompress gzip or BGZF data, reporting corrupt input as ``ValueError``."""
+
+    def __init__(self, stream, name):
+        self.gzip = gzip.GzipFile(fileobj=stream, mode="rb")
+        self.name = name
+
+    def read(self, size=-1):
+        try:
+            return self.gzip.read(size)
+        except (EOFError, zlib.error, gzip.BadGzipFile) as error:
+            reason = str(error) or type(error).__name__
+            raise ValueError(f"Invalid gzip input {self.name}: {reason}") from None
+
+
+@contextmanager
+def open_input(path):
+    """Open ``path`` (``-`` for stdin) for reading bytes.
+
+    Gzip and BGZF input, recognized by its magic bytes, is decompressed as it is
+    read, so checksums cover the decompressed FASTA/GFA bytes.
+    """
+    if path == STANDARD_STREAM:
+        stream, name = sys.stdin.buffer, "<stdin>"
+        context = None
+    else:
+        stream = context = Path(path).open("rb")
+        name = os.fspath(path)
+    try:
+        magic = b""
+        while len(magic) < len(GZIP_MAGIC):
+            data = stream.read(len(GZIP_MAGIC) - len(magic))
+            if not data:
+                break
+            magic += data
+        result = _PrefixedStream(magic, stream)
+        yield _GzipStream(result, name) if magic == GZIP_MAGIC else result
+    finally:
+        if context is not None:
+            context.close()
+
+
+BGZF_BLOCK_SIZE = 0xFF00  # Uncompressed bytes per block, as in htslib.
+BGZF_MAX_BLOCK = 0x10000  # Compressed block size limit, header and trailer included.
+BGZF_EOF = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
+
+
+class BgzfWriter:
+    """Write BGZF (blocked gzip, as read by htslib and ``samtools faidx``).
+
+    Each block of at most ``BGZF_BLOCK_SIZE`` bytes is a gzip member whose ``BC``
+    extra subfield gives its total size minus one; the standard empty block
+    marks the end of the file. ``close`` writes the remaining data and the end
+    marker but does not close the underlying stream.
+    """
+
+    def __init__(self, stream, level=zlib.Z_DEFAULT_COMPRESSION):
+        self.stream = stream
+        self.level = level
+        self.buffer = b""
+
+    def write(self, data):
+        size = len(data)
+        data = bytes(data)
+        if self.buffer:
+            needed = BGZF_BLOCK_SIZE - len(self.buffer)
+            self.buffer += data[:needed]
+            data = data[needed:]
+            if len(self.buffer) < BGZF_BLOCK_SIZE:
+                return size
+            self._block(self.buffer)
+            self.buffer = b""
+        start = 0
+        while len(data) - start >= BGZF_BLOCK_SIZE:
+            self._block(data[start : start + BGZF_BLOCK_SIZE])
+            start += BGZF_BLOCK_SIZE
+        self.buffer = data[start:]
+        return size
+
+    def writelines(self, lines):
+        for line in lines:
+            self.write(line)
+
+    def _block(self, data):
+        compressor = zlib.compressobj(self.level, zlib.DEFLATED, -15)
+        compressed = compressor.compress(data) + compressor.flush()
+        if 18 + len(compressed) + 8 > BGZF_MAX_BLOCK:  # Incompressible: split.
+            half = len(data) // 2
+            self._block(data[:half])
+            self._block(data[half:])
+            return
+        header = struct.pack(
+            "<4BI2BH2BHH",
+            0x1F,
+            0x8B,
+            8,  # Deflate.
+            4,  # FEXTRA.
+            0,  # MTIME.
+            0,
+            0xFF,  # Unknown OS.
+            6,  # XLEN.
+            ord("B"),
+            ord("C"),
+            2,
+            18 + len(compressed) + 8 - 1,  # BSIZE.
+        )
+        trailer = struct.pack("<II", zlib.crc32(data), len(data))
+        self.stream.write(header + compressed + trailer)
+
+    def close(self):
+        if self.buffer:
+            self._block(self.buffer)
+            self.buffer = b""
+        self.stream.write(BGZF_EOF)
+
+
+def read_metadata(path, content=None, format_name=None):
+    method = "input_" + (format_name or file_format(path))
+    data = fhr()
+    if content is None:
+        with open_input(path) as stream:
+            getattr(data, method)(stream)
+    else:
+        getattr(data, method)(content)
+    return data
+
+
+def write_metadata(data, path, format_name=None):
+    content = getattr(data, "output_" + (format_name or file_format(path)))()
+    if path == STANDARD_STREAM or is_compressed_path(path):
+        write_to(path, lambda output: output.write(content.encode("utf-8")))
+    else:
+        write_output(path, lambda output: output.write(content), "w", encoding="utf-8")
+
+
+def write_to(path, write):
+    """Call ``write`` with a binary file object for ``path`` (``-`` for stdout).
+
+    Paths ending in ``.gz`` or ``.bgz`` receive BGZF and other paths plain bytes,
+    written atomically by ``write_output``. Stdout is never compressed.
+    """
+    if path == STANDARD_STREAM:
+        write(sys.stdout.buffer)
+        sys.stdout.buffer.flush()
+    elif is_compressed_path(path):
+
+        def compressed(output):
+            stream = BgzfWriter(output)
+            write(stream)
+            stream.close()
+
+        write_output(path, compressed)
+    else:
+        write_output(path, write)
+
+
+def write_output(path, write, mode="wb", **options):
+    """Call ``write`` with a file object, then atomically replace ``path``.
+
+    A temporary file in the destination directory receives the output and only
+    replaces the destination once ``write`` has succeeded, so a failure never
+    leaves partial output. Existing non-regular files such as ``/dev/null`` are
+    written directly.
+    """
+    target = os.path.realpath(path)
+    try:
+        status = os.stat(target)
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        permissions = 0o666 & ~umask
+    else:
+        if not stat.S_ISREG(status.st_mode):
+            with open(path, mode, **options) as output:
+                write(output)
+            return
+        permissions = stat.S_IMODE(status.st_mode)
+    directory, name = os.path.split(target)
+    try:
+        descriptor, temporary = tempfile.mkstemp(
+            prefix=f".{name}.", suffix=".tmp", dir=directory
+        )
+    except OSError as error:
+        # Report the requested path, as a direct write would.
+        raise type(error)(error.errno, error.strerror, os.fspath(path)) from None
+    try:
+        with os.fdopen(descriptor, mode, **options) as output:
+            os.chmod(temporary, permissions)
+            write(output)
+        os.replace(temporary, target)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
+def _output_is_input(output, inputs):
+    if output == STANDARD_STREAM:
+        return False
+    output = Path(output)
+    inputs = [Path(path) for path in inputs if path != STANDARD_STREAM]
+    if any(output.resolve() == path.resolve() for path in inputs):
+        return True
+    return output.exists() and any(
+        output.samefile(path) for path in inputs if path.exists()
+    )
+
+
+def _prefix(kind):
+    return b";~" if kind == "fasta" else b"#~"
+
+
+def strip_parts(chunks, kind):
+    """Yield the bytes of FASTA/GFA chunks except FHR header lines."""
+    for part, data in sequence_parts(chunks, _prefix(kind)):
+        if part is DATA:
+            yield data
+
+
+def _stripped(path, kind):
+    with open_input(path) as stream:
+        yield from strip_parts(read_chunks(stream), kind)
+
+
+def _drain(parts):
+    for _ in parts:
+        pass
+
+
+def strip_header(content, kind):
+    return b"".join(strip_parts(read_chunks(content), kind))
+
+
+class SequenceScan:
+    """FHR header lines and checksum state of FASTA/GFA bytes read in one pass.
+
+    Every byte is hashed as it streams except the scalar checksum line: the root
+    indentation of header lines can only decrease as lines arrive, so at most one
+    candidate checksum line stays valid, and a digest copied before it excludes it.
+    """
+
+    def __init__(self, chunks, kind):
+        self.prefix = _prefix(kind)
+        self.pattern = re.compile(
+            b"^" + re.escape(self.prefix) + rb"[ \t]*checksum[ \t]*:"
+        )
+        self.header = []
+        self.root_indent = None
+        self.matches = 0
+        self.checksum_line = None
+        self.excluded = None
+        try:
+            self.digest = hashlib.new("sha512_256")
+        except ValueError:
+            self.digest = None
+        self.hash_available = self.digest is not None
+        for part, data in sequence_parts(chunks, self.prefix):
+            if part is HEADER:
+                self._header_line(data)
+            elif part is END:
+                # No more header lines: keep only the digest that can be used.
+                self.digest = None
+                if self.matches != 1:
+                    self.excluded = None
+            else:
+                self._update(data)
+
+    def _update(self, data):
+        if self.digest is not None:
+            self.digest.update(data)
+        if self.excluded is not None:
+            self.excluded.update(data)
+
+    def _header_line(self, line):
+        self.header.append(line)
+        metadata = line[len(self.prefix) :]
+        if (
+            metadata.strip()
+            and not metadata.lstrip().startswith(b"#")
+            and not re.match(
+                rb"^(?:%|---(?:[ \t]|$)|\.\.\.(?:[ \t]|$))",
+                metadata.lstrip(b" \t"),
+            )
+        ):
+            indent = len(metadata) - len(metadata.lstrip(b" \t"))
+            if self.root_indent is None or indent < self.root_indent:
+                self.root_indent = indent
+                self.matches = 0
+                self.excluded = None
+            if indent == self.root_indent and self.pattern.match(line):
+                self.matches += 1
+                self.checksum_line = line
+                self.excluded = None
+                if self.matches == 1 and self.digest is not None:
+                    self.excluded = self.digest.copy()
+                if self.digest is not None:
+                    self.digest.update(line)
+                return
+        self._update(line)
+
+    def checksum(self):
+        """Return the FHR checksum after checking the checksum header line."""
+        if self.matches != 1:
+            raise ValueError("Expected exactly one scalar checksum header line")
+        prefix = self.prefix
+        # Decode and parse exactly as input_fasta/input_gfa would.
+        header = load_yaml("\n".join(header_text(line, prefix) for line in self.header))
+        # The excluded line must hold the whole value; continuation lines are hashed.
+        try:
+            value = load_yaml(header_text(self.checksum_line, prefix))
+        except yaml.YAMLError:
+            value = None
+        if not (
+            isinstance(value, dict)
+            and list(value) == ["checksum"]
+            and isinstance(value["checksum"], str)
+            and value["checksum"]
+            and isinstance(header, dict)
+            and header.get("checksum") == value["checksum"]
+        ):
+            raise ValueError(
+                "The checksum header line must contain the complete checksum value "
+                "as a single-line scalar"
+            )
+        if not self.hash_available:
+            raise ValueError(
+                "SHA-512/256 is unavailable in this Python build; "
+                "use a Python distribution with OpenSSL support"
+            )
+        return base64.b64encode(self.excluded.digest()).decode("ascii")
+
+
+def checksum(content, kind):
+    """Hash all original bytes except the one scalar checksum metadata line."""
+    return SequenceScan(read_chunks(content), kind).checksum()
+
+
+def combined_header(data, body, kind):
+    """Return the header that combines ``data`` with stripped ``body`` chunks."""
+    data = fhr(**deepcopy(data.__dict__))
+    data.checksum = "A" * 43 + "="
+    preliminary = getattr(data, "output_" + kind)().encode("utf-8")
+    data.checksum = SequenceScan(chain([preliminary], body), kind).checksum()
+    data.fhr_validate()
+    return getattr(data, "output_" + kind)().encode("utf-8")
+
+
+def combine(data, content, kind):
+    body = strip_header(content, kind)
+    return combined_header(data, read_chunks(body), kind) + body
+
+
+def parser(description):
+    result = argparse.ArgumentParser(description=description)
+    result.add_argument("--version", action="version", version=__version__)
+    return result
+
+
+def run(action):
+    try:
+        return action() or 0
+    except ValidationError as error:
+        print(
+            f"FHR: schema validation failed at {error.json_path}: {error.message}",
+            file=sys.stderr,
+        )
+        return 1
+    except RecursionError:
+        print("FHR: metadata is nested too deeply", file=sys.stderr)
+        return 1
+    except BrokenPipeError:
+        # The reader of stdout exited; avoid another error when Python exits.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        print("FHR: output pipe closed", file=sys.stderr)
+        return 1
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        AttributeError,
+        yaml.YAMLError,
+    ) as error:
+        print(f"FHR: {error}", file=sys.stderr)
+        return 1
+
+
+def _format_option(args_parser, flag, dest, description):
+    args_parser.add_argument(
+        flag,
+        dest=dest,
+        choices=sorted(FORMAT_NAMES),
+        help=description + " (default: from the file extension; required for -)",
+    )
+
+
+def _format(path, name):
+    if name:
+        return FORMAT_NAMES[name]
+    if path == STANDARD_STREAM:
+        raise ValueError("Give the format of - with --from or --to")
+    return file_format(path)
+
+
+def _check_sequence_path(path, kind, what):
+    if path != STANDARD_STREAM and file_format(path) != kind:
+        raise ValueError(f"Expected a {kind.upper()} {what}")
+
+
+# Each command is an ``add_arguments(parser)`` function and an action taking the
+# parsed arguments; sequence actions also take the kind (``fasta`` or ``gfa``).
+# The ``fhr-*`` commands and the ``bioheaders`` subcommands share them.
+
+
+def _convert_arguments(args_parser):
+    args_parser.add_argument("input", help="input file, or - for stdin")
+    args_parser.add_argument("output", help="output file, or - for stdout")
+    _format_option(args_parser, "--from", "input_format", "input format")
+    _format_option(args_parser, "--to", "output_format", "output format")
+
+
+def _convert(args):
+    input_format = _format(args.input, args.input_format)
+    output_format = _format(args.output, args.output_format)
+    if _output_is_input(args.output, [args.input]):
+        raise ValueError("Output must differ from the input file")
+    data = read_metadata(args.input, format_name=input_format)
+    data.fhr_validate()
+    write_metadata(data, args.output, output_format)
+
+
+def _validate_arguments(args_parser):
+    args_parser.add_argument("input", help="input file, or - for stdin")
+    _format_option(args_parser, "--from", "input_format", "input format")
+
+
+def _validate(args):
+    input_format = _format(args.input, args.input_format)
+    read_metadata(args.input, format_name=input_format).fhr_validate()
+    print("FHR metadata is valid.")
+
+
+def _default_combine_output(sequence, kind):
+    if sequence == STANDARD_STREAM:
+        return STANDARD_STREAM
+    path = Path(sequence)
+    output = _uncompressed_path(path).with_suffix(f".fhr.{kind}")
+    if is_compressed_path(path):
+        output = output.with_name(output.name + path.suffix)
+    return str(output)
+
+
+def _combine_arguments(args_parser):
+    args_parser.add_argument("metadata")
+    args_parser.add_argument("sequence", help="sequence file, or - for stdin")
+    args_parser.add_argument("-o", "--output", help="output file, or - for stdout")
+
+
+def _combine(args, kind):
+    output = args.output or _default_combine_output(args.sequence, kind)
+    if _output_is_input(output, [args.sequence, args.metadata]):
+        raise ValueError("Output must differ from the input files")
+    data = read_metadata(args.metadata)
+    if args.sequence != STANDARD_STREAM:
+        # Hash the stripped sequence, then read it again to write it.
+        header = combined_header(data, _stripped(args.sequence, kind), kind)
+
+        def write(output):
+            output.write(header)
+            output.writelines(_stripped(args.sequence, kind))
+
+        write_to(output, write)
+        return
+    # Stdin can be read only once: spool the stripped sequence while hashing.
+    with tempfile.TemporaryFile() as spool:
+
+        def spooled():
+            for data in _stripped(STANDARD_STREAM, kind):
+                spool.write(data)
+                yield data
+
+        header = combined_header(data, spooled(), kind)
+        spool.seek(0)
+
+        def write(output):
+            output.write(header)
+            output.writelines(read_chunks(spool))
+
+        write_to(output, write)
+
+
+def _strip_arguments(args_parser):
+    args_parser.add_argument("input", help="input file, or - for stdin")
+    args_parser.add_argument(
+        "output", nargs="?", help="output file, or - for stdout (the default)"
+    )
+
+
+def _strip(args, kind):
+    output = args.output or STANDARD_STREAM
+    if _output_is_input(output, [args.input]):
+        _drain(_stripped(args.input, kind))  # Report input errors first.
+        raise ValueError("Output must differ from the input file")
+    if output == STANDARD_STREAM and args.input != STANDARD_STREAM:
+        # Find input errors before writing anything to stdout.
+        _drain(_stripped(args.input, kind))
+    write_to(output, lambda stream: stream.writelines(_stripped(args.input, kind)))
+
+
+def _verify_arguments(args_parser):
+    args_parser.add_argument("input", help="input file, or - for stdin")
+
+
+def _verify(args, kind):
+    with open_input(args.input) as stream:
+        scan = SequenceScan(read_chunks(stream), kind)
+    data = fhr()
+    data._input_header_lines(scan.header, scan.prefix)
+    data.fhr_validate()
+    if data.checksum != scan.checksum():
+        raise ValueError("Checksum verification failed")
+    print("Checksum verified.")
+
+
+def _command(description, add_arguments, perform):
+    def action():
+        args_parser = parser(description)
+        add_arguments(args_parser)
+        return perform(args_parser.parse_args())
+
+    return run(action)
+
+
+def _sequence_command(description, add_arguments, perform, kind, path, what):
+    def checked(args):
+        _check_sequence_path(getattr(args, path), kind, what)
+        return perform(args, kind)
+
+    return _command(description, add_arguments, checked)
+
+
+def convert_main():
+    return _command(
+        "Convert FHR metadata between JSON, YAML, FASTA, GFA, and HTML",
+        _convert_arguments,
+        _convert,
+    )
+
+
+def validate_main():
+    return _command(
+        "Validate FHR metadata against the bundled schema",
+        _validate_arguments,
+        _validate,
+    )
+
+
+def combine_main(kind):
+    return _sequence_command(
+        f"Combine metadata with {kind.upper()} and calculate its FHR checksum",
+        _combine_arguments,
+        _combine,
+        kind,
+        "sequence",
+        "sequence file",
+    )
+
+
+def strip_main(kind):
+    return _sequence_command(
+        f"Strip FHR metadata from {kind.upper()} without changing other bytes",
+        _strip_arguments,
+        _strip,
+        kind,
+        "input",
+        "file",
+    )
+
+
+def checksum_main(kind):
+    return _sequence_command(
+        f"Validate {kind.upper()} metadata and its FHR checksum",
+        _verify_arguments,
+        _verify,
+        kind,
+        "input",
+        "file",
+    )
+
+
+def fasta_combine_main():
+    return combine_main("fasta")
+
+
+def fasta_strip_main():
+    return strip_main("fasta")
+
+
+def fasta_validate_main():
+    return checksum_main("fasta")
+
+
+def gfa_combine_main():
+    return combine_main("gfa")
+
+
+def gfa_strip_main():
+    return strip_main("gfa")
+
+
+def gfa_validate_main():
+    return checksum_main("gfa")
+
+
+SEQUENCE_KINDS = ("fasta", "gfa")
+
+
+class Subcommand:
+    """A ``bioheaders`` subcommand.
+
+    ``sequence`` names the FASTA/GFA path argument of commands that take a
+    ``--type``; their action receives the kind given or detected from it.
+    """
+
+    def __init__(self, name, summary, description, add_arguments, perform, **options):
+        self.name = name
+        self.summary = summary
+        self.description = description
+        self.add_arguments = add_arguments
+        self.perform = perform
+        self.aliases = options.get("aliases", ())
+        self.sequence = options.get("sequence")
+
+    def add_to(self, subparsers):
+        args_parser = subparsers.add_parser(
+            self.name,
+            aliases=list(self.aliases),
+            help=self.summary,
+            description=self.description,
+        )
+        self.add_arguments(args_parser)
+        if self.sequence:
+            args_parser.add_argument(
+                "--type",
+                dest="sequence_type",
+                choices=SEQUENCE_KINDS,
+                help="sequence file type (default: from the file extension, "
+                "ignoring .gz or .bgz; required for -)",
+            )
+        args_parser.set_defaults(subcommand=self)
+
+    def __call__(self, args):
+        if not self.sequence:
+            return self.perform(args)
+        path = getattr(args, self.sequence)
+        return self.perform(args, sequence_kind(path, args.sequence_type))
+
+
+def sequence_kind(path, name=None):
+    """Return ``name``, or the FASTA/GFA kind of ``path`` from its extension."""
+    if name:
+        return name
+    if path == STANDARD_STREAM:
+        raise ValueError("Give the type of - with --type fasta or --type gfa")
+    kind = file_format(path)
+    if kind not in SEQUENCE_KINDS:
+        raise ValueError(f"Expected a FASTA or GFA file: {path}")
+    return kind
+
+
+# FHR (reference genome) commands. Commands for other header types can be added
+# as further subcommands or a separate list without changing these.
+SUBCOMMANDS = (
+    Subcommand(
+        "convert",
+        "convert metadata between JSON, YAML, FASTA, GFA, and HTML",
+        "Convert FHR metadata between JSON, YAML, FASTA, GFA, and HTML",
+        _convert_arguments,
+        _convert,
+    ),
+    Subcommand(
+        "validate",
+        "validate metadata against the bundled schema",
+        "Validate FHR metadata against the bundled schema",
+        _validate_arguments,
+        _validate,
+    ),
+    Subcommand(
+        "combine",
+        "combine metadata with FASTA or GFA and calculate its checksum",
+        "Combine metadata with FASTA or GFA and calculate its FHR checksum",
+        _combine_arguments,
+        _combine,
+        sequence="sequence",
+    ),
+    Subcommand(
+        "strip",
+        "strip metadata from FASTA or GFA without changing other bytes",
+        "Strip FHR metadata from FASTA or GFA without changing other bytes",
+        _strip_arguments,
+        _strip,
+        sequence="input",
+    ),
+    Subcommand(
+        "verify",
+        "validate FASTA or GFA metadata and verify its checksum",
+        "Validate FASTA or GFA metadata and its FHR checksum",
+        _verify_arguments,
+        _verify,
+        aliases=("checksum",),
+        sequence="input",
+    ),
+)
+
+
+def main():
+    """Run the ``bioheaders`` command."""
+
+    def action():
+        args_parser = parser(
+            "Convert, validate, combine, strip, and verify FAIR-bioHeaders (FHR) "
+            "metadata in JSON, YAML, FASTA, GFA, and HTML"
+        )
+        subparsers = args_parser.add_subparsers(
+            title="commands", dest="command", metavar="COMMAND"
+        )
+        subparsers.required = True
+        for subcommand in SUBCOMMANDS:
+            subcommand.add_to(subparsers)
+        args = args_parser.parse_args()
+        return args.subcommand(args)
+
+    return run(action)

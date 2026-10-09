@@ -22,8 +22,9 @@ For changes to FASTA/GFA processing, also run the opt-in large-file memory test,
 which writes about 1 GB of temporary files: `FHR_MEMORY_TEST=1 poetry run pytest
 -s -k memory` (set `FHR_MEMORY_TEST_MB` to change the 300 MB input size).
 
-Changes to metadata must coordinate `fhr.json`, the LinkML model, both converter
-schema copies, serializers, examples, and documentation. Add regression tests
+Changes to metadata must coordinate `fhr.json`, the LinkML model, the converter
+schema copies (`bioheaders/fhr_schema.json`, `fhr/fhr_schema.json`, and root
+`fhr_schema.json`), serializers, examples, and documentation. Add regression tests
 for changed behavior, including minimal metadata and relevant invalid cases.
 Document checksum semantics and migration rather than silently changing identity.
 Keep required metadata and runtime dependencies small.
@@ -43,13 +44,24 @@ Use Chicago bibliography entries with DOI resolver links in human-readable citat
 
 ## Releasing
 
-1. In one PR, set the version in `pyproject.toml`, `fhr/__init__.py`,
-   `tests/fhr_test.py`, README and `CITATION.cff` (with `date-released`), and
-   turn the CHANGELOG `Unreleased` heading into `## X.Y.Z — YYYY-MM-DD`.
-2. After it merges, tag main: `git tag -a vX.Y.Z -m "FHR File Converter vX.Y.Z"`
-   and push the tag.
+Each release publishes two PyPI distributions with the same version:
+`fair-bioheaders` (this project, built by Poetry) and `fhr`, the former name,
+which is built from `compat/fhr` with `python -m build compat/fhr` and only
+requires `fair-bioheaders==X.Y.Z` and declares the `fhr-*` commands.
+
+1. In one PR, set the version in `pyproject.toml`, `bioheaders/__init__.py`,
+   `tests/fhr_test.py`, `tests/bioheaders_test.py`, `compat/fhr/pyproject.toml`
+   (both `version` and the `fair-bioheaders==X.Y.Z` requirement), README and
+   `CITATION.cff` (with `date-released`), and turn the CHANGELOG `Unreleased`
+   heading into `## X.Y.Z — YYYY-MM-DD`.
+2. After it merges, tag main:
+   `git tag -a vX.Y.Z -m "FAIR-bioHeaders Tools vX.Y.Z"` and push the tag.
 3. The [release workflow](.github/workflows/release.yml) checks the tag against
-   the package version, runs the tests, builds the wheel and sdist, creates the
-   GitHub release from the CHANGELOG entry (Zenodo archives it), and publishes to
-   PyPI through trusted publishing in the `pypi` environment.
+   both distribution versions and the `fhr` requirement, runs the tests, builds
+   both wheels and sdists, installs the wheels outside the checkout as a smoke
+   test, creates the GitHub release from the CHANGELOG entry with all four files
+   (Zenodo archives it), and publishes both distributions to PyPI through
+   trusted publishing in the `pypi` environment. Both PyPI projects must list
+   this repository, `release.yml`, and the `pypi` environment as a trusted
+   publisher.
 4. Add the new Zenodo version DOI to `CITATION.cff`.

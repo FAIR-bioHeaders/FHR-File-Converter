@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.0 — 2026-10-08
+
+0.4.0 renames the project; FHR metadata, checksums, and file handling are
+unchanged, and every 0.3 command and import keeps working.
+
+- Rename the PyPI distribution `fhr` to `fair-bioheaders` and the Python package
+  `fhr` to `bioheaders`; the repository moved from FHR-File-Converter to
+  FAIR-bioHeaders-Tools (old URLs redirect). Zenodo DOIs are unchanged.
+- Add the `bioheaders` command with `convert`, `validate`, `combine`, `strip`,
+  and `verify` (alias `checksum`) subcommands. The sequence subcommands detect
+  FASTA or GFA from the file extension, including before `.gz`/`.bgz`, or take
+  `--type fasta|gfa` (required for stdin). `python -m bioheaders` runs it.
+- Keep the eight `fhr-*` commands with unchanged options, output, and exit
+  status; they print no deprecation notice.
+- Keep `import fhr` and `fhr.cli` as deprecated aliases: an `fhr` module, installed
+  by `fair-bioheaders`, makes them the same module objects as `bioheaders` and
+  `bioheaders.cli` and emits one `DeprecationWarning`.
+- Publish `fhr` 0.4.0 as a compatibility distribution without code that requires
+  `fair-bioheaders==0.4.0` and declares the `fhr-*` commands, so `pip install fhr`
+  and `pip install -U fhr` from 0.3 keep working. It is built from `compat/fhr`.
+- The release workflow builds, checks, attaches, and publishes both distributions.
+- The packaged schema moves to `bioheaders/fhr_schema.json`; the root and
+  `fhr/fhr_schema.json` copies stay for FHR-Specification's release checks.
+
 ## 0.3.3 — 2026-10-08 (patch release of v0.3)
 
 - Read gzip, multi-member gzip, and BGZF FASTA/GFA (and metadata) input, detected

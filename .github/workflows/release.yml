@@ -1,8 +1,10 @@
 name: Release
 
-# Pushing a version tag (vX.Y.Z) builds, tests and publishes that version: the
-# wheel and sdist are attached to a GitHub release (which Zenodo archives) and
-# published to PyPI through trusted publishing, with no stored token.
+# Pushing a version tag (vX.Y.Z) builds, tests and publishes that version of two
+# distributions: fair-bioheaders (the tools) and fhr (the old name, which only
+# depends on the same fair-bioheaders version). Their wheels and sdists are
+# attached to a GitHub release (which Zenodo archives) and published to PyPI
+# through trusted publishing, with no stored token.
 
 on:
   push:
@@ -24,21 +26,45 @@ jobs:
           python-version: '3.13'
       - name: Install Poetry
         run: python -m pip install poetry==2.3.2
-      - name: Check the tag matches the package version
+      - name: Install build
+        run: python -m pip install build==1.6.1
+      - name: Check the tag matches both distribution versions
         run: |
           version="$(poetry version --short)"
           if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package version $version" >&2
+            echo "Tag $GITHUB_REF_NAME does not match fair-bioheaders $version" >&2
             exit 1
           fi
+          python - "$version" <<'EOF'
+          import sys, tomllib
+          version = sys.argv[1]
+          with open("compat/fhr/pyproject.toml", "rb") as stream:
+              project = tomllib.load(stream)["project"]
+          expected = (version, [f"fair-bioheaders=={version}"])
+          if (project["version"], project["dependencies"]) != expected:
+              sys.exit(f"compat/fhr must be version {version} and require only "
+                       f"fair-bioheaders=={version}")
+          EOF
       - name: Test
         run: |
           poetry install
           poetry run pytest
-      - name: Build wheel and source distribution
+      - name: Build wheels and source distributions
         run: |
           poetry build
+          python -m build compat/fhr --outdir dist
+          ls dist
+          test "$(ls dist | wc -l)" -eq 4
           sha256sum dist/*
+      - name: Check the built wheels install and run outside the checkout
+        run: |
+          python -m venv /tmp/release-check
+          /tmp/release-check/bin/python -m pip install dist/*.whl
+          cd /tmp
+          /tmp/release-check/bin/bioheaders --version
+          /tmp/release-check/bin/fhr-validate "$GITHUB_WORKSPACE/examples/minimal.fhr.json"
+          /tmp/release-check/bin/fhr-fasta-validate "$GITHUB_WORKSPACE/examples/example.fhr.fasta"
+          /tmp/release-check/bin/python -W error -c "import bioheaders"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
@@ -74,15 +100,17 @@ jobs:
             exit 1
           fi
           gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
-            --title "FHR File Converter $GITHUB_REF_NAME" --notes-file notes.md
+            --title "FAIR-bioHeaders Tools $GITHUB_REF_NAME" --notes-file notes.md
 
   pypi:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Uploads every file in dist/: both fair-bioheaders and fhr. Each PyPI project
+    # needs a trusted publisher for this repository, workflow and environment.
     environment:
       name: pypi
-      url: https://pypi.org/project/fhr/
+      url: https://pypi.org/project/fair-bioheaders/
     permissions:
       id-token: write
     steps:

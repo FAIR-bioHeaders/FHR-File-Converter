@@ -3,14 +3,20 @@ max-line-length = 120
 ignore = "E203, E266, E501, W503"
 
 [tool.poetry]
-name = "fhr"
-version = "0.3.3"
-description = "This tool is used to validate and convert between different FHR header serializations"
+name = "fair-bioheaders"
+version = "0.4.0"
+description = "Convert and validate FAIR-bioHeaders (FHR) metadata in JSON, YAML, FASTA, GFA, and HTML (formerly the fhr package)"
 authors = ["David Molik <david.molik@usda.gov>","Adam Wright <adam.wright@oicr.on.ca>"]
 license = "USDA-ARS"
 readme = "README.md"
-packages = [{include = "fhr"}]
-include = ["fhr/fhr_schema.json"]
+homepage = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools"
+repository = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools"
+documentation = "https://github.com/FAIR-bioHeaders/FHR-Specification"
+keywords = ["FAIR", "FHR", "genome", "metadata", "fasta", "gfa"]
+# bioheaders is the package; the fhr.py module is its deprecated alias, kept for
+# old imports. The fhr/ directory holds checkout-only files and is not installed.
+packages = [{include = "bioheaders"}, {include = "fhr.py"}]
+include = ["bioheaders/fhr_schema.json"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -33,15 +39,21 @@ pytest = [
     { version = "^8.4.2", python = "<3.10" },
 ]
 
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues"
+"Changelog" = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/blob/main/CHANGELOG.md"
+
 [tool.poetry.scripts]
-fhr-convert = "fhr.cli:convert_main"
-fhr-validate = "fhr.cli:validate_main"
-fhr-fasta-strip = "fhr.cli:fasta_strip_main"
-fhr-fasta-combine = "fhr.cli:fasta_combine_main"
-fhr-fasta-validate = "fhr.cli:fasta_validate_main"
-fhr-gfa-strip = "fhr.cli:gfa_strip_main"
-fhr-gfa-combine = "fhr.cli:gfa_combine_main"
-fhr-gfa-validate = "fhr.cli:gfa_validate_main"
+bioheaders = "bioheaders.cli:main"
+# The fhr-* commands predate bioheaders and are kept unchanged.
+fhr-convert = "bioheaders.cli:convert_main"
+fhr-validate = "bioheaders.cli:validate_main"
+fhr-fasta-strip = "bioheaders.cli:fasta_strip_main"
+fhr-fasta-combine = "bioheaders.cli:fasta_combine_main"
+fhr-fasta-validate = "bioheaders.cli:fasta_validate_main"
+fhr-gfa-strip = "bioheaders.cli:gfa_strip_main"
+fhr-gfa-combine = "bioheaders.cli:gfa_combine_main"
+fhr-gfa-validate = "bioheaders.cli:gfa_validate_main"
 
 
 
