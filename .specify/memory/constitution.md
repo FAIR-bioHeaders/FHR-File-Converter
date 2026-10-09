@@ -9,8 +9,8 @@
 ### I. The specification is the contract
 
 The converter implements FHR-Specification; it does not define it. The bundled
-`fhr/fhr_schema.json` and root `fhr_schema.json` stay byte-identical with the
-specification's `fhr.json`. Behaviour the specification does not define is
+`bioheaders/fhr_schema.json` and the `fhr/fhr_schema.json` and root
+`fhr_schema.json` copies stay byte-identical with the specification's `fhr.json`. Behaviour the specification does not define is
 proposed there first, not invented here.
 
 ### II. Exact bytes and one reading
@@ -36,8 +36,9 @@ escaped. Machine-readable microdata values take precedence over display text.
 
 ### V. Compatible, small, tested
 
-Keep runtime dependencies small. Keyword constructor fields and the eight CLI
-entry points are public API; breaking changes need a migration note and a
+Keep runtime dependencies small. Keyword constructor fields, the `bioheaders`
+command, the eight `fhr-*` CLI entry points, and the deprecated `fhr` import name
+are public API; breaking changes need a migration note and a
 version bump. Every behaviour change ships with regression tests.
 
 ## Verification gates
@@ -51,6 +52,7 @@ poetry run ruff check .
 poetry run isort . --check-only
 poetry run black . --check
 poetry build
+python -m build compat/fhr
 ```
 
 Sequence-tool changes also test metadata and sequence tampering, CRLF, ordinary

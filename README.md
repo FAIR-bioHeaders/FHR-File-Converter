@@ -1,19 +1,22 @@
-# FHR File Converter
+# FAIR-bioHeaders Tools
 
-[![Converter tests](https://github.com/FAIR-bioHeaders/FHR-File-Converter/actions/workflows/pytest.yaml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FHR-File-Converter/actions/workflows/pytest.yaml)
+[![Tests](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/actions/workflows/pytest.yaml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/actions/workflows/pytest.yaml)
 [![Specification DOI](https://img.shields.io/badge/Specification_DOI-10.5281%2Fzenodo.6762549-blue)](https://doi.org/10.5281/zenodo.6762549)
 [![File Converter DOI](https://img.shields.io/badge/File_Converter_DOI-10.5281%2Fzenodo.6762547-blue)](https://doi.org/10.5281/zenodo.6762547)
 
-Convert and validate FHR genome metadata in JSON, YAML, FASTA, GFA, and HTML
-microdata. See [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification)
-for the schema and metadata design. The current v0.3 release is version **0.3.3**.
+Convert and validate FAIR-bioHeaders Reference genome (FHR) metadata in JSON,
+YAML, FASTA, GFA, and HTML microdata. See
+[FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification) for the
+schema and metadata design. This is the `fair-bioheaders` package, version
+**0.4.0**, formerly the FHR File Converter (`fhr`); see
+[Renamed from fhr](#renamed-from-fhr).
 
 ## Install
 
 For a published release:
 
 ```bash
-python -m pip install fhr
+python -m pip install fair-bioheaders
 ```
 
 For this checkout and its development checks (Python 3.9 or later):
@@ -30,17 +33,31 @@ poetry run black . --check
 ## Commands
 
 ```bash
-fhr-convert examples/example.fhr.yaml /tmp/example.fhr.json
-fhr-validate /tmp/example.fhr.json
-fhr-fasta-combine examples/example.fhr.yaml genome.fasta -o genome.fhr.fasta
-fhr-fasta-validate genome.fhr.fasta
-fhr-fasta-strip genome.fhr.fasta genome.stripped.fasta
-fhr-gfa-combine examples/example.fhr.yaml assembly.gfa -o assembly.fhr.gfa
-fhr-gfa-validate assembly.fhr.gfa
-fhr-gfa-strip assembly.fhr.gfa assembly.stripped.gfa
+bioheaders convert examples/example.fhr.yaml /tmp/example.fhr.json
+bioheaders validate /tmp/example.fhr.json
+bioheaders combine examples/example.fhr.yaml genome.fasta -o genome.fhr.fasta
+bioheaders verify genome.fhr.fasta
+bioheaders strip genome.fhr.fasta genome.stripped.fasta
+bioheaders combine examples/example.fhr.yaml assembly.gfa -o assembly.fhr.gfa
+bioheaders verify assembly.fhr.gfa
+bioheaders strip assembly.fhr.gfa assembly.stripped.gfa
 ```
 
-`fhr-convert INPUT OUTPUT` detects `.json`, `.yaml`/`.yml`, `.fasta`/`.fa`/`.fna`,
+`combine`, `strip`, and `verify` (also called `checksum`) take the FASTA or GFA
+type from the sequence file's extension, ignoring `.gz` or `.bgz`; give
+`--type fasta` or `--type gfa` for stdin or other extensions. `bioheaders
+--version` prints the version and `bioheaders COMMAND --help` describes each
+command. The original commands remain available with the same options and output:
+
+| `bioheaders` command | Original command |
+| --- | --- |
+| `convert INPUT OUTPUT` | `fhr-convert` |
+| `validate INPUT` | `fhr-validate` |
+| `combine METADATA SEQUENCE` | `fhr-fasta-combine`, `fhr-gfa-combine` |
+| `strip INPUT [OUTPUT]` | `fhr-fasta-strip`, `fhr-gfa-strip` |
+| `verify INPUT` | `fhr-fasta-validate`, `fhr-gfa-validate` |
+
+`convert INPUT OUTPUT` detects `.json`, `.yaml`/`.yml`, `.fasta`/`.fa`/`.fna`,
 `.gfa`, and `.html` from extensions. It validates metadata before writing output;
 FASTA/GFA output contains a metadata header only. To include sequence data, use
 `combine METADATA SEQUENCE [-o OUTPUT]`, whose default output is `SEQUENCE.fhr.fasta`
@@ -49,8 +66,9 @@ are replaced. Inputs are not overwritten by sequence helpers.
 
 `strip INPUT [OUTPUT]` writes to stdout if OUTPUT is omitted. Only FHR-prefixed
 lines are removed; other bytes, including ordinary comments and CRLF endings,
-are preserved. `fhr-validate` checks metadata, while FASTA/GFA validate commands
-also verify the exact-byte file checksum. Failures exit with status 1.
+are preserved. `validate` checks metadata, while `verify` (`fhr-fasta-validate`,
+`fhr-gfa-validate`) also verifies the exact-byte file checksum. Failures exit
+with status 1.
 
 FASTA/GFA commands stream their input in 1 MiB chunks, so memory use does not grow
 with file size (about 35 MB peak for a 1 GB FASTA). Validate reads the file once;
@@ -61,13 +79,13 @@ so a failed command leaves no partial output.
 ### Compressed files and pipes
 
 ```bash
-fhr-fasta-combine examples/example.fhr.yaml genome.fa.gz    # writes genome.fhr.fasta.gz
-fhr-fasta-validate genome.fhr.fasta.gz
-fhr-fasta-strip genome.fhr.fasta.gz genome.stripped.fa.gz
-zcat genome.fa.gz | fhr-fasta-combine examples/example.fhr.yaml - > genome.fhr.fasta
-curl -sL https://example.org/genome.fhr.fasta.gz | fhr-fasta-validate -
-fhr-convert genome.fhr.fasta.gz - --to json
-fhr-convert - metadata.yaml --from json < metadata.json
+bioheaders combine examples/example.fhr.yaml genome.fa.gz    # writes genome.fhr.fasta.gz
+bioheaders verify genome.fhr.fasta.gz
+bioheaders strip genome.fhr.fasta.gz genome.stripped.fa.gz
+zcat genome.fa.gz | bioheaders combine --type fasta examples/example.fhr.yaml - > genome.fhr.fasta
+curl -sL https://example.org/genome.fhr.fasta.gz | bioheaders verify --type fasta -
+bioheaders convert genome.fhr.fasta.gz - --to json
+bioheaders convert - metadata.yaml --from json < metadata.json
 ```
 
 Gzip input, including multi-member gzip and BGZF, is recognized by its magic
@@ -82,11 +100,12 @@ compression extension. Other outputs, and stdout, are never compressed. Note tha
 `samtools faidx` rejects FASTA files containing `;` lines, compressed or not, so
 index a stripped copy for random access.
 
-`-` reads stdin or writes stdout: the input of validate, strip, combine (the
-sequence), `fhr-convert`, and `fhr-validate`, and the output of strip, convert,
-and `combine -o`. Combine of stdin writes stdout by default. `fhr-convert` and
-`fhr-validate` need `--from FORMAT` for stdin and `fhr-convert` needs `--to
-FORMAT` for stdout (`json`, `yaml`, `fasta`, `gfa`, or `html`). Stdin is read
+`-` reads stdin or writes stdout: the input of verify, strip, combine (the
+sequence), convert, and validate, and the output of strip, convert, and
+`combine -o`. Combine of stdin writes stdout by default. Convert and validate
+need `--from FORMAT` for stdin and convert needs `--to FORMAT` for stdout
+(`json`, `yaml`, `fasta`, `gfa`, or `html`); the `bioheaders` sequence commands
+need `--type` for stdin. Stdin is read
 once: combine spools the stripped sequence to a temporary file in `TMPDIR` (as
 large as the sequence) while hashing it. Strip from stdin to stdout writes as it
 reads, so an error late in the input can follow partial output; check the exit
@@ -95,7 +114,7 @@ status. Strip of a file to stdout still checks the whole file before writing.
 ## Python
 
 ```python
-from fhr import fhr
+from bioheaders import fhr
 
 metadata = fhr()
 with open("examples/example.fhr.yaml", encoding="utf-8") as stream:
@@ -110,6 +129,35 @@ trips; HTML values are escaped and explicitly typed. Keywords can initialize an
 instance (`fhr(genome="example")`), and fields remain accessible as attributes.
 The installed schema is loaded from package resources rather than the working
 directory, so commands work outside the checkout. No schema is downloaded at runtime.
+`bioheaders.cli` holds the command implementations and the byte-level helpers
+(`checksum`, `combine`, `strip_header`, `open_input`, `write_to`, and others).
+
+## Renamed from fhr
+
+In 0.4.0 the PyPI package `fhr` was renamed `fair-bioheaders`, the Python package
+`fhr` was renamed `bioheaders`, and the repository moved from FHR-File-Converter
+to [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
+(old links redirect). The new names leave room for other FAIR-bioHeaders header
+types. Nothing that worked with 0.3 stops working:
+
+- The eight `fhr-*` commands are unchanged and print no deprecation notices, so
+  scripts and pipelines that read their output or stderr keep working. They are
+  not deprecated, but new scripts can use `bioheaders`.
+- `import fhr`, `from fhr import fhr`, and `from fhr.cli import ...` still work:
+  `fhr` and `fhr.cli` are the same module objects as `bioheaders` and
+  `bioheaders.cli`. Importing `fhr` emits one `DeprecationWarning`; replace
+  `fhr` with `bioheaders` in imports. The `fhr` metadata class keeps its name.
+- `pip install fhr` installs `fhr` 0.4.0, a compatibility package without code
+  that requires the same version of `fair-bioheaders`, so existing requirements
+  and `pip install -U fhr` keep working. Prefer `fair-bioheaders` in new
+  requirements. The compatibility package also installs the `fhr-*` commands, so
+  if you uninstall `fhr` 0.4 later, restore them with
+  `python -m pip install --force-reinstall --no-deps fair-bioheaders`.
+- In an environment that still has `fhr` 0.3, run `python -m pip uninstall fhr`
+  before `python -m pip install fair-bioheaders` (or upgrade with
+  `python -m pip install -U fhr`); otherwise the old `fhr` package files shadow
+  the new compatibility module.
+- Citations and Zenodo DOIs are unchanged.
 
 Checksum helpers require SHA-512/256 support in the Python build. Some Apple
 system Python builds omit it; use an OpenSSL-enabled Python distribution.
@@ -117,7 +165,7 @@ Metadata conversion and validation do not require that hash implementation.
 
 ## v0.3 compatibility and identity
 
-- Required fields and `schemaVersion: 1` remain unchanged; the package is 0.3.3.
+- Required fields and `schemaVersion: 1` remain unchanged since v0.3.0.
 - `assemblySoftware` accepts a legacy string or optional structured software
   objects with name, URI, version, and command options. `assemblyProtocol` is a URI.
 - `vitalStats.N90` is base pairs; `vitalStats.gcContent` is 0–100 percent.
@@ -151,11 +199,12 @@ The FASTA/GFA fixtures contain verified FHR checksums; their SeqCol IDs are plac
 ## Docker
 
 ```bash
-docker build -t fhr-file-converter .
-docker run --rm fhr-file-converter --help
+docker build -t fair-bioheaders-tools .
+docker run --rm fair-bioheaders-tools --help
 ```
 
-Mount inputs/outputs into the container for conversion. See
+The image runs `fhr-convert`; use `--entrypoint bioheaders` for the other
+commands. Mount inputs/outputs into the container for conversion. See
 [CONTRIBUTING](CONTRIBUTING.md), [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md),
 [SECURITY](SECURITY.md), and [AGENTS](AGENTS.md) for project guidance.
 
