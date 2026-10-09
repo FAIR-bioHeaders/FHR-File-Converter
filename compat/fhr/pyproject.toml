@@ -13,7 +13,7 @@ authors = [
     {name = "David Molik", email = "david.molik@usda.gov"},
     {name = "Adam Wright", email = "adam.wright@oicr.on.ca"},
 ]
-license = {text = "USDA-ARS"}
+license = {file = "LICENSE"}
 dependencies = ["fair-bioheaders==0.4.0"]
 
 # The same fhr-* commands as fair-bioheaders. When pip upgrades fhr 0.3, it
