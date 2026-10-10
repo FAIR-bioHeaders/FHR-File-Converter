@@ -316,8 +316,12 @@ def test_unsupported_hash_reports_runtime_requirement(monkeypatch):
 
 
 def test_nested_checksum_names_stay_covered(metadata):
-    metadata["accessionID"]["checksum"] = "nested-value"
+    # A "checksum:" line that is not the root key stays covered. Since v0.4
+    # closes every nested object, multi-line free text is where it can occur.
+    metadata["documentation"] = "Assembly notes.\nchecksum: nested-value\n"
     combined = combine(fhr(**metadata), b">ctg\nACGT\n", "fasta")
+    assert b"checksum: nested-value" in combined
+    assert not combined.count(b";~checksum: nested-value")
     original = checksum(combined, "fasta")
     assert (
         checksum(combined.replace(b"nested-value", b"changed-value"), "fasta")
