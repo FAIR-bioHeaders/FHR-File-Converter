@@ -146,7 +146,7 @@ def test_installed_bioheaders_command(tmp_path):
 
 def test_convert_and_validate_match_fhr_commands(tmp_path):
     source = ROOT / "examples/example.fhr.yaml"
-    for extension in ("json", "fasta", "gfa", "html"):
+    for extension in ("json", "fasta", "gfa", "html", "jsonld"):
         new, old = tmp_path / f"new.{extension}", tmp_path / f"old.{extension}"
         assert bioheaders_command("convert", source, new).returncode == 0
         assert run(BIN / "fhr-convert", source, old).returncode == 0

@@ -593,6 +593,28 @@ class fhr:
     def output_json(self):
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
 
+    def input_jsonld(self, stream, ignore_unknown_terms=False, warn=None):
+        """Read canonical FHR JSON-LD (FHR-Specification docs/JSONLD.md, rule J1)."""
+        from . import jsonld
+
+        document = json.loads(_text(stream), object_pairs_hook=_unique_object)
+        self._input(
+            jsonld.from_jsonld(
+                document, ignore_unknown_terms=ignore_unknown_terms, warn=warn
+            )
+        )
+
+    def output_jsonld(self, export=None):
+        """Write JSON-LD: the metadata with an embedded context and typed nodes.
+
+        ``export`` is an optional export context with ``id``, ``url`` and
+        ``keywords`` (see ``bioheaders.jsonld.to_jsonld``).
+        """
+        from . import jsonld
+
+        document = jsonld.to_jsonld(self.__dict__, export=export)
+        return json.dumps(document, ensure_ascii=False, indent=2) + "\n"
+
     def _input_header(self, stream, prefix):
         # Match checksum line handling: split bytes, decode only header lines.
         marker = prefix.encode("ascii")

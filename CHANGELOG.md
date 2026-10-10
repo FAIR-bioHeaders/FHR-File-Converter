@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Add JSON-LD (`.jsonld`, `--from/--to jsonld`) for FHR metadata, following
+  FHR-Specification docs/JSONLD.md (feature 011): the record with its own keys, an
+  embedded bundled context and typed nodes (`Dataset`, `Taxon`, `Person`/`Organization`/`Agent`
+  from the author identifier, `PropertyValue`, `SoftwareApplication`, `VitalStats`). Output
+  is byte-identical to the specification's examples. A `documentation` URL is written as
+  `subjectOf`. Reading accepts the canonical form only (rule J1). No new runtime dependency;
+  nothing is fetched. `convert --export-context FILE` adds the dataset `@id`, `url` and
+  `keywords` and claims Bioschemas Dataset 1.0-RELEASE conformance only when complete
+  (provisional). The new `bioheaders.jsonld` API is provisional. Existing formats and
+  commands are unchanged.
 - Document the MPL-2.0 transition for new project contributions from March 2025 onward, preserve historical permissions and third-party notices, and align README/package/citation licensing. No runtime behavior changes.
 
 ## 0.4.0 — 2026-10-08
