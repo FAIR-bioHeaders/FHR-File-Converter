@@ -6,7 +6,8 @@
 ``assess_file`` reads the header of one file, offline, and returns a report
 that conforms to ``data/assessment-report.schema.json``: one result for each
 of the 41 RDA FAIR Data Maturity Model indicators, with the cited header lines
-and a suggestion for each gap. There is no score.
+and a suggestion for each gap. ``assess_release`` assesses many files (batch
+mode) and writes per-file reports and a release summary. There is no score.
 
 This Python API is provisional until version 1.0 of the report format is
 confirmed by provider feedback; the command ``bioheaders assess`` is the
@@ -40,24 +41,87 @@ def assess_file(
     record_limit=1000,
     hash_inputs=False,
     type_option=None,
+    display_path=None,
+    related_display=None,
+    online_timeout=None,
 ):
-    """Assess one file (``-`` for stdin) and return the report as a plain dict."""
-    if online:
-        raise ValueError("online checks are not available in this version")
+    """Assess one file (``-`` for stdin) and return the report as a plain dict.
+
+    With ``online=True`` the identifiers and URLs in the header are resolved
+    (research R-10; ``online_timeout`` seconds per request, default 10); file
+    contents are never sent. ``display_path`` and ``related_display`` replace
+    the paths written into the report (batch mode writes paths relative to the
+    release root).
+    """
+    online = (online_timeout or 10.0) if online else None
     if path == STANDARD_STREAM:
         with tempfile.TemporaryDirectory() as directory:
             spool = Path(directory) / "stdin"
             with spool.open("wb") as output:
                 shutil.copyfileobj(sys.stdin.buffer, output)
             return _assess(
-                spool, STANDARD_STREAM, related, record_limit, hash_inputs, type_option
+                spool,
+                STANDARD_STREAM,
+                related,
+                record_limit,
+                hash_inputs,
+                type_option,
+                related_display,
+                online,
             )
     return _assess(
-        path, os.fspath(path), related, record_limit, hash_inputs, type_option
+        path,
+        display_path or os.fspath(path),
+        related,
+        record_limit,
+        hash_inputs,
+        type_option,
+        related_display,
+        online,
     )
 
 
-def _assess(path, shown, related, record_limit, hash_inputs, type_option):
+def assess_release(
+    paths,
+    output_dir,
+    pairs=None,
+    jobs=None,
+    online=False,
+    **options,
+):
+    """Assess many files and write per-file reports and summaries to ``output_dir``.
+
+    ``paths`` are files and directories (directories are walked recursively).
+    ``pairs`` is a pairs TSV path or a mapping of derived to related paths,
+    relative to the single directory given. Other keyword options: ``related``,
+    ``include``, ``exclude``, ``record_limit``, ``hash_inputs``,
+    ``type_option``. Returns the release summary (``summary.json``) as a dict.
+    Raises ``ValueError`` for a usage error.
+    """
+    from . import batch
+
+    summary, _mismatch = batch.run(
+        paths,
+        output_dir,
+        pairs=pairs,
+        jobs=jobs,
+        online=online,
+        recursive=True,
+        **options,
+    )
+    return summary
+
+
+def _assess(
+    path,
+    shown,
+    related,
+    record_limit,
+    hash_inputs,
+    type_option,
+    related_display=None,
+    online=None,
+):
     from ..cli import _PrefixedStream, open_input
     from . import conventions, data, links, render, rubric, suggestions
     from .model import AssessmentReport, IndicatorResult, InputFile
@@ -130,6 +194,15 @@ def _assess(path, shown, related, record_limit, hash_inputs, type_option):
         truncated=reading.truncated if reading else False,
         formats=formats,
     )
+    online_checks = None
+    if online is not None:
+        from . import online as online_module
+
+        outcomes, online_checks = ({}, [])
+        if scope == "assessed":
+            outcomes, online_checks = online_module.run(evidence, timeout=online)
+        context.online = True
+        context.online_outcomes = outcomes
     context.file_name = None if shown == STANDARD_STREAM else Path(shown).name
     context.related_values = None
     check, pair = None, None
@@ -137,7 +210,7 @@ def _assess(path, shown, related, record_limit, hash_inputs, type_option):
         from . import circumstantial
         from . import related as related_module
 
-        related_path = os.fspath(related)
+        related_path = related_display or os.fspath(related)
         related_file = related_module.scan(related)
         for link in link_list:
             link.verification = links.verify(link, related_file, related_path)
@@ -178,6 +251,8 @@ def _assess(path, shown, related, record_limit, hash_inputs, type_option):
                 "A GAF header links to a gene set or ontology release, not to a genome;"
                 " see RDA-I3-02M for the ontology release."
             )
+        if online_checks and indicator.get("online_upgrade"):
+            notes += _online_notes(outcome, evidence, context.online_outcomes)
         results.append(IndicatorResult(suggestion=suggestion, notes=notes, **outcome))
     report = AssessmentReport(
         tool_version=__version__,
@@ -193,6 +268,31 @@ def _assess(path, shown, related, record_limit, hash_inputs, type_option):
         circumstantial=check,
         pair_classification=pair,
         findings=findings,
+        online=online_checks,
     ).to_json()
     render.validate_report(report)
     return report
+
+
+ONLINE_WORDS = {
+    "resolved": "resolved",
+    "not_found": "was not found",
+    "unavailable": "could not be checked",
+    "refused": "was not requested (refused by the online-check rules)",
+}
+
+
+def _online_notes(outcome, evidence, outcomes):
+    """Resolution notes; an online result never changes an offline status."""
+    cited = set(outcome.get("evidence", []))
+    notes = []
+    for line in evidence:
+        if line.id not in cited:
+            continue
+        for item in line.items:
+            value = item.value.strip() if isinstance(item.value, str) else None
+            if value in outcomes:
+                note = f"Online check: {value} {ONLINE_WORDS[outcomes[value]]}."
+                if note not in notes:
+                    notes.append(note)
+    return notes

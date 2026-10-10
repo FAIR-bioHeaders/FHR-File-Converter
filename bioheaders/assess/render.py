@@ -188,6 +188,25 @@ def _circumstantial_lines(check):
     ]
 
 
+def _online_lines(report):
+    lines = []
+    for check in report["online"]["checks"]:
+        status = (
+            f"HTTP {check['http_status']}"
+            if check["http_status"] is not None
+            else "no HTTP status"
+        )
+        final = f" -> {check['final_url']}" if check["final_url"] else ""
+        lines.append(
+            f"{check['target']}: {check['outcome'].replace('_', ' ')}, {status}, "
+            f"at {check['checked_at']} ({check['request_url']}{final})"
+        )
+    return lines or ["no identifier or URL in the header could be resolved"]
+
+
+ONLINE_HEADING = "Online checks (time-dependent; not part of the reproducible report)"
+
+
 def to_text(report):
     """The terminal report (contracts/cli.md "Outputs")."""
     titles = _titles()
@@ -216,6 +235,9 @@ def to_text(report):
             if suggestion:
                 out.append(f"      suggestion: {suggestion['text']}")
                 out.append(f"        {suggestion['line']}")
+    if report.get("online"):
+        out += ["", ONLINE_HEADING]
+        out += ["  " + line for line in _online_lines(report)]
     out += ["", "Recorded links"]
     lines = {item["id"]: item["line"] for item in report["evidence"]}
     if report.get("links"):
@@ -284,6 +306,9 @@ def to_markdown(report):
                 f"| {result['indicator']} {_cell(titles[result['indicator']])} "
                 f"| {_cell(_status(result))} | {evidence} | {proposal} |"
             )
+    if report.get("online"):
+        out += ["", f"## {ONLINE_HEADING}", ""]
+        out += [f"- {_cell(line)}" for line in _online_lines(report)]
     lines = {item["id"]: item["line"] for item in report["evidence"]}
     out += ["", "## Recorded links", ""]
     if report.get("links"):

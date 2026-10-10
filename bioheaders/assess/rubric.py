@@ -7,7 +7,9 @@
 2. Inputs that are out of scope or unreadable: not_assessed with that reason.
 3. Deferred (data-body) indicators: not_assessed (deferred-data-body).
 4. Online indicators without --online: not_assessed (online-check-not-requested).
-5. Online network failures: not_assessed (online-check-unavailable).
+5. Online indicators with --online: evidenced if a header value resolved,
+   not_evidenced if there is none or every one was not found, otherwise
+   not_assessed (online-check-unavailable).
 6. The fhr-conformance check when conformance was not assessed: its reason.
 7. Conditions over credited evidence (no upstream provenance, nothing malformed,
    nothing from an invalid FAIR-bioHeaders header), then the rubric's rules.
@@ -42,6 +44,7 @@ class Context:
         self.truncated = values.get("truncated", False)
         self.formats = values.get("formats", {})
         self.online = values.get("online", False)
+        self.online_outcomes = values.get("online_outcomes", {})
 
 
 def _rule(rule, satisfied, ids):
@@ -176,6 +179,8 @@ def evaluate(indicator, context):
         return _result(identifier, "not_assessed", indicator["reason"])
     if assessability == "online" and not context.online:
         return _result(identifier, "not_assessed", "online-check-not-requested")
+    if assessability == "online":
+        return _online(indicator, context, synonyms)
     if (
         indicator.get("check") == "fhr-conformance"
         and context.conformance is not None
@@ -226,6 +231,53 @@ def evaluate(indicator, context):
         conditions_total=len(conditions),
         findings=findings,
         satisfied=set(satisfied),
+    )
+
+
+def _online(indicator, context, synonyms):
+    """Status of an online indicator from the outcomes of its header values."""
+    found = []
+    for condition in indicator["conditions"]:
+        allowed = condition.get("scope_allowed", ["file"])
+        form = condition.get("form")
+        for evidence, item in _credited(context):
+            if item.concept != condition["concept"] or evidence.scope not in allowed:
+                continue
+            if (
+                form
+                and form not in item.forms
+                and not synonyms.form_matches(form, item.value)
+            ):
+                continue
+            if isinstance(item.value, str):
+                outcome = context.online_outcomes.get(item.value.strip())
+                found.append((evidence.id, outcome))
+    total = len(indicator["conditions"])
+    resolved = sorted(
+        {e for e, outcome in found if outcome == "resolved"}, key=lambda e: int(e[1:])
+    )
+    if resolved:
+        return _result(
+            indicator["id"],
+            "evidenced",
+            method="online",
+            evidence=resolved,
+            conditions_met=total,
+            conditions_total=total,
+        )
+    if not found or all(outcome == "not_found" for _, outcome in found):
+        return _result(
+            indicator["id"],
+            "not_evidenced",
+            method="online",
+            conditions_total=total,
+        )
+    return _result(
+        indicator["id"],
+        "not_assessed",
+        "online-check-unavailable",
+        method="online",
+        conditions_total=total,
     )
 
 
