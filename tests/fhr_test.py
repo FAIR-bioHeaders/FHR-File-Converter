@@ -1,4 +1,5 @@
 import base64
+import gzip
 import hashlib
 import json
 import os
@@ -22,7 +23,9 @@ def metadata():
     return json.loads((ROOT / "examples/example.fhr.json").read_text())
 
 
-@pytest.mark.parametrize("kind", ["json", "yaml", "fasta", "gfa", "microdata"])
+@pytest.mark.parametrize(
+    "kind", ["json", "yaml", "fasta", "gfa", "microdata", "jsonld"]
+)
 def test_round_trip(metadata, kind):
     metadata.update(
         assemblySoftware=[
@@ -146,11 +149,54 @@ def command(tmp_path, script, *args):
 def test_cli_all_formats_and_sequence_helpers(metadata, tmp_path):
     source = tmp_path / "input.json"
     source.write_text(json.dumps(metadata))
-    for extension in ("yaml", "json", "fasta", "gfa", "html"):
+    for extension in ("yaml", "json", "fasta", "gfa", "html", "jsonld", "jsonld.gz"):
         output = tmp_path / ("output." + extension)
         result = command(tmp_path, "fhr_convert.py", source, output)
         assert result.returncode == 0, result.stderr
         assert command(tmp_path, "fhr_validate.py", output).returncode == 0
+    jsonld_text = (tmp_path / "output.jsonld").read_bytes()
+    assert gzip.decompress((tmp_path / "output.jsonld.gz").read_bytes()) == jsonld_text
+    back = tmp_path / "back.json"
+    assert (
+        command(
+            tmp_path, "fhr_convert.py", tmp_path / "output.jsonld.gz", back
+        ).returncode
+        == 0
+    )
+    assert json.loads(back.read_text()) == metadata
+    piped = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "fhr_convert.py"),
+            "--from",
+            "jsonld",
+            "--to",
+            "yaml",
+            "-",
+            "-",
+        ],
+        input=jsonld_text,
+        capture_output=True,
+        cwd=tmp_path,
+    )
+    assert piped.returncode == 0, piped.stderr
+    assert yaml.safe_load(piped.stdout) == metadata
+    piped = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "fhr_convert.py"),
+            "--from",
+            "json",
+            "--to",
+            "jsonld",
+            "-",
+            "-",
+        ],
+        input=source.read_bytes(),
+        capture_output=True,
+        cwd=tmp_path,
+    )
+    assert piped.stdout == jsonld_text
     for kind, payload in (("fasta", b">ctg\r\nACGT\r\n"), ("gfa", b"S\tctg\tACGT\r\n")):
         sequence = tmp_path / ("sequence." + kind)
         sequence.write_bytes(payload)
@@ -159,6 +205,17 @@ def test_cli_all_formats_and_sequence_helpers(metadata, tmp_path):
             tmp_path, f"{kind}/fhr_{kind}_combine.py", source, sequence, "-o", combined
         )
         assert result.returncode == 0, result.stderr
+        from_jsonld = tmp_path / ("from-jsonld." + kind)
+        result = command(
+            tmp_path,
+            f"{kind}/fhr_{kind}_combine.py",
+            tmp_path / "output.jsonld",
+            sequence,
+            "-o",
+            from_jsonld,
+        )
+        assert result.returncode == 0, result.stderr
+        assert from_jsonld.read_bytes() == combined.read_bytes()
         assert (
             command(tmp_path, f"{kind}/fhr_{kind}_validate.py", combined).returncode
             == 0
@@ -218,6 +275,24 @@ def test_installed_entry_points_outside_checkout(tmp_path):
         text=True,
     )
     assert result.returncode == 0, result.stderr
+    # JSON-LD from outside the checkout: the bundled context must be installed.
+    for source, target in (
+        (ROOT / "examples/example.fhr.json", tmp_path / "out.jsonld"),
+        (tmp_path / "out.jsonld", tmp_path / "back.json"),
+    ):
+        result = subprocess.run(
+            [str(bin_path / "fhr-convert"), str(source), str(target)],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
+    assert (tmp_path / "out.jsonld").read_bytes() == (
+        ROOT / "examples/example.fhr.jsonld"
+    ).read_bytes()
+    assert json.loads((tmp_path / "back.json").read_text()) == json.loads(
+        (ROOT / "examples/example.fhr.json").read_text()
+    )
 
 
 def test_bundled_schema_and_all_examples(metadata):

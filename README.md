@@ -5,7 +5,7 @@
 [![File Converter DOI](https://img.shields.io/badge/File_Converter_DOI-10.5281%2Fzenodo.6762547-blue)](https://doi.org/10.5281/zenodo.6762547)
 
 Convert and validate FAIR-bioHeaders Reference genome (FHR) metadata in JSON,
-YAML, FASTA, GFA, and HTML microdata. See
+YAML, JSON-LD, FASTA, GFA, and HTML microdata. See
 [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification) for the
 schema and metadata design. This is the `fair-bioheaders` package, version
 **0.4.0**, formerly the FHR File Converter (`fhr`); see
@@ -57,7 +57,7 @@ command. The original commands remain available with the same options and output
 | `strip INPUT [OUTPUT]` | `fhr-fasta-strip`, `fhr-gfa-strip` |
 | `verify INPUT` | `fhr-fasta-validate`, `fhr-gfa-validate` |
 
-`convert INPUT OUTPUT` detects `.json`, `.yaml`/`.yml`, `.fasta`/`.fa`/`.fna`,
+`convert INPUT OUTPUT` detects `.json`, `.yaml`/`.yml`, `.jsonld`, `.fasta`/`.fa`/`.fna`,
 `.gfa`, and `.html` from extensions. It validates metadata before writing output;
 FASTA/GFA output contains a metadata header only. To include sequence data, use
 `combine METADATA SEQUENCE [-o OUTPUT]`, whose default output is `SEQUENCE.fhr.fasta`
@@ -116,12 +116,45 @@ support for leading `;` lines in htslib is proposed in
 sequence), convert, and validate, and the output of strip, convert, and
 `combine -o`. Combine of stdin writes stdout by default. Convert and validate
 need `--from FORMAT` for stdin and convert needs `--to FORMAT` for stdout
-(`json`, `yaml`, `fasta`, `gfa`, or `html`); the `bioheaders` sequence commands
+(`json`, `yaml`, `jsonld`, `fasta`, `gfa`, or `html`); the `bioheaders` sequence commands
 need `--type` for stdin. Stdin is read
 once: combine spools the stripped sequence to a temporary file in `TMPDIR` (as
 large as the sequence) while hashing it. Strip from stdin to stdout writes as it
 reads, so an error late in the input can follow partial output; check the exit
 status. Strip of a file to stdout still checks the whole file before writing.
+
+### JSON-LD
+
+```bash
+bioheaders convert examples/example.fhr.json example.fhr.jsonld
+bioheaders convert example.fhr.jsonld back.json
+bioheaders convert --export-context export.yaml examples/example.fhr.json page.jsonld
+```
+
+A `.jsonld` file is the FHR record with its own keys, an embedded JSON-LD context and
+`@type` on the record (`Dataset`) and its nested nodes, so the same document is FHR
+metadata and schema.org linked data. The format is defined in FHR-Specification
+[docs/JSONLD.md](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/docs/JSONLD.md),
+and `examples/example.fhr.jsonld` is byte-identical to the specification's example. The
+context is bundled (`bioheaders/fhr.context.jsonld`, a copy of the specification's
+`jsonld/fhr.context.jsonld`) and never fetched; writing and reading need no extra package and
+work offline.
+
+- Authors are typed `Person` with an ORCID iD, `Organization` with a ROR ID, and otherwise
+  `Agent` (not classified). A `documentation` value that is an absolute URL is written as
+  `subjectOf`, text as `documentation` (`schema:description`).
+- Nested keys that the context does not define, such as `taxon.checksum`, are kept and
+  reported: `FHR: JSON-LD: taxon.checksum has no JSON-LD term; linked-data consumers will
+  ignore it`.
+- `--export-context FILE` (JSON-LD output only, provisional) reads a YAML or JSON mapping
+  with the dataset's `id`, landing-page `url` and `keywords`, which are not FHR fields. The
+  output then claims Bioschemas Dataset 1.0-RELEASE conformance (`conformsTo`) only when every
+  minimum property is present, and otherwise names the missing ones.
+- Reading accepts the canonical form (rule J1): the bundled context, embedded or by its
+  raw-main URL, and no JSON-LD keyword except `@type` (and a root `@id`). `@context` and
+  `@type` are set aside, `subjectOf` becomes `documentation`, and the export terms are set
+  aside with a warning; the rest is validated like JSON. Other JSON-LD forms (expanded, or
+  compacted with another context) are not read yet.
 
 ## Python
 
@@ -143,6 +176,11 @@ The installed schema is loaded from package resources rather than the working
 directory, so commands work outside the checkout. No schema is downloaded at runtime.
 `bioheaders.cli` holds the command implementations and the byte-level helpers
 (`checksum`, `combine`, `strip_header`, `open_input`, `write_to`, and others).
+
+JSON-LD uses `output_jsonld(export=None)` and `input_jsonld(stream)`. The
+`bioheaders.jsonld` module is a provisional API: `CONTEXT` (the bundled context),
+`KNOWN_CONTEXT_URLS`, `to_jsonld(data, export=None)`, `from_jsonld(document)`,
+`is_canonical(document)`, `unmapped_keys(data)` and `bioschemas_missing(document)`.
 
 ## Renamed from fhr
 

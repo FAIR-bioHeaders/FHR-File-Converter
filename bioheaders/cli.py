@@ -26,6 +26,7 @@ from . import (
     __version__,
     fhr,
     header_text,
+    jsonld,
     load_yaml,
     read_chunks,
     sequence_parts,
@@ -40,6 +41,7 @@ FORMATS = {
     ".fna": "fasta",
     ".gfa": "gfa",
     ".html": "microdata",
+    ".jsonld": "jsonld",
 }
 
 
@@ -52,6 +54,7 @@ FORMAT_NAMES = {
     "fasta": "fasta",
     "gfa": "gfa",
     "html": "microdata",
+    "jsonld": "jsonld",
 }
 GZIP_MAGIC = b"\x1f\x8b"
 STANDARD_STREAM = "-"
@@ -219,8 +222,8 @@ def read_metadata(path, content=None, format_name=None):
     return data
 
 
-def write_metadata(data, path, format_name=None):
-    content = getattr(data, "output_" + (format_name or file_format(path)))()
+def write_metadata(data, path, format_name=None, **options):
+    content = getattr(data, "output_" + (format_name or file_format(path)))(**options)
     if path == STANDARD_STREAM or is_compressed_path(path):
         write_to(path, lambda output: output.write(content.encode("utf-8")))
     else:
@@ -512,16 +515,52 @@ def _convert_arguments(args_parser):
     args_parser.add_argument("output", help="output file, or - for stdout")
     _format_option(args_parser, "--from", "input_format", "input format")
     _format_option(args_parser, "--to", "output_format", "output format")
+    args_parser.add_argument(
+        "--export-context",
+        metavar="FILE",
+        help="JSON-LD output only: YAML or JSON file with the dataset's id, url and "
+        "keywords, which are not FHR fields; Bioschemas Dataset conformance is "
+        "claimed only when every minimum property is present (provisional)",
+    )
+
+
+def _read_export_context(path):
+    with open_input(path) as stream:
+        return load_yaml(stream.read().decode("utf-8"))
 
 
 def _convert(args):
     input_format = _format(args.input, args.input_format)
     output_format = _format(args.output, args.output_format)
+    if args.export_context and output_format != "jsonld":
+        raise ValueError("--export-context applies only to JSON-LD output")
     if _output_is_input(args.output, [args.input]):
         raise ValueError("Output must differ from the input file")
+    options = {}
+    if args.export_context:
+        options["export"] = jsonld.check_export(
+            _read_export_context(args.export_context)
+        )
     data = read_metadata(args.input, format_name=input_format)
     data.fhr_validate()
-    write_metadata(data, args.output, output_format)
+    if output_format == "jsonld":
+        for path in jsonld.unmapped_keys(data.__dict__):
+            print(
+                f"FHR: JSON-LD: {path} has no JSON-LD term; linked-data consumers "
+                "will ignore it",
+                file=sys.stderr,
+            )
+        if "export" in options:
+            missing = jsonld.bioschemas_missing(
+                jsonld.to_jsonld(data.__dict__, export=options["export"])
+            )
+            if missing:
+                print(
+                    "FHR: JSON-LD: not claiming Bioschemas Dataset conformance; "
+                    f"missing: {', '.join(missing)}",
+                    file=sys.stderr,
+                )
+    write_metadata(data, args.output, output_format, **options)
 
 
 def _validate_arguments(args_parser):
@@ -636,7 +675,7 @@ def _sequence_command(description, add_arguments, perform, kind, path, what):
 
 def convert_main():
     return _command(
-        "Convert FHR metadata between JSON, YAML, FASTA, GFA, and HTML",
+        "Convert FHR metadata between JSON, YAML, JSON-LD, FASTA, GFA, and HTML",
         _convert_arguments,
         _convert,
     )
@@ -909,8 +948,8 @@ def _assess(args):
 SUBCOMMANDS = (
     Subcommand(
         "convert",
-        "convert metadata between JSON, YAML, FASTA, GFA, and HTML",
-        "Convert FHR metadata between JSON, YAML, FASTA, GFA, and HTML",
+        "convert metadata between JSON, YAML, JSON-LD, FASTA, GFA, and HTML",
+        "Convert FHR metadata between JSON, YAML, JSON-LD, FASTA, GFA, and HTML",
         _convert_arguments,
         _convert,
     ),
@@ -964,7 +1003,7 @@ def main():
     def action():
         args_parser = parser(
             "Convert, validate, combine, strip, and verify FAIR-bioHeaders (FHR) "
-            "metadata in JSON, YAML, FASTA, GFA, and HTML"
+            "metadata in JSON, YAML, JSON-LD, FASTA, GFA, and HTML"
         )
         subparsers = args_parser.add_subparsers(
             title="commands", dest="command", metavar="COMMAND"
