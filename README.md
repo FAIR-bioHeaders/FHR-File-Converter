@@ -156,6 +156,50 @@ work offline.
   aside with a warning; the rest is validated like JSON. Other JSON-LD forms (expanded, or
   compacted with another context) are not read yet.
 
+### FAIR header assessment
+
+```bash
+bioheaders assess GCF_000002985.6_WBcel235_genomic.gff.gz          # terminal report
+bioheaders assess --format json annotations.gff3.gz > report.json   # machine-readable
+bioheaders assess --related genomic.fa.gz annotations.gff3.gz       # check the recorded genome link
+bioheaders assess --recursive --pairs pairs.tsv --output reports/9.1.0 release-9.1.0/
+```
+
+`assess` reads the header of a FASTA, GFF3, GAF, VCF, GFA or other text file (gzip and BGZF
+too) and reports, for each of the 41 RDA FAIR Data Maturity Model indicators, a status
+(`evidenced`, `partially evidenced`, `not evidenced`, `not applicable` or `not assessed`) with
+the header lines it rests on and, for each gap, a line to add in the file's own convention. It
+is a checklist, not a score: nothing adds the statuses up. The guideline behind it is
+FHR-Specification
+[docs/FAIR_HEADER_GUIDELINE.md](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/docs/FAIR_HEADER_GUIDELINE.md),
+and the specification's `assessment/` fixtures pin the expected results
+(feature 010).
+
+- A FAIR-bioHeaders header gets a separate conformance result against the bundled schema; the
+  schema URL in the header is never fetched.
+- `--related FILE` verifies the links the header records (FHR checksum, SeqCol digest, VCF
+  `##contig` MD5s, assembly accessions) against a related file, usually the genome, and
+  reports name and length agreement separately as circumstantial evidence.
+- Batch mode (several files, or a directory with `--recursive`) needs `--output DIR`. It
+  writes one JSON and one Markdown report per file, mirroring the input tree, and
+  `summary.json`, `summary.md` and `summary.tsv` with per-indicator counts. `--pairs` maps
+  derived files to related files (`derived<TAB>related`, relative to the directory);
+  `--include`/`--exclude` select files and `--jobs` sets the number of processes. Re-running on
+  unchanged files gives byte-identical output, so `diff` shows what changed between releases.
+- **Offline by default.** No network access is made unless `--online` is given. Then only the
+  identifiers and URLs found in the header are resolved (DOIs through doi.org, CURIEs through
+  identifiers.org, http(s) URLs as given), never file contents; private and loopback
+  addresses are refused, and the report marks the results as time-dependent.
+- Exit codes: 0 assessed (whatever the statuses), 1 an input could not be read, 2 usage error,
+  3 with `--fail-on-mismatch` when a recorded link does not match the related file.
+
+`scripts/bench_assess.py` (checkout only) times batch mode on a synthetic 200-file release.
+
+Indicator identifiers and titles from: FAIR Data Maturity Model Working Group (2020). FAIR Data
+Maturity Model. Specification and Guidelines. Research Data Alliance. doi:10.15497/rda00050.
+Licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). File-header interpretations
+are adaptations by FAIR-bioHeaders and are not endorsed by the RDA.
+
 ## Python
 
 ```python
@@ -181,6 +225,11 @@ JSON-LD uses `output_jsonld(export=None)` and `input_jsonld(stream)`. The
 `bioheaders.jsonld` module is a provisional API: `CONTEXT` (the bundled context),
 `KNOWN_CONTEXT_URLS`, `to_jsonld(data, export=None)`, `from_jsonld(document)`,
 `is_canonical(document)`, `unmapped_keys(data)` and `bioschemas_missing(document)`.
+
+`bioheaders.assess` is a provisional API: `assess_file(path, related=None, online=False,
+record_limit=1000)` returns one report and `assess_release(paths, output_dir, pairs=None,
+jobs=None, online=False)` writes a release's reports and returns its summary, as plain dicts
+that follow the JSON Schemas in `bioheaders/assess/data/`.
 
 ## Renamed from fhr
 
