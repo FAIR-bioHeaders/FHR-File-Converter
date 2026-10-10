@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/main/bioheaders/assess/data/rubric.schema.json",
+  "title": "FAIR-bioHeaders assessment rubric (rubric.json)",
+  "description": "RDA FAIR Data Maturity Model indicators with file-header interpretations (FR-012). See contracts/data-files.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rubric_version", "source", "attribution", "indicators"],
+  "properties": {
+    "rubric_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "version", "doi", "licence"],
+      "properties": {
+        "title": {"const": "FAIR Data Maturity Model. Specification and Guidelines"},
+        "version": {"const": "1.0"},
+        "doi": {"const": "10.15497/rda00050"},
+        "licence": {"const": "CC-BY-4.0"}
+      }
+    },
+    "attribution": {"type": "string", "pattern": "10\\.15497/rda00050"},
+    "indicators": {
+      "type": "array",
+      "minItems": 41,
+      "maxItems": 41,
+      "items": {"$ref": "#/$defs/indicator"}
+    }
+  },
+  "$defs": {
+    "convention": {"enum": ["fair-bioheaders", "gff3-pragma", "gff3-directive", "gaf", "vcf-meta", "fasta-defline"]},
+    "rule": {
+      "oneOf": [
+        {"enum": ["all", "any", "never"]},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min"],
+          "properties": {"min": {"type": "integer", "minimum": 1}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["any_of"],
+          "description": "Holds when at least one of the named conditions holds.",
+          "properties": {"any_of": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["all_of"],
+          "description": "Holds when every named condition holds.",
+          "properties": {"all_of": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}}
+        }
+      ]
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "concept"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+        "concept": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+        "form": {"type": "string", "description": "Value-form id from synonyms.json; absent = any non-empty value."},
+        "scope_allowed": {
+          "type": "array",
+          "items": {"enum": ["file", "first-record"]},
+          "default": ["file"]
+        },
+        "description": {"type": "string"}
+      }
+    },
+    "indicator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "principle", "priority", "target", "assessability", "interpretation", "guideline_item"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^RDA-(F1|F2|F3|F4|A1|A1\\.1|A1\\.2|A2|I1|I2|I3|R1|R1\\.1|R1\\.2|R1\\.3)-0[1-5][MD]$"},
+        "title": {"type": "string", "minLength": 1, "description": "RDA short title, verbatim (CC BY 4.0)."},
+        "principle": {"type": "string"},
+        "priority": {"enum": ["essential", "important", "useful"]},
+        "target": {"enum": ["metadata", "data"]},
+        "assessability": {"enum": ["offline", "online", "not_applicable", "deferred"]},
+        "reason": {"enum": ["embedded-metadata", "repository-level", "object-in-hand", "deferred-data-body"]},
+        "interpretation": {"type": "string", "minLength": 1, "description": "File-header interpretation; an adaptation by FAIR-bioHeaders."},
+        "conditions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/condition"}},
+        "evidenced_when": {"$ref": "#/$defs/rule"},
+        "partial_when": {"$ref": "#/$defs/rule"},
+        "check": {"enum": ["derived-link", "fhr-conformance", "format-declared", "record-sample-parse", "resolve"]},
+        "online_upgrade": {"type": "boolean", "default": false},
+        "guideline_item": {"oneOf": [{"type": "string", "pattern": "^G[1-8]$"}, {"const": "out-of-scope"}]},
+        "suggestions": {
+          "type": "object",
+          "propertyNames": {"$ref": "#/$defs/convention"},
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "line"],
+            "properties": {
+              "text": {"type": "string", "minLength": 1},
+              "line": {"type": "string", "minLength": 1, "description": "May use {value}, {related.<field>} or a <labelled placeholder>; nothing else."}
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"assessability": {"enum": ["not_applicable", "deferred"]}}},
+          "then": {"required": ["reason"], "not": {"required": ["conditions"]}}
+        },
+        {
+          "if": {"properties": {"assessability": {"const": "not_applicable"}}},
+          "then": {"properties": {"reason": {"enum": ["embedded-metadata", "repository-level", "object-in-hand"]}, "guideline_item": {"const": "out-of-scope"}}}
+        },
+        {
+          "if": {"properties": {"assessability": {"const": "deferred"}}},
+          "then": {"properties": {"reason": {"const": "deferred-data-body"}}}
+        },
+        {
+          "if": {"properties": {"assessability": {"enum": ["offline", "online"]}}},
+          "then": {
+            "required": ["conditions", "evidenced_when", "partial_when", "suggestions"],
+            "not": {"required": ["reason"]},
+            "properties": {"suggestions": {"required": ["fair-bioheaders"]}}
+          }
+        }
+      ]
+    }
+  }
+}

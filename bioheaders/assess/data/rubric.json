@@ -1,0 +1,1424 @@
+{
+  "rubric_version": "1.0.0",
+  "source": {
+    "title": "FAIR Data Maturity Model. Specification and Guidelines",
+    "version": "1.0",
+    "doi": "10.15497/rda00050",
+    "licence": "CC-BY-4.0"
+  },
+  "attribution": "Indicator identifiers and titles from: FAIR Data Maturity Model Working Group (2020). FAIR Data Maturity Model. Specification and Guidelines. Research Data Alliance. doi:10.15497/rda00050. Licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). File-header interpretations are adaptations by FAIR-bioHeaders and are not endorsed by the RDA.",
+  "indicators": [
+    {
+      "id": "RDA-F1-01M",
+      "title": "Metadata is identified by a persistent identifier",
+      "principle": "F1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "embedded-metadata",
+      "interpretation": "Adapted: an embedded header has no identity apart from the file that carries it; the file's own identity is assessed under RDA-F1-01D and RDA-F1-02D. A separate metadata record is a repository-level matter.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-F1-01D",
+      "title": "Data is identified by a persistent identifier",
+      "principle": "F1",
+      "priority": "essential",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header states an identifier of this file's own data in a scheme of the pinned identifier-scheme table that is flagged persistent (DOI, versioned INSDC/RefSeq assembly accession, registered CURIE). Names such as GRCh38 are not identifiers, and an accession of the genome that a derived file annotates is credited under RDA-I3-04M, not here.",
+      "conditions": [
+        {
+          "id": "identifier-stated",
+          "concept": "data-identifier"
+        },
+        {
+          "id": "persistent-scheme",
+          "concept": "data-identifier",
+          "form": "registered-id"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "persistent-scheme"
+        ]
+      },
+      "partial_when": "any",
+      "online_upgrade": true,
+      "guideline_item": "G1",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
+        },
+        "gff3-pragma": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "vcf-meta": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "gaf": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        }
+      }
+    },
+    {
+      "id": "RDA-F1-02M",
+      "title": "Metadata is identified by a globally unique identifier",
+      "principle": "F1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "embedded-metadata",
+      "interpretation": "Adapted: as RDA-F1-01M: the header shares the identity of its file.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-F1-02D",
+      "title": "Data is identified by a globally unique identifier",
+      "principle": "F1",
+      "priority": "essential",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header states a globally unique identifier of this file's data: an identifier in a registered scheme, or a content digest in a defined algorithm (FHR checksum, SeqCol digest). A per-record MD5 in the first FASTA defline is record-level evidence and gives at most partial credit.",
+      "conditions": [
+        {
+          "id": "registered-identifier",
+          "concept": "data-identifier",
+          "form": "registered-id"
+        },
+        {
+          "id": "content-checksum",
+          "concept": "checksum",
+          "form": "fhr-checksum"
+        },
+        {
+          "id": "seqcol-digest",
+          "concept": "seqcol-id",
+          "form": "seqcol-digest"
+        },
+        {
+          "id": "record-digest",
+          "concept": "record-digest",
+          "form": "md5",
+          "scope_allowed": [
+            "file",
+            "first-record"
+          ]
+        },
+        {
+          "id": "identifier-stated",
+          "concept": "data-identifier"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "registered-identifier",
+          "content-checksum",
+          "seqcol-digest",
+          "record-digest"
+        ]
+      },
+      "partial_when": "any",
+      "guideline_item": "G1",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
+        },
+        "gff3-pragma": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "vcf-meta": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "gaf": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        }
+      }
+    },
+    {
+      "id": "RDA-F2-01M",
+      "title": "Rich metadata is provided to allow discovery",
+      "principle": "F2",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header carries a fixed set of six discovery elements: subject name, taxon, version, creator, date and an identifier of the data. All six are evidenced; three to five are partial.",
+      "conditions": [
+        {
+          "id": "subject",
+          "concept": "subject-name"
+        },
+        {
+          "id": "taxon",
+          "concept": "taxon"
+        },
+        {
+          "id": "version",
+          "concept": "version"
+        },
+        {
+          "id": "creator",
+          "concept": "creator"
+        },
+        {
+          "id": "date",
+          "concept": "date-created"
+        },
+        {
+          "id": "identifier",
+          "concept": "data-identifier"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": {
+        "min": 3
+      },
+      "guideline_item": "G2",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "State the version or release of this file's data.",
+          "line": "#~version: <version or release of this file's data, e.g. WS298>"
+        },
+        "gff3-pragma": {
+          "text": "State the version or release of this file's data.",
+          "line": "#!version <version or release of this file's data, e.g. WS298>"
+        },
+        "vcf-meta": {
+          "text": "State the version or release of this file's data.",
+          "line": "##version=<version or release of this file's data, e.g. WS298>"
+        },
+        "gaf": {
+          "text": "State the version or release of this file's data.",
+          "line": "!version: <version or release of this file's data, e.g. WS298>"
+        }
+      }
+    },
+    {
+      "id": "RDA-F3-01M",
+      "title": "Metadata includes the identifier for the data",
+      "principle": "F3",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header contains an identifier of this file's data (identifier, accession, FHR checksum or SeqCol digest) under a key whose meaning is that identifier.",
+      "conditions": [
+        {
+          "id": "identifier",
+          "concept": "data-identifier"
+        },
+        {
+          "id": "checksum",
+          "concept": "checksum",
+          "form": "fhr-checksum"
+        },
+        {
+          "id": "seqcol",
+          "concept": "seqcol-id",
+          "form": "seqcol-digest"
+        }
+      ],
+      "evidenced_when": "any",
+      "partial_when": "never",
+      "guideline_item": "G1",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
+        },
+        "gff3-pragma": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "vcf-meta": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "gaf": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        }
+      }
+    },
+    {
+      "id": "RDA-F4-01M",
+      "title": "Metadata is offered in such a way that it can be harvested and indexed",
+      "principle": "F4",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "repository-level",
+      "interpretation": "Adapted: indexing is done by a searchable resource, not by a file; whether the header can be read by machines is assessed under RDA-I1-01M.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A1-01M",
+      "title": "Metadata contains information to enable the user to get access to the data",
+      "principle": "A1",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header says where the data can be obtained, as a URL. An identifier of the data without a URL is partial.",
+      "conditions": [
+        {
+          "id": "access-url",
+          "concept": "access-url",
+          "form": "url"
+        },
+        {
+          "id": "identifier",
+          "concept": "data-identifier"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "access-url"
+        ]
+      },
+      "partial_when": "any",
+      "guideline_item": "G8",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
+        },
+        "gff3-pragma": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "vcf-meta": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "gaf": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        }
+      }
+    },
+    {
+      "id": "RDA-A1-02M",
+      "title": "Metadata can be accessed manually",
+      "principle": "A1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "embedded-metadata",
+      "interpretation": "Adapted: anyone holding the file can read a text header; the route to the metadata is the file distribution.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A1-02D",
+      "title": "Data can be accessed manually",
+      "principle": "A1",
+      "priority": "essential",
+      "target": "data",
+      "assessability": "not_applicable",
+      "reason": "object-in-hand",
+      "interpretation": "Adapted: the assessed object is the file itself; how to obtain it again is covered by RDA-A1-01M.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A1-03M",
+      "title": "Metadata identifier resolves to a metadata record",
+      "principle": "A1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "embedded-metadata",
+      "interpretation": "Adapted: the header has no metadata identifier of its own (see RDA-F1-01M).",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A1-03D",
+      "title": "Data identifier resolves to a digital object",
+      "principle": "A1",
+      "priority": "essential",
+      "target": "data",
+      "assessability": "online",
+      "interpretation": "Adapted: with the opt-in online check only, the identifier of this file's data resolves through doi.org or identifiers.org. File contents are never sent.",
+      "conditions": [
+        {
+          "id": "identifier",
+          "concept": "data-identifier",
+          "form": "registered-id"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "never",
+      "check": "resolve",
+      "guideline_item": "G8",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
+        },
+        "gff3-pragma": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "vcf-meta": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        },
+        "gaf": {
+          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
+        }
+      }
+    },
+    {
+      "id": "RDA-A1-04M",
+      "title": "Metadata is accessed through standardised protocol",
+      "principle": "A1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "embedded-metadata",
+      "interpretation": "Adapted: the header is delivered with the file.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A1-04D",
+      "title": "Data is accessible through standardised protocol",
+      "principle": "A1",
+      "priority": "essential",
+      "target": "data",
+      "assessability": "online",
+      "interpretation": "Adapted: with the opt-in online check only, the stated data URL uses a standard protocol and the request succeeds.",
+      "conditions": [
+        {
+          "id": "access-url",
+          "concept": "access-url",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "never",
+      "check": "resolve",
+      "guideline_item": "G8",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
+        },
+        "gff3-pragma": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "vcf-meta": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "gaf": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        }
+      }
+    },
+    {
+      "id": "RDA-A1-05D",
+      "title": "Data can be accessed automatically",
+      "principle": "A1",
+      "priority": "important",
+      "target": "data",
+      "assessability": "online",
+      "interpretation": "Adapted: with the opt-in online check only, the stated identifier or URL can be retrieved without interaction.",
+      "conditions": [
+        {
+          "id": "access-url",
+          "concept": "access-url",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "never",
+      "check": "resolve",
+      "guideline_item": "G8",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
+        },
+        "gff3-pragma": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "vcf-meta": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "gaf": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        }
+      }
+    },
+    {
+      "id": "RDA-A1.1-01M",
+      "title": "Metadata is accessible through a free access protocol",
+      "principle": "A1.1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "embedded-metadata",
+      "interpretation": "Adapted: the header is delivered with the file.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A1.1-01D",
+      "title": "Data is accessible through a free access protocol",
+      "principle": "A1.1",
+      "priority": "important",
+      "target": "data",
+      "assessability": "online",
+      "interpretation": "Adapted: with the opt-in online check only, the successful retrieval used an open protocol (http or https).",
+      "conditions": [
+        {
+          "id": "access-url",
+          "concept": "access-url",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "never",
+      "check": "resolve",
+      "guideline_item": "G8",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
+        },
+        "gff3-pragma": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "vcf-meta": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        },
+        "gaf": {
+          "text": "Say where this file can be obtained, as a URL.",
+          "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
+        }
+      }
+    },
+    {
+      "id": "RDA-A1.2-01D",
+      "title": "Data is accessible through an access protocol that supports authentication and authorisation",
+      "principle": "A1.2",
+      "priority": "useful",
+      "target": "data",
+      "assessability": "not_applicable",
+      "reason": "repository-level",
+      "interpretation": "Adapted: a property of the distribution service, which applies where access must be controlled.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-A2-01M",
+      "title": "Metadata is guaranteed to remain available after data is no longer available",
+      "principle": "A2",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "not_applicable",
+      "reason": "repository-level",
+      "interpretation": "Adapted: embedded metadata disappears with the file by construction. Deposit the header in a durable record (landing page or archive) as well.",
+      "guideline_item": "out-of-scope"
+    },
+    {
+      "id": "RDA-I1-01M",
+      "title": "Metadata uses knowledge representation expressed in standardised format",
+      "principle": "I1",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header lines follow a published header convention that the header declares: a GFF3, VCF or GAF format directive, or a FAIR-bioHeaders schema. Free comment lines are not a standardised representation.",
+      "conditions": [
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        },
+        {
+          "id": "header-schema",
+          "concept": "header-schema",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "any",
+      "partial_when": "never",
+      "guideline_item": "G3",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##gff-version <GFF version, e.g. 3>"
+        },
+        "vcf-meta": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
+        },
+        "gaf": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "!gaf-version: <GAF version, e.g. 2.2>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
+        }
+      }
+    },
+    {
+      "id": "RDA-I1-01D",
+      "title": "Data uses knowledge representation expressed in standardised format",
+      "principle": "I1",
+      "priority": "important",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the data format is a registered standard and is declared in the file (##gff-version, ##fileformat, !gaf-version, or a FAIR-bioHeaders schema). A format recognised only by inspecting the content is not evidence.",
+      "conditions": [
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        },
+        {
+          "id": "header-schema",
+          "concept": "header-schema",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "any",
+      "partial_when": "never",
+      "check": "format-declared",
+      "guideline_item": "G3",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##gff-version <GFF version, e.g. 3>"
+        },
+        "vcf-meta": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
+        },
+        "gaf": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "!gaf-version: <GAF version, e.g. 2.2>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
+        }
+      }
+    },
+    {
+      "id": "RDA-I1-02M",
+      "title": "Metadata uses machine-understandable knowledge representation",
+      "principle": "I1",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header declares a machine-readable schema and maps its keys to IRIs (for example with a JSON-LD context). A declared schema without IRI mappings is partial; the shared core has no IRI mappings yet.",
+      "conditions": [
+        {
+          "id": "header-schema",
+          "concept": "header-schema",
+          "form": "url"
+        },
+        {
+          "id": "key-iris",
+          "concept": "context-iri",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "any",
+      "guideline_item": "G3",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Map the header keys to IRIs with a JSON-LD context, so that the metadata is machine-understandable.",
+          "line": "#~'@context': <URL of a JSON-LD context for the header keys, e.g. https://example.org/context.jsonld>"
+        }
+      }
+    },
+    {
+      "id": "RDA-I1-02D",
+      "title": "Data uses machine-understandable knowledge representation",
+      "principle": "I1",
+      "priority": "important",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header gives typed, machine-readable definitions of the data's own fields (VCF INFO and FORMAT lines) or names the vocabulary of the records (GFF3 ##feature-ontology). A declared format without such definitions is partial.",
+      "conditions": [
+        {
+          "id": "field-definitions",
+          "concept": "field-definition"
+        },
+        {
+          "id": "vocabulary",
+          "concept": "ontology-version"
+        },
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "field-definitions",
+          "vocabulary"
+        ]
+      },
+      "partial_when": "any",
+      "guideline_item": "G4",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Name the Sequence Ontology release used for feature types.",
+          "line": "##feature-ontology <URL of the Sequence Ontology release used, e.g. http://purl.obolibrary.org/obo/so/2024-11-18/so.owl>"
+        },
+        "gaf": {
+          "text": "Name the Gene Ontology release used.",
+          "line": "!go-version: <PURL of the GO release used, e.g. http://purl.obolibrary.org/obo/go/releases/2026-08-02/go.owl>"
+        },
+        "fair-bioheaders": {
+          "text": "Point to documentation that defines the fields and vocabularies of the records.",
+          "line": "#~documentation: <URL of the documentation of the record fields, e.g. https://example.org/fields.html>"
+        }
+      }
+    },
+    {
+      "id": "RDA-I2-01M",
+      "title": "Metadata uses FAIR-compliant vocabularies",
+      "principle": "I2",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: values backed by a vocabulary are persistent IRIs from registered vocabularies: the taxon as an identifiers.org taxonomy IRI, people as ORCID iDs. A label or a non-persistent web page URL is partial.",
+      "conditions": [
+        {
+          "id": "taxon-iri",
+          "concept": "taxon",
+          "form": "taxonomy-iri"
+        },
+        {
+          "id": "orcid",
+          "concept": "creator",
+          "form": "orcid"
+        },
+        {
+          "id": "taxon-stated",
+          "concept": "taxon"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "taxon-iri",
+          "orcid"
+        ]
+      },
+      "partial_when": "any",
+      "online_upgrade": true,
+      "guideline_item": "G4",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "##species https://identifiers.org/taxonomy:{value}"
+        },
+        "vcf-meta": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "##taxon=https://identifiers.org/taxonomy:{value}"
+        },
+        "gaf": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "!taxon: https://identifiers.org/taxonomy:{value}"
+        },
+        "fair-bioheaders": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "#~taxon: {name: <species name, e.g. Caenorhabditis elegans>, uri: https://identifiers.org/taxonomy:{value}}"
+        }
+      }
+    },
+    {
+      "id": "RDA-I2-01D",
+      "title": "Data uses FAIR-compliant vocabularies",
+      "principle": "I2",
+      "priority": "useful",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header names the vocabularies and versions used in the records (GFF3 ##feature-ontology, GAF !go-version). A format that mandates a vocabulary (GFF3, GAF) without a stated version is partial. Record values are not scanned.",
+      "conditions": [
+        {
+          "id": "vocabulary-version",
+          "concept": "ontology-version"
+        },
+        {
+          "id": "vocabulary-bound-format",
+          "concept": "format-version",
+          "form": "vocabulary-bound-format"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "vocabulary-version"
+        ]
+      },
+      "partial_when": "any",
+      "guideline_item": "G4",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Name the Sequence Ontology release used for feature types.",
+          "line": "##feature-ontology <URL of the Sequence Ontology release used, e.g. http://purl.obolibrary.org/obo/so/2024-11-18/so.owl>"
+        },
+        "gaf": {
+          "text": "Name the Gene Ontology release used.",
+          "line": "!go-version: <PURL of the GO release used, e.g. http://purl.obolibrary.org/obo/go/releases/2026-08-02/go.owl>"
+        },
+        "fair-bioheaders": {
+          "text": "Point to documentation that defines the fields and vocabularies of the records.",
+          "line": "#~documentation: <URL of the documentation of the record fields, e.g. https://example.org/fields.html>"
+        }
+      }
+    },
+    {
+      "id": "RDA-I3-01M",
+      "title": "Metadata includes references to other metadata",
+      "principle": "I3",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header refers to records about related entities by identifier: a taxonomy IRI, an ORCID iD, a DOI of an article. A taxonomy web page URL is partial.",
+      "conditions": [
+        {
+          "id": "taxon-iri",
+          "concept": "taxon",
+          "form": "taxonomy-iri"
+        },
+        {
+          "id": "orcid",
+          "concept": "creator",
+          "form": "orcid"
+        },
+        {
+          "id": "article-doi",
+          "concept": "scholarly-article",
+          "form": "doi"
+        },
+        {
+          "id": "taxon-url",
+          "concept": "taxon",
+          "form": "ncbi-taxonomy-url"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "taxon-iri",
+          "orcid",
+          "article-doi"
+        ]
+      },
+      "partial_when": "any",
+      "guideline_item": "G4",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "##species https://identifiers.org/taxonomy:{value}"
+        },
+        "vcf-meta": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "##taxon=https://identifiers.org/taxonomy:{value}"
+        },
+        "gaf": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "!taxon: https://identifiers.org/taxonomy:{value}"
+        },
+        "fair-bioheaders": {
+          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "line": "#~taxon: {name: <species name, e.g. Caenorhabditis elegans>, uri: https://identifiers.org/taxonomy:{value}}"
+        }
+      }
+    },
+    {
+      "id": "RDA-I3-01D",
+      "title": "Data includes references to other data",
+      "principle": "I3",
+      "priority": "useful",
+      "target": "data",
+      "assessability": "deferred",
+      "reason": "deferred-data-body",
+      "interpretation": "Adapted: cross-references inside the records (GFF3 Dbxref, GAF DB:ID columns, VCF ID). Record bodies are not scanned in this release.",
+      "guideline_item": "G5"
+    },
+    {
+      "id": "RDA-I3-02M",
+      "title": "Metadata includes references to other data",
+      "principle": "I3",
+      "priority": "useful",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header refers to another dataset: the assembly or reference sequence (checksum, digest, versioned accession or URL), or an ontology release by URL. A name only is partial. Matching sequence names is circumstantial and not credited.",
+      "conditions": [
+        {
+          "id": "identifier-reference",
+          "concept": "assembly-accession",
+          "description": "checksum, seqcol, sequence-digests, accession or file URL link"
+        },
+        {
+          "id": "ontology-reference",
+          "concept": "ontology-version",
+          "form": "url"
+        },
+        {
+          "id": "name-reference",
+          "concept": "assembly-name",
+          "description": "any recorded link, including a name or a directory URL"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "identifier-reference",
+          "ontology-reference"
+        ]
+      },
+      "partial_when": "any",
+      "check": "derived-link",
+      "guideline_item": "G5",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "Record the accession of the assembly this annotation describes, so that the genome can be identified exactly.",
+          "line": "#!genome-build-accession NCBI_Assembly:<versioned assembly accession, e.g. GCF_000002985.6>"
+        },
+        "vcf-meta": {
+          "text": "Give each contig the MD5 of its reference sequence, one line per contig, so that the genome can be checked exactly.",
+          "line": "##contig=<ID={related.name},length={related.length},md5={related.md5}>"
+        },
+        "gaf": {
+          "text": "Name the ontology release the annotations refer to.",
+          "line": "!go-version: <PURL of the GO release used, e.g. http://purl.obolibrary.org/obo/go/releases/2026-08-02/go.owl>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a derivedFrom entry that names the parent file by checksum and states the relationship.",
+          "line": "#~derivedFrom: [{headerType: <header type of the parent file, e.g. FHR>, relationship: <relationship to the parent, e.g. annotates>, checksum: {related.checksum}}]"
+        }
+      }
+    },
+    {
+      "id": "RDA-I3-02D",
+      "title": "Data includes qualified references to other data",
+      "principle": "I3",
+      "priority": "useful",
+      "target": "data",
+      "assessability": "deferred",
+      "reason": "deferred-data-body",
+      "interpretation": "Adapted: qualified links inside the records (GFF3 Parent, Derives_from, Ontology_term). Record bodies are not scanned in this release.",
+      "guideline_item": "G5"
+    },
+    {
+      "id": "RDA-I3-03M",
+      "title": "Metadata includes qualified references to other metadata",
+      "principle": "I3",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: as RDA-I3-01M, and the role of the reference is stated by a key with a published meaning (metadataAuthor, assemblyAuthor, scholarlyArticle).",
+      "conditions": [
+        {
+          "id": "author-orcid",
+          "concept": "creator",
+          "form": "orcid"
+        },
+        {
+          "id": "article-doi",
+          "concept": "scholarly-article",
+          "form": "doi"
+        }
+      ],
+      "evidenced_when": "any",
+      "partial_when": "never",
+      "guideline_item": "G4",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Name the author of the header with an ORCID iD, which states the role and links to a record about the person.",
+          "line": "#~metadataAuthor: [{name: <author name, e.g. Josiah Carberry>, uri: https://orcid.org/<ORCID iD, e.g. 0000-0002-1825-0097>}]"
+        }
+      }
+    },
+    {
+      "id": "RDA-I3-04M",
+      "title": "Metadata include qualified references to other data",
+      "principle": "I3",
+      "priority": "useful",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header refers to the data this file was derived from by an identifier (checksum, SeqCol digest, per-sequence digests, versioned accession, file URL) and states the relationship, either explicitly (derivedFrom) or through a native key whose documented meaning is the relationship (#!genome-build-accession). A name or directory URL alone is partial. Matching sequence names is circumstantial and not credited.",
+      "conditions": [
+        {
+          "id": "identifier-reference",
+          "concept": "assembly-accession",
+          "description": "checksum, seqcol, sequence-digests, accession or file URL link"
+        },
+        {
+          "id": "relationship-stated",
+          "concept": "derived-relationship",
+          "description": "explicit or documented relationship of a recorded link"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "any",
+      "check": "derived-link",
+      "guideline_item": "G5",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "Record the accession of the assembly this annotation describes, so that the genome can be identified exactly.",
+          "line": "#!genome-build-accession NCBI_Assembly:<versioned assembly accession, e.g. GCF_000002985.6>"
+        },
+        "vcf-meta": {
+          "text": "Give each contig the MD5 of its reference sequence, one line per contig, so that the genome can be checked exactly.",
+          "line": "##contig=<ID={related.name},length={related.length},md5={related.md5}>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a derivedFrom entry that names the parent file by checksum and states the relationship.",
+          "line": "#~derivedFrom: [{headerType: <header type of the parent file, e.g. FHR>, relationship: <relationship to the parent, e.g. annotates>, checksum: {related.checksum}}]"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1-01M",
+      "title": "Plurality of accurate and relevant attributes are provided to allow reuse",
+      "principle": "R1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header carries a fixed list of reuse attributes: version, creator, date, licence, taxon and source data. Accuracy is not judged. All six are evidenced; three to five are partial.",
+      "conditions": [
+        {
+          "id": "version",
+          "concept": "version"
+        },
+        {
+          "id": "creator",
+          "concept": "creator"
+        },
+        {
+          "id": "date",
+          "concept": "date-created"
+        },
+        {
+          "id": "licence",
+          "concept": "licence"
+        },
+        {
+          "id": "taxon",
+          "concept": "taxon"
+        },
+        {
+          "id": "source",
+          "concept": "source-data"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": {
+        "min": 3
+      },
+      "guideline_item": "G2",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "vcf-meta": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "gaf": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "fair-bioheaders": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.1-01M",
+      "title": "Metadata includes information about the licence under which the data can be reused",
+      "principle": "R1.1",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header states a licence under a licence key; human-readable text counts.",
+      "conditions": [
+        {
+          "id": "licence-stated",
+          "concept": "licence"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "never",
+      "guideline_item": "G7",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "vcf-meta": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "gaf": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "fair-bioheaders": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.1-02M",
+      "title": "Metadata refers to a standard reuse licence",
+      "principle": "R1.1",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the licence is an SPDX identifier from the pinned SPDX licence list or the canonical URL of a standard licence. Other licence text is partial.",
+      "conditions": [
+        {
+          "id": "spdx-id",
+          "concept": "licence",
+          "form": "spdx-id"
+        },
+        {
+          "id": "licence-url",
+          "concept": "licence",
+          "form": "licence-url"
+        },
+        {
+          "id": "licence-stated",
+          "concept": "licence"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "spdx-id",
+          "licence-url"
+        ]
+      },
+      "partial_when": "any",
+      "guideline_item": "G7",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "vcf-meta": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "gaf": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "fair-bioheaders": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.1-03M",
+      "title": "Metadata refers to a machine-understandable reuse licence",
+      "principle": "R1.1",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the licence is an SPDX identifier or a standard licence IRI, both of which have machine-readable expressions.",
+      "conditions": [
+        {
+          "id": "spdx-id",
+          "concept": "licence",
+          "form": "spdx-id"
+        },
+        {
+          "id": "licence-url",
+          "concept": "licence",
+          "form": "licence-url"
+        }
+      ],
+      "evidenced_when": "any",
+      "partial_when": "never",
+      "online_upgrade": true,
+      "guideline_item": "G7",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "vcf-meta": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "gaf": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        },
+        "fair-bioheaders": {
+          "text": "State the licence of this file as an SPDX identifier.",
+          "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.2-01M",
+      "title": "Metadata includes provenance information according to community-specific standards",
+      "principle": "R1.2",
+      "priority": "important",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: provenance under keys defined by the convention, in three groups: who (creator or software), when (date) and from what (source annotation or parent data). All three are evidenced; one or two are partial.",
+      "conditions": [
+        {
+          "id": "who",
+          "concept": "creator"
+        },
+        {
+          "id": "when",
+          "concept": "date-created"
+        },
+        {
+          "id": "from-what",
+          "concept": "source-data"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "any",
+      "guideline_item": "G6",
+      "suggestions": {
+        "gff3-pragma": {
+          "text": "Record when this file was produced.",
+          "line": "#!date-produced <ISO 8601 date, e.g. 2026-10-10>"
+        },
+        "vcf-meta": {
+          "text": "Record when this file was produced.",
+          "line": "##fileDate=<date as YYYYMMDD, e.g. 20261010>"
+        },
+        "gaf": {
+          "text": "Record when this file was produced.",
+          "line": "!date-generated: <ISO 8601 date, e.g. 2026-10-10>"
+        },
+        "fair-bioheaders": {
+          "text": "Record when this file was produced.",
+          "line": "#~dateCreated: <ISO 8601 date, e.g. 2026-10-10>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.2-02M",
+      "title": "Metadata includes provenance information according to a cross-community language",
+      "principle": "R1.2",
+      "priority": "useful",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: provenance is expressed in, or mapped to, a cross-domain language such as PROV-O. The derivedFrom relationship has no published PROV-O mapping yet (FHR-Specification#54), so it is at most partial; native conventions are not evidenced.",
+      "conditions": [
+        {
+          "id": "relationship",
+          "concept": "derived-relationship"
+        },
+        {
+          "id": "prov-mapping",
+          "concept": "context-iri",
+          "form": "url"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "any",
+      "guideline_item": "G5",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Record the parent file with a derivedFrom entry and its relationship; the relationship vocabulary is still provisional (FHR-Specification#54).",
+          "line": "#~derivedFrom: [{headerType: <header type of the parent file, e.g. FHR>, relationship: <relationship to the parent, e.g. annotates>, checksum: {related.checksum}}]"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.3-01M",
+      "title": "Metadata complies with a community standard",
+      "principle": "R1.3",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header meets its convention: a FAIR-bioHeaders header validates against its schema (reported separately as conformance and only cited here); a GFF3, VCF or GAF header declares its format on the first line. A declaration that is not on the first line is partial.",
+      "conditions": [
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        },
+        {
+          "id": "convention-met",
+          "concept": "header-schema",
+          "description": "FAIR-bioHeaders conformance valid, or the native format declaration on the first line"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": "any",
+      "check": "fhr-conformance",
+      "guideline_item": "G3",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##gff-version <GFF version, e.g. 3>"
+        },
+        "vcf-meta": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
+        },
+        "gaf": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "!gaf-version: <GAF version, e.g. 2.2>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.3-01D",
+      "title": "Data complies with a community standard",
+      "principle": "R1.3",
+      "priority": "essential",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the file declares its format and the sampled records (at most --record-limit, reported) parse as that format. Full validation is left to format validators.",
+      "conditions": [
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        },
+        {
+          "id": "records-parse",
+          "concept": "format-version",
+          "description": "the sampled records parse as the declared format"
+        }
+      ],
+      "evidenced_when": "all",
+      "partial_when": {
+        "any_of": [
+          "format-declared"
+        ]
+      },
+      "check": "record-sample-parse",
+      "guideline_item": "G3",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##gff-version <GFF version, e.g. 3>"
+        },
+        "vcf-meta": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
+        },
+        "gaf": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "!gaf-version: <GAF version, e.g. 2.2>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.3-02M",
+      "title": "Metadata is expressed in compliance with a machine-understandable community standard",
+      "principle": "R1.3",
+      "priority": "essential",
+      "target": "metadata",
+      "assessability": "offline",
+      "interpretation": "Adapted: the header declares a machine-readable schema and validates against it (FAIR-bioHeaders). GFF3, VCF and GAF headers follow prose specifications only, which is partial.",
+      "conditions": [
+        {
+          "id": "schema-declared",
+          "concept": "header-schema",
+          "form": "url"
+        },
+        {
+          "id": "schema-valid",
+          "concept": "header-schema",
+          "description": "FAIR-bioHeaders conformance valid"
+        },
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        }
+      ],
+      "evidenced_when": {
+        "all_of": [
+          "schema-declared",
+          "schema-valid"
+        ]
+      },
+      "partial_when": "any",
+      "check": "fhr-conformance",
+      "guideline_item": "G3",
+      "suggestions": {
+        "fair-bioheaders": {
+          "text": "Add a FAIR-bioHeaders header that names its machine-readable schema; for a genome, create it with bioheaders combine so that it validates.",
+          "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
+        }
+      }
+    },
+    {
+      "id": "RDA-R1.3-02D",
+      "title": "Data is expressed in compliance with a machine-understandable community standard",
+      "principle": "R1.3",
+      "priority": "important",
+      "target": "data",
+      "assessability": "offline",
+      "interpretation": "Adapted: the data format is in the pinned community-format table and is declared in the file with its version (or by a FAIR-bioHeaders schema). A declared format with an unlisted version is partial.",
+      "conditions": [
+        {
+          "id": "listed-format-declared",
+          "concept": "format-version",
+          "description": "declared format and version listed in the pinned format table"
+        },
+        {
+          "id": "format-declared",
+          "concept": "format-version"
+        }
+      ],
+      "evidenced_when": {
+        "any_of": [
+          "listed-format-declared"
+        ]
+      },
+      "partial_when": "any",
+      "check": "format-declared",
+      "guideline_item": "G3",
+      "suggestions": {
+        "gff3-directive": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##gff-version <GFF version, e.g. 3>"
+        },
+        "vcf-meta": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
+        },
+        "gaf": {
+          "text": "Declare the format and its version on the first line.",
+          "line": "!gaf-version: <GAF version, e.g. 2.2>"
+        },
+        "fair-bioheaders": {
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
+        }
+      }
+    }
+  ]
+}

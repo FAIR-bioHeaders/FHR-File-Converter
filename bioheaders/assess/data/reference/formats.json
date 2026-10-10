@@ -1,0 +1,58 @@
+{
+ "table": "formats",
+ "version": "2026-10-10",
+ "source": "https://fairsharing.org/FAIRsharing.rz4vfg and https://fairsharing.org/FAIRsharing.dnk0f6 (record titles checked 2026-10-10); fairsharing is null where no record id could be confirmed",
+ "retrieved": "2026-10-10",
+ "entries": [
+  {
+   "format": "fasta",
+   "fairsharing": "FAIRsharing.rz4vfg",
+   "version_directive": null,
+   "versions": []
+  },
+  {
+   "format": "gff3",
+   "fairsharing": "FAIRsharing.dnk0f6",
+   "version_directive": "##gff-version",
+   "versions": [
+    "3",
+    "3.1.26"
+   ]
+  },
+  {
+   "format": "gaf",
+   "fairsharing": null,
+   "version_directive": "!gaf-version:",
+   "versions": [
+    "1.0",
+    "2.0",
+    "2.1",
+    "2.2"
+   ]
+  },
+  {
+   "format": "vcf",
+   "fairsharing": null,
+   "version_directive": "##fileformat=VCFv",
+   "versions": [
+    "4.0",
+    "4.1",
+    "4.2",
+    "4.3",
+    "4.4",
+    "4.5"
+   ]
+  },
+  {
+   "format": "gfa",
+   "fairsharing": null,
+   "version_directive": "H\tVN:Z:",
+   "versions": [
+    "1.0",
+    "1.1",
+    "1.2",
+    "2.0"
+   ]
+  }
+ ]
+}

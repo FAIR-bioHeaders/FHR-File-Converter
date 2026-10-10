@@ -1,0 +1,32 @@
+!gaf-version: 2.2
+!
+!generated-by: GOC
+!
+!date-generated: 2026-05-21T09:09
+!
+!Header from source association file:
+!=================================
+!
+!generated-by: GOC
+!
+!date-generated: 2026-05-20T10:18
+!
+!Header from wb source association file:
+!=================================
+!generated-by: UniProt
+!date-generated: 2026-04-30 09:19
+!go-version: http://purl.obolibrary.org/obo/go/releases/2026-04-27/extensions/go-plus.ofn
+!=================================
+!
+!Header copied from paint_wb_valid.gaf
+!=================================
+!Created on Mon Jan  5 19:02:40 2026.
+!generated-by: PANTHER
+!date-generated: 2026-01-05
+!PANTHER version: v.19.0.
+!GO version: 2025-10-05.
+!
+!=================================
+!
+!Documentation about this header can be found here: https://github.com/geneontology/go-site/blob/master/docs/gaf_validation.md
+!

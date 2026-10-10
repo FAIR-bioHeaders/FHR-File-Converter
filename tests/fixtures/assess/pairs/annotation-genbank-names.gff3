@@ -1,0 +1,17 @@
+##gff-version 3
+#!genome-build WBcel235
+#!genome-build-accession NCBI_Assembly:GCA_000002985.3
+##sequence-region BX284601.5 1 151
+##sequence-region BX284602.5 1 153
+##sequence-region BX284603.4 1 138
+##sequence-region BX284604.4 1 175
+##sequence-region BX284605.5 1 209
+##sequence-region BX284606.5 1 177
+##sequence-region X54252.1 1 14
+BX284601.5	synthetic	gene	1	10	.	+	.	ID=gene1
+BX284602.5	synthetic	gene	1	10	.	+	.	ID=gene2
+BX284603.4	synthetic	gene	1	10	.	+	.	ID=gene3
+BX284604.4	synthetic	gene	1	10	.	+	.	ID=gene4
+BX284605.5	synthetic	gene	1	10	.	+	.	ID=gene5
+BX284606.5	synthetic	gene	1	10	.	+	.	ID=gene6
+X54252.1	synthetic	gene	1	10	.	+	.	ID=gene7

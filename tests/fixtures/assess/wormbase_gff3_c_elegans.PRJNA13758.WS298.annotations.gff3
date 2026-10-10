@@ -1,0 +1,8 @@
+##gff-version 3
+##sequence-region I 1 15072434
+##sequence-region II 1 15279421
+##sequence-region III 1 13783801
+##sequence-region IV 1 17493829
+##sequence-region V 1 20924180
+##sequence-region X 1 17718942
+##sequence-region MtDNA 1 13794

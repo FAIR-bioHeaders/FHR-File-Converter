@@ -1,0 +1,80 @@
+{
+ "table": "id-schemes",
+ "version": "identifiers.org-2026-10-10",
+ "source": "https://registry.api.identifiers.org/restApi/namespaces/search/findByPrefix?prefix=<prefix> (curated subset; cross-checked with https://bioregistry.io/api/registry/<prefix>)",
+ "retrieved": "2026-10-10",
+ "entries": [
+  {
+   "prefix": "taxonomy",
+   "pattern": "^\\d+$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/taxonomy:"
+  },
+  {
+   "prefix": "orcid",
+   "pattern": "^\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)$",
+   "persistent": true,
+   "resolver": "https://orcid.org/"
+  },
+  {
+   "prefix": "ror",
+   "pattern": "^0[a-hj-km-np-tv-z|0-9]{6}[0-9]{2}$",
+   "persistent": true,
+   "resolver": "https://ror.org/"
+  },
+  {
+   "prefix": "doi",
+   "pattern": "^(doi\\:)?10\\.\\d+/.*$",
+   "persistent": true,
+   "resolver": "https://doi.org/"
+  },
+  {
+   "prefix": "so",
+   "pattern": "^SO:\\d{7}$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/"
+  },
+  {
+   "prefix": "go",
+   "pattern": "^GO:\\d{7}$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/"
+  },
+  {
+   "prefix": "eco",
+   "pattern": "^ECO:\\d{7}$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/"
+  },
+  {
+   "prefix": "insdc.gca",
+   "pattern": "^GCA_[0-9]{9}(\\.[0-9]+)?$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/insdc.gca:"
+  },
+  {
+   "prefix": "refseq.gcf",
+   "pattern": "^GCF_[0-9]{9}(\\.[0-9]+)?$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/refseq.gcf:"
+  },
+  {
+   "prefix": "ena.embl",
+   "pattern": "^[A-Z]+[0-9]+(\\.\\d+)?$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/ena.embl:"
+  },
+  {
+   "prefix": "bioproject",
+   "pattern": "^PRJ[DEN][A-Z]\\d+$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/bioproject:"
+  },
+  {
+   "prefix": "biosample",
+   "pattern": "^SAM[NED](\\w)?\\d+$",
+   "persistent": true,
+   "resolver": "https://identifiers.org/biosample:"
+  }
+ ]
+}

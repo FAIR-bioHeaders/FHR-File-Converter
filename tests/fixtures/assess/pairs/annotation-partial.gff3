@@ -1,0 +1,14 @@
+##gff-version 3
+##sequence-region I 1 151
+##sequence-region II 1 154
+##sequence-region III 1 138
+##sequence-region IV 1 175
+##sequence-region V 1 209
+##sequence-region X 1 177
+##sequence-region Y 1 100
+I	synthetic	gene	1	10	.	+	.	ID=gene1
+II	synthetic	gene	1	10	.	+	.	ID=gene2
+III	synthetic	gene	1	10	.	+	.	ID=gene3
+IV	synthetic	gene	1	10	.	+	.	ID=gene4
+V	synthetic	gene	1	10	.	+	.	ID=gene5
+X	synthetic	gene	1	10	.	+	.	ID=gene6

@@ -1,0 +1,8 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+#!genome-build WBcel235
+#!genome-build-accession NCBI_Assembly:GCF_000002985.6
+#!annotation-source WormBase WS298
+##sequence-region NC_003279.8 1 15072434
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=6239

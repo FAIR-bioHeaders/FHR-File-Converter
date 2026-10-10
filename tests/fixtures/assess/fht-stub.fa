@@ -1,0 +1,6 @@
+;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json
+;~schemaVersion: 1.0
+;~transcriptome: Synthetic transcriptome stub (no published FHT schema)
+;~reuseConditions: CC0-1.0
+>tx1
+ACGUACGUAC
