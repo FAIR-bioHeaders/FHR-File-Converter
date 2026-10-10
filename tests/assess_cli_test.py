@@ -132,3 +132,54 @@ def test_existing_subcommand_help_is_unchanged():
     without = [s for s in SUBCOMMANDS if s.name != "assess"]
     for name in names[:-1]:
         assert _subcommand_help(SUBCOMMANDS, name) == _subcommand_help(without, name)
+
+
+PAIRS = FIXTURES / "pairs"
+
+
+def test_related_file_report_sections():
+    result = bioheaders(
+        "assess",
+        "--related",
+        PAIRS / "genome-plain.fa",
+        PAIRS / "annotation-no-link.gff3",
+    )
+    assert result.returncode == 0, result.stderr
+    text = result.stdout.decode()
+    assert "Circumstantial evidence (not a recorded link)" in text
+    assert "verdict: consistent" in text
+    assert "Pair: consistent-unverified" in text
+
+
+@pytest.mark.parametrize(
+    "derived, genome, flag, code",
+    [
+        ("annotation-version-mismatch.gff3", "genome-fhr-v2.fa", True, 3),
+        ("annotation-version-mismatch.gff3", "genome-fhr-v2.fa", False, 0),
+        ("annotation-correct.gff3", "genome-fhr.fa", True, 0),
+        ("variants-contig-md5.vcf", "genome-plain.fa", True, 3),
+        ("annotation-accession-only.gff3", "genome-plain.fa", True, 0),
+    ],
+)
+def test_fail_on_mismatch(derived, genome, flag, code):
+    options = ["--fail-on-mismatch"] if flag else []
+    result = bioheaders(
+        "assess", *options, "--related", PAIRS / genome, PAIRS / derived
+    )
+    assert result.returncode == code, result.stderr
+
+
+def test_unreadable_related_file_exits_1_before_3(tmp_path):
+    result = bioheaders(
+        "assess",
+        "--fail-on-mismatch",
+        "--format",
+        "json",
+        "--related",
+        tmp_path / "missing.fa",
+        PAIRS / "annotation-correct.gff3",
+    )
+    assert result.returncode == 1
+    assert result.stderr.decode().startswith("FHR: ")
+    report = json.loads(result.stdout)
+    assert report["links"][0]["verification"]["reason"] == "related-file-unreadable"

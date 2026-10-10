@@ -96,3 +96,123 @@ def is_directory(link):
     return link.kind == "url" and load_synonyms().form_matches(
         "directory-url", link.value
     )
+
+
+# Verification against a related file (research R-07) ---------------------------
+
+ACCESSION = re.compile(r"GC[AF]_\d{9}\.\d+")
+
+
+def _identity(value):
+    value = re.sub(r"^https?://identifiers\.org/", "", value.strip())
+    value = re.sub(r"^(NCBI_Assembly|insdc\.gca|refseq\.gcf):", "", value, flags=re.I)
+    return value
+
+
+def _hints(link, related_path):
+    name = related_path.replace("\\", "/").rsplit("/", 1)[-1]
+    value = link.value if isinstance(link.value, str) else ""
+    found = ACCESSION.search(value)
+    token = found.group(0) if found else value
+    if token and token in name:
+        return [
+            f"the related file's name contains {token}; a file name is not a recorded "
+            "identity, so this is not a match"
+        ]
+    return []
+
+
+def verify(link, related_file, related_path):
+    """Return the LinkVerification of one recorded link."""
+    from .model import LinkVerification
+
+    def result(verdict, method, reason=None, expected=None, actual=None, hints=()):
+        return LinkVerification(
+            related_path,
+            verdict,
+            method,
+            reason,
+            link.value if expected is None else expected,
+            actual,
+            list(hints),
+        )
+
+    if not link.well_formed:
+        return result("unverifiable", "none", "malformed")
+    if related_file.error:
+        return result("unverifiable", "none", "related-file-unreadable")
+    stated = related_file.stated
+    if link.kind == "checksum":
+        computed = related_file.computed_checksum
+        if computed:
+            hints = []
+            if stated.get("checksum") and stated["checksum"] != computed:
+                hints.append(
+                    "the related file's stated checksum does not match its content"
+                )
+            verdict = "match" if computed == link.value else "mismatch"
+            return result(
+                verdict, "computed-fhr-checksum", actual=computed, hints=hints
+            )
+        if stated.get("checksum"):
+            verdict = "match" if stated["checksum"] == link.value else "mismatch"
+            return result(verdict, "stated-fhr-checksum", actual=stated["checksum"])
+        return result("unverifiable", "none", "related-file-states-no-identity")
+    if link.kind == "seqcol":
+        if stated.get("seqcol_id"):
+            verdict = "match" if stated["seqcol_id"] == link.value else "mismatch"
+            return result(verdict, "stated-seqcol", actual=stated["seqcol_id"])
+        return result("unverifiable", "none", "related-file-states-no-seqcol")
+    if link.kind == "sequence-digests":
+        names = related_file.names
+        absent = sorted(name for name in link.value if name not in names)
+        compared = {n: d for n, d in link.value.items() if n in names and names[n][1]}
+        if not compared:
+            return result("unverifiable", "computed-md5", "sequence-absent")
+        differing = sorted(
+            n for n, d in compared.items() if d.lower() != names[n][1].lower()
+        )
+        hints = [f"not in the related file: {', '.join(absent)}"] if absent else []
+        if differing:
+            return result(
+                "mismatch",
+                "computed-md5",
+                expected={n: link.value[n] for n in differing},
+                actual={n: names[n][1] for n in differing},
+                hints=hints,
+            )
+        return result(
+            "match",
+            "computed-md5",
+            actual={n: names[n][1] for n in compared},
+            hints=hints,
+        )
+    values = {
+        "accession": stated.get("accessions", []),
+        "url": stated.get("urls", []),
+        "name": stated.get("names", []),
+    }[link.kind]
+    hints = _hints(link, related_path)
+    if not values:
+        return result(
+            "unverifiable",
+            "stated-identity",
+            "related-file-states-no-identity",
+            hints=hints,
+        )
+    wanted = _identity(link.value) if link.kind == "accession" else link.value
+    found = [
+        v for v in values if (_identity(v) if link.kind == "accession" else v) == wanted
+    ]
+    if found:
+        return result("match", "stated-identity", actual=found[0])
+    if link.kind == "accession":
+        return result("mismatch", "stated-identity", actual=values[0])
+    return result(
+        "unverifiable",
+        "stated-identity",
+        "related-file-states-no-identity",
+        actual=values[0],
+        hints=hints
+        + [f"the related file states {', '.join(values)}, which is not {link.value}"],
+    )

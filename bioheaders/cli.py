@@ -827,6 +827,17 @@ def _assess_arguments(args_parser):
         action="store_true",
         help="add the SHA-256 of the whole input file (costs a full read)",
     )
+    args_parser.add_argument(
+        "--related",
+        metavar="FILE",
+        help="related file (usually the genome FASTA): verify the recorded links "
+        "and compare sequence names and lengths",
+    )
+    args_parser.add_argument(
+        "--fail-on-mismatch",
+        action="store_true",
+        help="exit 3 if a recorded link does not match the related file",
+    )
 
 
 def _assess(args):
@@ -835,16 +846,30 @@ def _assess(args):
     if args.input == STANDARD_STREAM and args.assess_type == "auto":
         print("FHR: give the format of - with --type", file=sys.stderr)
         return 2
+    status = 0
+    if args.related:
+        from .assess import related
+
+        scanned = related.scan(args.related)
+        if scanned.error:
+            print(f"FHR: related file: {scanned.error}", file=sys.stderr)
+            status = 1
     report = assess_file(
         args.input,
+        related=args.related,
         record_limit=args.record_limit,
         hash_inputs=args.hash_inputs,
         type_option=None if args.assess_type == "auto" else args.assess_type,
     )
-    status = 0
     if report["input"]["scope"] == "error":
         print(f"FHR: {report['input']['error']}", file=sys.stderr)
         status = 1
+    mismatch = any(
+        (link.get("verification") or {}).get("verdict") == "mismatch"
+        for link in report["links"]
+    )
+    if status == 0 and args.fail_on_mismatch and mismatch:
+        status = 3
     if args.output:
         os.makedirs(args.output, exist_ok=True)
         name = "stdin" if args.input == STANDARD_STREAM else Path(args.input).name

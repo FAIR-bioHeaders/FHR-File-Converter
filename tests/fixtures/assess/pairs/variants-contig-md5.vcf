@@ -1,0 +1,10 @@
+##fileformat=VCFv4.3
+##contig=<ID=I,length=151,md5=86abbffaa66d3711d1fc43b44c013888>
+##contig=<ID=II,length=153,md5=5679c69443bed496de9395923ebf79a3>
+##contig=<ID=III,length=138,md5=68d38f8288d04cd8a47661845da8dd56>
+##contig=<ID=IV,length=175,md5=66ce7150893908fc1f93203d5b3ae6ca>
+##contig=<ID=V,length=209,md5=f72ee9f18bf8716e5716e93aa046cda4>
+##contig=<ID=X,length=177,md5=304555a07293a35f77a6e10b5941767b>
+##contig=<ID=MtDNA,length=14,md5=68d8af63704a66217c6bf53819ee912c>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+I	5	.	G	N	.	PASS	.

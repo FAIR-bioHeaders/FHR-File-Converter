@@ -132,6 +132,32 @@ def _assess(path, shown, related, record_limit, hash_inputs, type_option):
     )
     context.file_name = None if shown == STANDARD_STREAM else Path(shown).name
     context.related_values = None
+    check, pair = None, None
+    if related is not None and scope == "assessed":
+        from . import circumstantial
+        from . import related as related_module
+
+        related_path = os.fspath(related)
+        related_file = related_module.scan(related)
+        for link in link_list:
+            link.verification = links.verify(link, related_file, related_path)
+        check = circumstantial.check(
+            evidence, reading.seqids, related_file, related_path
+        )
+        pair = circumstantial.classify(
+            [link.verification.verdict for link in link_list], check.verdict
+        )
+        if pair == "recorded-match" and check.verdict != "consistent":
+            from .model import Finding
+
+            findings.append(
+                Finding(
+                    "format-irregularity",
+                    "a recorded link matches the related file, but the declared "
+                    f"sequence names or lengths disagree with it ({check.verdict})",
+                )
+            )
+        context.related_values = related_module.suggestion_values(related_file)
     indicators = {indicator["id"]: indicator for indicator in loaded.indicators}
     results = []
     for indicator in loaded.indicators:
@@ -164,6 +190,8 @@ def _assess(path, shown, related, record_limit, hash_inputs, type_option):
         results=results,
         conformance=conformance,
         links=link_list,
+        circumstantial=check,
+        pair_classification=pair,
         findings=findings,
     ).to_json()
     render.validate_report(report)
