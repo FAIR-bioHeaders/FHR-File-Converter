@@ -630,9 +630,6 @@
           "assemblyAuthor.uri"
         ]
       },
-      "forms": [
-        "orcid"
-      ],
       "scope": "file",
       "core_field": "metadataAuthor",
       "emit": {

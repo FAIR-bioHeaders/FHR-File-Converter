@@ -1,0 +1,2 @@
+# Assessment fixtures are byte-exact copies of FHR-Specification assessment/.
+tests/fixtures/assess/** -text

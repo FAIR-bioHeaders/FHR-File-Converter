@@ -725,13 +725,21 @@ class Subcommand:
         self.perform = perform
         self.aliases = options.get("aliases", ())
         self.sequence = options.get("sequence")
+        self.epilog = options.get("epilog")
 
     def add_to(self, subparsers):
+        extra = {}
+        if self.epilog:
+            extra = {
+                "epilog": self.epilog,
+                "formatter_class": argparse.RawDescriptionHelpFormatter,
+            }
         args_parser = subparsers.add_parser(
             self.name,
             aliases=list(self.aliases),
             help=self.summary,
             description=self.description,
+            **extra,
         )
         self.add_arguments(args_parser)
         if self.sequence:
@@ -761,6 +769,114 @@ def sequence_kind(path, name=None):
     if kind not in SEQUENCE_KINDS:
         raise ValueError(f"Expected a FASTA or GFA file: {path}")
     return kind
+
+
+ASSESS_TYPES = ("auto", "fasta", "gff3", "gaf", "vcf", "gfa")
+ASSESS_EPILOG = """\
+Reports, for each of the 41 RDA FAIR Data Maturity Model indicators, a status
+with the header lines it rests on and a suggestion for each gap. There is no
+score. No network access is made. Exit codes: 0 assessed (any statuses),
+1 an input could not be read, 2 usage error, 3 --fail-on-mismatch and a
+recorded link did not match the related file.
+
+Indicator identifiers and titles from: FAIR Data Maturity Model Working Group
+(2020). FAIR Data Maturity Model. Specification and Guidelines. Research Data
+Alliance. doi:10.15497/rda00050. Licensed CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). File-header interpretations
+are adaptations by FAIR-bioHeaders and are not endorsed by the RDA."""
+
+
+def _non_negative(text):
+    value = int(text)
+    if value < 0:
+        raise argparse.ArgumentTypeError("must be 0 or more")
+    return value
+
+
+def _assess_arguments(args_parser):
+    args_parser.add_argument("input", help="file to assess, or - for stdin")
+    args_parser.add_argument(
+        "--type",
+        dest="assess_type",
+        choices=ASSESS_TYPES,
+        default="auto",
+        help="input format (default: auto, from the content, then the file name; "
+        "required for -)",
+    )
+    args_parser.add_argument(
+        "--format",
+        dest="report_format",
+        choices=("text", "markdown", "json"),
+        default="text",
+        help="report format written to stdout (default: text)",
+    )
+    args_parser.add_argument(
+        "--output",
+        metavar="DIR",
+        help="write NAME.assessment.json and NAME.assessment.md to DIR instead",
+    )
+    args_parser.add_argument(
+        "--record-limit",
+        type=_non_negative,
+        default=1000,
+        metavar="N",
+        help="data records sampled after the header (default: 1000; 0: header only)",
+    )
+    args_parser.add_argument(
+        "--hash-inputs",
+        action="store_true",
+        help="add the SHA-256 of the whole input file (costs a full read)",
+    )
+
+
+def _assess(args):
+    from .assess import assess_file, render
+
+    if args.input == STANDARD_STREAM and args.assess_type == "auto":
+        print("FHR: give the format of - with --type", file=sys.stderr)
+        return 2
+    report = assess_file(
+        args.input,
+        record_limit=args.record_limit,
+        hash_inputs=args.hash_inputs,
+        type_option=None if args.assess_type == "auto" else args.assess_type,
+    )
+    status = 0
+    if report["input"]["scope"] == "error":
+        print(f"FHR: {report['input']['error']}", file=sys.stderr)
+        status = 1
+    if args.output:
+        os.makedirs(args.output, exist_ok=True)
+        name = "stdin" if args.input == STANDARD_STREAM else Path(args.input).name
+        base = os.path.join(args.output, name + ".assessment")
+        json_text = render.to_json(report)
+        markdown = render.to_markdown(report)
+        write_output(
+            base + ".json",
+            lambda out: out.write(json_text),
+            "w",
+            encoding="utf-8",
+            newline="\n",
+        )
+        write_output(
+            base + ".md",
+            lambda out: out.write(markdown),
+            "w",
+            encoding="utf-8",
+            newline="\n",
+        )
+        print(
+            f"{args.input}: {report['input']['scope'].replace('_', ' ')}; report {base}.json"
+        )
+        return status
+    render_format = {
+        "text": render.to_text,
+        "markdown": render.to_markdown,
+        "json": render.to_json,
+    }[args.report_format]
+    sys.stdout.buffer.write(render_format(report).encode("utf-8"))
+    sys.stdout.buffer.flush()
+    return status
 
 
 # FHR (reference genome) commands. Commands for other header types can be added
@@ -804,6 +920,15 @@ SUBCOMMANDS = (
         _verify,
         aliases=("checksum",),
         sequence="input",
+    ),
+    Subcommand(
+        "assess",
+        "assess how FAIR the header of a data file is (offline)",
+        "Assess the header of a FASTA, GFF3, GAF, VCF, GFA or other text file "
+        "against the RDA FAIR Data Maturity Model indicators, offline",
+        _assess_arguments,
+        _assess,
+        epilog=ASSESS_EPILOG,
     ),
 )
 

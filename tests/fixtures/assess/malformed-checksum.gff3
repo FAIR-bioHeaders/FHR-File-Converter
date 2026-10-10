@@ -1,0 +1,4 @@
+##gff-version 3
+#~derivedFrom: [{headerType: FHR, relationship: annotates, checksum: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}]
+##sequence-region ctg1 1 20
+ctg1	synthetic	gene	1	20	.	+	.	ID=gene1

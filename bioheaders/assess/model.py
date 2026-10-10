@@ -98,6 +98,8 @@ class HeaderEvidence:
     concepts: List[str] = field(default_factory=list)
     scope: str = "file"
     value_forms: List[str] = field(default_factory=list)
+    # Internal: the (concept, value) items found on this line (synonyms.Item).
+    items: List[Any] = field(default_factory=list, repr=False, compare=False)
 
     def to_json(self):
         return {

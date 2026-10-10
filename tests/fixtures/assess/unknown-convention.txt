@@ -1,0 +1,4 @@
+% produced by a synthetic tool
+% columns: x y
+1 2
+3 4

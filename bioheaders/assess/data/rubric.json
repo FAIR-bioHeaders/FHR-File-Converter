@@ -641,7 +641,7 @@
       "suggestions": {
         "fair-bioheaders": {
           "text": "Map the header keys to IRIs with a JSON-LD context, so that the metadata is machine-understandable.",
-          "line": "#~@context: <URL of a JSON-LD context for the header keys, e.g. https://example.org/context.jsonld>"
+          "line": "#~'@context': <URL of a JSON-LD context for the header keys, e.g. https://example.org/context.jsonld>"
         }
       }
     },
