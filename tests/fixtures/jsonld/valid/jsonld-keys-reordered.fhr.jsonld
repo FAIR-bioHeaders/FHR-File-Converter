@@ -1,0 +1,283 @@
+{
+  "vitalStats": {
+    "gcContent": 45.5,
+    "totalBasePairs": 20,
+    "L50": 1,
+    "N50": 20,
+    "@type": "VitalStats"
+  },
+  "assemblySoftware": [
+    {
+      "commandLineOption": [
+        "-t",
+        "2"
+      ],
+      "version": "1.2.3",
+      "name": "synthetic-assembler",
+      "@type": "SoftwareApplication"
+    }
+  ],
+  "reuseConditions": "CC0-1.0",
+  "relatedLink": [
+    "https://example.org/synthetic"
+  ],
+  "identifier": [
+    "example:conformance-1"
+  ],
+  "genomeSynonym": [
+    "synthetic conformance genome"
+  ],
+  "checksum": "3an6Cqo2eomqlt75XIpyWXDtls3GhA8EOpjK97S+ykc=",
+  "documentation": "Synthetic FHR conformance vector; not a real assembly.",
+  "masking": "not-masked",
+  "dateCreated": "2026-10-08",
+  "assemblyAuthor": [
+    {
+      "uri": "https://orcid.org/0000-0002-1825-0097",
+      "name": "Josiah Carberry (ORCID example iD)",
+      "@type": "Person"
+    }
+  ],
+  "metadataAuthor": [
+    {
+      "name": "Synthetic metadata author (placeholder)",
+      "@type": "Agent"
+    }
+  ],
+  "version": "1.0.0",
+  "taxon": {
+    "uri": "https://identifiers.org/taxonomy:9606",
+    "name": "Homo sapiens",
+    "@type": "Taxon"
+  },
+  "genome": "Synthetic FHR conformance genome",
+  "schemaVersion": 1.0,
+  "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
+  "@type": "Dataset",
+  "@context": {
+    "conformsTo": {
+      "@type": "@id",
+      "@id": "dct:conformsTo"
+    },
+    "url": {
+      "@type": "@id",
+      "@id": "sdo:url"
+    },
+    "keywords": {
+      "@container": "@set",
+      "@id": "sdo:keywords"
+    },
+    "subjectOf": {
+      "@type": "@id",
+      "@id": "sdo:subjectOf"
+    },
+    "seqcol_id": {
+      "@id": "fhr:seqcol_id"
+    },
+    "assemblyProtocol": {
+      "@type": "@id",
+      "@id": "fhr:assemblyProtocol"
+    },
+    "assemblySoftware": {
+      "@context": [
+        null,
+        {
+          "commandLineOption": {
+            "@container": "@list",
+            "@id": "fhr:commandLineOption"
+          },
+          "version": {
+            "@id": "sdo:softwareVersion"
+          },
+          "uri": {
+            "@type": "@id",
+            "@id": "sdo:url"
+          },
+          "name": {
+            "@id": "sdo:name"
+          },
+          "SoftwareApplication": "sdo:SoftwareApplication",
+          "fhr": "https://w3id.org/fair-bioheaders/terms#",
+          "sdo": "http://schema.org/",
+          "@protected": true
+        }
+      ],
+      "@container": "@set",
+      "@id": "fhr:assemblySoftware"
+    },
+    "checksum": {
+      "@id": "fhr:checksum"
+    },
+    "vitalStats": {
+      "@context": [
+        null,
+        {
+          "gcContent": {
+            "@id": "fhr:gcContent"
+          },
+          "N90": {
+            "@id": "fhr:N90"
+          },
+          "readTechnology": {
+            "@id": "fhr:readTechnology"
+          },
+          "numberScaffolds": {
+            "@id": "fhr:numberScaffolds"
+          },
+          "numberContigs": {
+            "@id": "fhr:numberContigs"
+          },
+          "totalBasePairs": {
+            "@id": "fhr:totalBasePairs"
+          },
+          "L90": {
+            "@id": "fhr:L90"
+          },
+          "N50": {
+            "@id": "fhr:N50"
+          },
+          "L50": {
+            "@id": "fhr:L50"
+          },
+          "VitalStats": "fhr:VitalStats",
+          "fhr": "https://w3id.org/fair-bioheaders/terms#",
+          "sdo": "http://schema.org/",
+          "@protected": true
+        }
+      ],
+      "@id": "fhr:vitalStats"
+    },
+    "masking": {
+      "@id": "fhr:masking"
+    },
+    "reuseConditions": {
+      "@id": "sdo:license"
+    },
+    "funding": {
+      "@id": "sdo:funding"
+    },
+    "relatedLink": {
+      "@container": "@set",
+      "@type": "@id",
+      "@id": "fhr:relatedLink"
+    },
+    "identifier": {
+      "@container": "@set",
+      "@id": "sdo:identifier"
+    },
+    "documentation": {
+      "@id": "sdo:description"
+    },
+    "scholarlyArticle": {
+      "@id": "sdo:citation"
+    },
+    "instrument": {
+      "@container": "@set",
+      "@id": "fhr:instrument"
+    },
+    "accessionID": {
+      "@context": [
+        null,
+        {
+          "url": {
+            "@type": "@id",
+            "@id": "sdo:url"
+          },
+          "name": {
+            "@id": "sdo:name"
+          },
+          "PropertyValue": "sdo:PropertyValue",
+          "fhr": "https://w3id.org/fair-bioheaders/terms#",
+          "sdo": "http://schema.org/",
+          "@protected": true
+        }
+      ],
+      "@id": "fhr:accessionID"
+    },
+    "voucherSpecimen": {
+      "@id": "fhr:voucherSpecimen"
+    },
+    "dateCreated": {
+      "@type": "xsd:date",
+      "@id": "sdo:dateCreated"
+    },
+    "assemblyAuthor": {
+      "@context": [
+        null,
+        {
+          "uri": "@id",
+          "name": {
+            "@id": "sdo:name"
+          },
+          "Agent": "fhr:Agent",
+          "Organization": "sdo:Organization",
+          "Person": "sdo:Person",
+          "fhr": "https://w3id.org/fair-bioheaders/terms#",
+          "sdo": "http://schema.org/",
+          "@protected": true
+        }
+      ],
+      "@container": "@set",
+      "@id": "sdo:creator"
+    },
+    "metadataAuthor": {
+      "@context": [
+        null,
+        {
+          "uri": "@id",
+          "name": {
+            "@id": "sdo:name"
+          },
+          "Agent": "fhr:Agent",
+          "Organization": "sdo:Organization",
+          "Person": "sdo:Person",
+          "fhr": "https://w3id.org/fair-bioheaders/terms#",
+          "sdo": "http://schema.org/",
+          "@protected": true
+        }
+      ],
+      "@container": "@set",
+      "@id": "fhr:metadataAuthor"
+    },
+    "version": {
+      "@id": "sdo:version"
+    },
+    "taxon": {
+      "@context": [
+        null,
+        {
+          "uri": "@id",
+          "name": {
+            "@id": "sdo:name"
+          },
+          "Taxon": "sdo:Taxon",
+          "fhr": "https://w3id.org/fair-bioheaders/terms#",
+          "sdo": "http://schema.org/",
+          "@protected": true
+        }
+      ],
+      "@id": "sdo:about"
+    },
+    "genomeSynonym": {
+      "@container": "@set",
+      "@id": "sdo:alternateName"
+    },
+    "genome": {
+      "@id": "sdo:name"
+    },
+    "schemaVersion": {
+      "@id": "fhr:schemaVersion"
+    },
+    "schema": {
+      "@type": "@id",
+      "@id": "sdo:schemaVersion"
+    },
+    "Dataset": "sdo:Dataset",
+    "dct": "http://purl.org/dc/terms/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "fhr": "https://w3id.org/fair-bioheaders/terms#",
+    "sdo": "http://schema.org/",
+    "@protected": true,
+    "@version": 1.1
+  }
+}

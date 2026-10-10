@@ -137,8 +137,8 @@ metadata and schema.org linked data. The format is defined in FHR-Specification
 [docs/JSONLD.md](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/docs/JSONLD.md),
 and `examples/example.fhr.jsonld` is byte-identical to the specification's example. The
 context is bundled (`bioheaders/fhr.context.jsonld`, a copy of the specification's
-`jsonld/fhr.context.jsonld`) and never fetched; writing and reading need no extra package and
-work offline.
+`jsonld/fhr.context.jsonld`) and never fetched; writing and reading the canonical form need no
+extra package, and everything works offline.
 
 - Authors are typed `Person` with an ORCID iD, `Organization` with a ROR ID, and otherwise
   `Agent` (not classified). A `documentation` value that is an absolute URL is written as
@@ -153,8 +153,17 @@ work offline.
 - Reading accepts the canonical form (rule J1): the bundled context, embedded or by its
   raw-main URL, and no JSON-LD keyword except `@type` (and a root `@id`). `@context` and
   `@type` are set aside, `subjectOf` becomes `documentation`, and the export terms are set
-  aside with a warning; the rest is validated like JSON. Other JSON-LD forms (expanded, or
-  compacted with another context) are not read yet.
+  aside with a warning; the rest is validated like JSON.
+- Other JSON-LD forms (expanded, compacted with another context such as a schema.org
+  `@vocab`, or one record in `@graph`) are read by JSON-LD expansion (rules J3 to J5). This
+  needs the `jsonld` extra, PyLD, on Python 3.10 or later:
+  `pip install "fair-bioheaders[jsonld]"`. Contexts are served only from the bundled copy, so
+  a remote context such as `https://schema.org/` is refused
+  (`FHR: JSON-LD context is not available offline: https://schema.org/`). A term that maps to
+  no FHR field fails the read
+  (`FHR: JSON-LD term not in the FHR mapping: http://schema.org/keywords (at the record)`);
+  `convert` and `validate` take `--ignore-unknown-terms` to report such terms as warnings
+  instead. The document must describe exactly one record.
 
 ### FAIR header assessment
 
@@ -221,9 +230,11 @@ directory, so commands work outside the checkout. No schema is downloaded at run
 `bioheaders.cli` holds the command implementations and the byte-level helpers
 (`checksum`, `combine`, `strip_header`, `open_input`, `write_to`, and others).
 
-JSON-LD uses `output_jsonld(export=None)` and `input_jsonld(stream)`. The
+JSON-LD uses `output_jsonld(export=None)` and
+`input_jsonld(stream, ignore_unknown_terms=False, warn=None)`. The
 `bioheaders.jsonld` module is a provisional API: `CONTEXT` (the bundled context),
-`KNOWN_CONTEXT_URLS`, `to_jsonld(data, export=None)`, `from_jsonld(document)`,
+`KNOWN_CONTEXT_URLS`, `to_jsonld(data, export=None)`,
+`from_jsonld(document, *, ignore_unknown_terms=False, warn=None)`,
 `is_canonical(document)`, `unmapped_keys(data)` and `bioschemas_missing(document)`.
 
 `bioheaders.assess` is a provisional API: `assess_file(path, related=None, online=False,

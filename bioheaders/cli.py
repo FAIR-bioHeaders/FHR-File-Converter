@@ -13,6 +13,7 @@ import tempfile
 import zlib
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import partial
 from itertools import chain
 from pathlib import Path
 
@@ -211,14 +212,18 @@ class BgzfWriter:
         self.stream.write(BGZF_EOF)
 
 
-def read_metadata(path, content=None, format_name=None):
-    method = "input_" + (format_name or file_format(path))
+def read_metadata(path, content=None, format_name=None, ignore_unknown_terms=False):
+    """Read metadata in any format; ``ignore_unknown_terms`` applies to JSON-LD only."""
+    format_name = format_name or file_format(path)
     data = fhr()
+    read = getattr(data, "input_" + format_name)
+    if format_name == "jsonld":
+        read = partial(read, ignore_unknown_terms=ignore_unknown_terms)
     if content is None:
         with open_input(path) as stream:
-            getattr(data, method)(stream)
+            read(stream)
     else:
-        getattr(data, method)(content)
+        read(content)
     return data
 
 
@@ -510,11 +515,21 @@ def _check_sequence_path(path, kind, what):
 # The ``fhr-*`` commands and the ``bioheaders`` subcommands share them.
 
 
+def _ignore_unknown_terms_option(args_parser):
+    args_parser.add_argument(
+        "--ignore-unknown-terms",
+        action="store_true",
+        help="JSON-LD input only: report terms that do not map to an FHR field as "
+        "warnings instead of errors",
+    )
+
+
 def _convert_arguments(args_parser):
     args_parser.add_argument("input", help="input file, or - for stdin")
     args_parser.add_argument("output", help="output file, or - for stdout")
     _format_option(args_parser, "--from", "input_format", "input format")
     _format_option(args_parser, "--to", "output_format", "output format")
+    _ignore_unknown_terms_option(args_parser)
     args_parser.add_argument(
         "--export-context",
         metavar="FILE",
@@ -541,7 +556,11 @@ def _convert(args):
         options["export"] = jsonld.check_export(
             _read_export_context(args.export_context)
         )
-    data = read_metadata(args.input, format_name=input_format)
+    data = read_metadata(
+        args.input,
+        format_name=input_format,
+        ignore_unknown_terms=args.ignore_unknown_terms,
+    )
     data.fhr_validate()
     if output_format == "jsonld":
         for path in jsonld.unmapped_keys(data.__dict__):
@@ -566,11 +585,16 @@ def _convert(args):
 def _validate_arguments(args_parser):
     args_parser.add_argument("input", help="input file, or - for stdin")
     _format_option(args_parser, "--from", "input_format", "input format")
+    _ignore_unknown_terms_option(args_parser)
 
 
 def _validate(args):
     input_format = _format(args.input, args.input_format)
-    read_metadata(args.input, format_name=input_format).fhr_validate()
+    read_metadata(
+        args.input,
+        format_name=input_format,
+        ignore_unknown_terms=args.ignore_unknown_terms,
+    ).fhr_validate()
     print("FHR metadata is valid.")
 
 

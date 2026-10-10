@@ -594,7 +594,12 @@ class fhr:
         return json.dumps(self.__dict__, ensure_ascii=False, indent=2) + "\n"
 
     def input_jsonld(self, stream, ignore_unknown_terms=False, warn=None):
-        """Read canonical FHR JSON-LD (FHR-Specification docs/JSONLD.md, rule J1)."""
+        """Read FHR JSON-LD (FHR-Specification docs/JSONLD.md).
+
+        Canonical documents (rule J1) need only the standard library; other forms
+        (rules J3 to J5) need the ``jsonld`` extra. ``ignore_unknown_terms``
+        reports terms without an FHR field through ``warn`` instead of failing.
+        """
         from . import jsonld
 
         document = json.loads(_text(stream), object_pairs_hook=_unique_object)

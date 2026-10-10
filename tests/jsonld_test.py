@@ -1,12 +1,15 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""JSON-LD writing and canonical reading (FHR-Specification feature 011).
+"""JSON-LD writing and reading (FHR-Specification feature 011).
 
-These tests need no JSON-LD processor and run with network access disabled
+Writing and canonical reading need no JSON-LD processor. The general-path tests
+(rules J3 to J5) need PyLD, the jsonld extra, and are skipped without it (on
+Python 3.9 it is not installable). Everything runs with network access disabled
 (tests/conftest.py).
 """
 
+import copy
 import json
 import os
 import subprocess
@@ -29,10 +32,14 @@ EXPORT = {
     "url": "https://example.org/genomes/synthetic-human",
     "keywords": ["genome assembly", "Homo sapiens"],
 }
-NOT_CANONICAL = (
-    "this JSON-LD is not in the canonical FAIR-bioHeaders form (rule J1 of "
-    "FHR-Specification docs/JSONLD.md); reading other JSON-LD forms is not supported yet"
+NEEDS_EXTRA = (
+    "reading this JSON-LD form needs the jsonld extra: "
+    'pip install "fair-bioheaders[jsonld]"'
 )
+# FHR-Specification conformance vectors of format jsonld, copied with their
+# manifest entries; test_vectors_match_the_specification keeps them in step.
+VECTORS = ROOT / "tests" / "fixtures" / "jsonld"
+MANIFEST = json.loads((VECTORS / "manifest.json").read_text())["vectors"]
 
 
 @pytest.fixture
@@ -243,19 +250,27 @@ def test_canonical_reading_keeps_extra_nested_keys(metadata):
         lambda d: d.pop("@context"),
     ],
 )
-def test_non_canonical_documents_are_not_read(metadata, change):
+def test_non_canonical_documents_need_the_extra(metadata, change, monkeypatch):
     document = written(metadata)
     change(document)
     assert not jsonld.is_canonical(document)
+    monkeypatch.setitem(sys.modules, "pyld", None)
     with pytest.raises(ValueError) as error:
         read(document)
-    assert str(error.value) == NOT_CANONICAL
+    assert str(error.value) == NEEDS_EXTRA
+
+
+def test_canonical_reading_does_not_import_pyld(metadata, monkeypatch):
+    monkeypatch.setitem(sys.modules, "pyld", None)
+    assert read(written(metadata)) == metadata
 
 
 def test_non_object_documents_are_rejected():
     for text in ("[]", '"text"', "3"):
         with pytest.raises(ValueError):
             fhr().input_jsonld(text)
+    with pytest.raises(ValueError, match="must be a JSON object or array"):
+        fhr().input_jsonld('"text"')
 
 
 def test_duplicate_keys_are_rejected(metadata):
@@ -389,3 +404,261 @@ def test_context_matches_the_specification():
     for stem in ("example", "minimal"):
         name = f"examples/{stem}.fhr.jsonld"
         assert (ROOT / name).read_bytes() == (SPEC / name).read_bytes()
+
+
+def test_vectors_match_the_specification():
+    manifest = SPEC / "conformance" / "manifest.json"
+    if not manifest.is_file():
+        pytest.skip("FHR-Specification checkout not found")
+    published = [
+        v
+        for v in json.loads(manifest.read_text())["vectors"]
+        if v["format"] == "jsonld"
+    ]
+    assert published == MANIFEST
+    for vector in MANIFEST:
+        path = vector["file"]
+        assert (VECTORS / path).read_bytes() == (
+            SPEC / "conformance" / path
+        ).read_bytes()
+
+
+# The general path (rules J3 to J5).
+
+
+def equal(left, right):
+    """data-model section 8: key order ignored; array order and JSON types kept."""
+    if isinstance(left, dict) and isinstance(right, dict):
+        return left.keys() == right.keys() and all(
+            equal(left[k], right[k]) for k in left
+        )
+    if isinstance(left, list) and isinstance(right, list):
+        return len(left) == len(right) and all(map(equal, left, right))
+    return type(left) is type(right) and left == right
+
+
+def vector_bytes(vector):
+    return (VECTORS / vector["file"]).read_bytes()
+
+
+@pytest.mark.parametrize("vector", MANIFEST, ids=[v["id"] for v in MANIFEST])
+def test_conformance_vectors(vector):
+    pytest.importorskip("pyld")
+    data = fhr()
+    if vector["expected"] == "valid":
+        data.input_jsonld(vector_bytes(vector), warn=lambda message: None)
+        data.fhr_validate()
+        assert equal(data.__dict__, vector["metadata"])
+    else:
+        with pytest.raises((ValueError, ValidationError)):
+            data.input_jsonld(vector_bytes(vector), warn=lambda message: None)
+            data.fhr_validate()
+
+
+def expanded(document):
+    from pyld import jsonld as pyld
+
+    return pyld.expand(document, {"documentLoader": jsonld._document_loader([])})
+
+
+def test_examples_read_back_from_expanded_form():
+    pytest.importorskip("pyld")
+    for stem in ("example", "minimal"):
+        source = json.loads((ROOT / f"examples/{stem}.fhr.json").read_text())
+        document = expanded(
+            json.loads((ROOT / f"examples/{stem}.fhr.jsonld").read_text())
+        )
+        assert not jsonld.is_canonical(document)
+        assert equal(jsonld.from_jsonld(document), source)
+
+
+def test_general_reader_keeps_document_order_and_legacy_strings(metadata):
+    pytest.importorskip("pyld")
+    metadata["assemblySoftware"] = "synthetic-assembler"
+    back = jsonld.from_jsonld(expanded(written(metadata)))
+    assert list(back) == sorted(metadata, key=jsonld.KEY_ORDER.__getitem__)
+    assert back["assemblySoftware"] == "synthetic-assembler"
+    assert equal(back, metadata)
+
+
+def test_reverse_map_covers_every_field_path():
+    """All 45 property paths of fhr.json (data-model section 4)."""
+
+    def paths(scope, prefix=""):
+        reverse, id_key = scope
+        found = {prefix + id_key} if id_key else set()
+        for key, _, _, child in reverse.values():
+            found.add(prefix + key)
+            if child is not None:
+                found |= paths(child, f"{prefix}{key}.")
+        return found
+
+    schema = json.loads((ROOT / "bioheaders/fhr_schema.json").read_text())
+
+    def schema_paths(node, prefix=""):
+        if "$ref" in node:
+            node = schema["definitions"][node["$ref"].rsplit("/", 1)[-1]]
+        found = set()
+        for option in node.get("anyOf", []) + node.get("oneOf", []):
+            found |= schema_paths(option, prefix)
+        if "items" in node:
+            found |= schema_paths(node["items"], prefix)
+        for key, child in node.get("properties", {}).items():
+            found.add(prefix + key)
+            found |= schema_paths(child, f"{prefix}{key}.")
+        return found
+
+    expected = schema_paths(schema)
+    assert len(expected) == 45
+    assert paths(jsonld.REVERSE_MAP) == expected
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://schema.org/",
+        "https://example.org/context.jsonld",
+        "https://w3id.org/fair-bioheaders/fhr/v9.9.9/jsonld/fhr.context.jsonld",
+    ],
+)
+def test_loader_serves_only_bundled_contexts(url):
+    pyld = pytest.importorskip("pyld.jsonld")
+    refused = []
+    load = jsonld._document_loader(refused)
+    with pytest.raises(pyld.JsonLdError) as error:
+        load(url)
+    assert error.value.code == "loading document failed"
+    assert refused == [url]
+    served = load(jsonld.RAW_MAIN_CONTEXT_URL)
+    assert served["document"] == jsonld.CONTEXT
+    with pytest.raises(ValueError) as error:
+        jsonld.from_jsonld({"@context": url, "name": "x"})
+    assert str(error.value) == f"JSON-LD context is not available offline: {url}"
+
+
+def open_object_vector():
+    """The taxon.checksum vector, made non-canonical by moving it into @graph."""
+    vector = next(v for v in MANIFEST if v["id"] == "jsonld-open-object-extra-key")
+    document = json.loads(vector_bytes(vector))
+    context = document.pop("@context")
+    return {"@context": context, "@graph": [document]}, vector["metadata"]
+
+
+def test_nested_key_without_a_term_is_an_unknown_term():
+    pytest.importorskip("pyld")
+    document, metadata = open_object_vector()
+    with pytest.raises(ValueError) as error:
+        jsonld.from_jsonld(document)
+    assert str(error.value) == (
+        "JSON-LD term not in the FHR mapping: checksum "
+        "(dropped by JSON-LD expansion: it has no IRI)"
+    )
+    messages = []
+    back = jsonld.from_jsonld(document, ignore_unknown_terms=True, warn=messages.append)
+    assert messages == [
+        "warning: JSON-LD term not in the FHR mapping: checksum "
+        "(dropped by JSON-LD expansion: it has no IRI)"
+    ]
+    expected = copy.deepcopy(metadata)
+    del expected["taxon"]["checksum"]
+    assert equal(back, expected)
+
+
+def test_unknown_terms_print_warnings_with_the_option(tmp_path):
+    pytest.importorskip("pyld")
+    vector = next(v for v in MANIFEST if v["id"] == "jsonld-unknown-term")
+    source = tmp_path / "in.jsonld"
+    source.write_bytes(vector_bytes(vector))
+    failed = bioheaders_command("validate", source)
+    assert failed.returncode == 1
+    assert failed.stderr == (
+        b"FHR: JSON-LD term not in the FHR mapping: http://schema.org/keywords "
+        b"(at the record)\n"
+    )
+    for command in (("validate", source), ("convert", source, tmp_path / "out.json")):
+        result = bioheaders_command(command[0], "--ignore-unknown-terms", *command[1:])
+        assert result.returncode == 0, result.stderr
+        assert result.stderr == (
+            b"FHR: warning: JSON-LD term not in the FHR mapping: "
+            b"http://schema.org/keywords (at the record)\n"
+        )
+    assert "keywords" not in json.loads((tmp_path / "out.json").read_text())
+
+
+def test_ignore_unknown_terms_does_not_hide_other_errors(tmp_path):
+    pytest.importorskip("pyld")
+    vector = next(v for v in MANIFEST if v["id"] == "jsonld-two-nodes")
+    source = tmp_path / "in.jsonld"
+    source.write_bytes(vector_bytes(vector))
+    result = bioheaders_command("validate", "--ignore-unknown-terms", source)
+    assert result.returncode == 1
+    assert result.stderr == (
+        b"FHR: JSON-LD must describe exactly one FHR record (found 2 nodes)\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "name, message",
+    [
+        (
+            "jsonld-two-nodes",
+            "JSON-LD must describe exactly one FHR record (found 2 nodes)",
+        ),
+        (
+            "jsonld-two-genome-values",
+            "JSON-LD gives 2 values for single-valued field genome",
+        ),
+        (
+            "jsonld-remote-context",
+            "JSON-LD context is not available offline: https://schema.org/",
+        ),
+        ("jsonld-root-id", "JSON-LD term not in the FHR mapping: @id (at the record)"),
+        (
+            "jsonld-datetime-datecreated",
+            "JSON-LD gives field dateCreated the datatype "
+            "http://www.w3.org/2001/XMLSchema#dateTime; allowed: only xsd:date or no datatype",
+        ),
+        (
+            "jsonld-flattened",
+            "JSON-LD gives field taxon only as a reference to "
+            "https://identifiers.org/taxonomy:9606 (flattened form), which is not supported",
+        ),
+    ],
+)
+def test_error_messages(name, message):
+    pytest.importorskip("pyld")
+    vector = next(v for v in MANIFEST if v["id"] == name)
+    with pytest.raises(ValueError) as error:
+        jsonld.from_jsonld(json.loads(vector_bytes(vector)))
+    assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    "value, message",
+    [
+        ({"@value": "x", "@language": "en"}, "language-tagged value for field genome"),
+        (
+            {"@value": "1", "@type": "http://www.w3.org/2001/XMLSchema#string"},
+            "datatype",
+        ),
+        ({"@id": "https://example.org/x"}, "a node for field genome"),
+    ],
+)
+def test_value_rules(metadata, value, message):
+    pytest.importorskip("pyld")
+    document = expanded(written(metadata))
+    document[0]["http://schema.org/name"] = [value]
+    with pytest.raises(ValueError, match=message):
+        jsonld.from_jsonld(document)
+
+
+def test_iri_field_accepts_id_or_string(metadata):
+    pytest.importorskip("pyld")
+    document = expanded(written(metadata))
+    link = "https://w3id.org/fair-bioheaders/terms#relatedLink"
+    document[0][link] = [
+        {"@value": "https://example.org/a"},
+        {"@id": "https://example.org/b"},
+    ]
+    back = jsonld.from_jsonld(document)
+    assert back["relatedLink"] == ["https://example.org/a", "https://example.org/b"]
