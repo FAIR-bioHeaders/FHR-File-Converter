@@ -21,7 +21,8 @@
   embedded bundled context and typed nodes (`Dataset`, `Taxon`, `Person`/`Organization`/`Agent`
   from the author identifier, `PropertyValue`, `SoftwareApplication`, `VitalStats`). Output
   is byte-identical to the specification's examples. A `documentation` URL is written as
-  `subjectOf`. Reading the canonical form (rule J1) needs no new dependency. Other JSON-LD
+  `subjectOf`. The context also defines the node types at its root, so JSON-LD 1.0 tools such
+  as validator.schema.org recognise them. Reading the canonical form (rule J1) needs no new dependency. Other JSON-LD
   forms (expanded, compacted with another context, one record in `@graph`) are read by
   JSON-LD expansion (rules J3 to J5) with the new optional `jsonld` extra (PyLD, Python
   3.10+); terms that map to no FHR field fail the read unless `convert`/`validate` get
