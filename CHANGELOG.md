@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-10
 
 - Add `bioheaders assess` (FHR-Specification feature 010): a FAIR checklist for the header of
   a FASTA, GFF3, GAF, VCF, GFA or other text file against the 41 RDA FAIR Data Maturity Model

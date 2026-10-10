@@ -8,7 +8,7 @@ Convert and validate FAIR-bioHeaders Reference genome (FHR) metadata in JSON,
 YAML, JSON-LD, FASTA, GFA, and HTML microdata. See
 [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification) for the
 schema and metadata design. This is the `fair-bioheaders` package, version
-**0.4.0**, formerly the FHR File Converter (`fhr`); see
+**0.5.0**, formerly the FHR File Converter (`fhr`); see
 [Renamed from fhr](#renamed-from-fhr).
 
 ## Install
@@ -257,7 +257,7 @@ types. Nothing that worked with 0.3 stops working:
   `fhr` and `fhr.cli` are the same module objects as `bioheaders` and
   `bioheaders.cli`. Importing `fhr` emits one `DeprecationWarning`; replace
   `fhr` with `bioheaders` in imports. The `fhr` metadata class keeps its name.
-- `pip install fhr` installs `fhr` 0.4.0, a compatibility package without code
+- `pip install fhr` installs `fhr`, a compatibility package without code
   that requires the same version of `fair-bioheaders`, so existing requirements
   and `pip install -U fhr` keep working. Prefer `fair-bioheaders` in new
   requirements. The compatibility package also installs the `fhr-*` commands, so
