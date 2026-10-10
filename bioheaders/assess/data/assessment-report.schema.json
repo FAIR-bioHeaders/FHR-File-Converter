@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/main/bioheaders/assess/data/assessment-report.schema.json",
+  "title": "FAIR-bioHeaders header assessment report",
+  "description": "Machine-readable report of `bioheaders assess` for one file (specs/010-fair-header-assessment). A checklist with evidence: there is deliberately no score field (FR-004). Design source: FHR-Specification specs/010-fair-header-assessment/contracts/; the toolkit ships a byte-identical copy at the $id path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version", "tool", "rubric_version", "synonyms_version", "reference_versions",
+    "attribution", "online_checks", "input", "evidence", "results", "findings"
+  ],
+  "properties": {
+    "report_version": {"const": "1.0.0"},
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"const": "bioheaders assess"},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "rubric_version": {"$ref": "#/$defs/semver"},
+    "synonyms_version": {"$ref": "#/$defs/semver"},
+    "reference_versions": {
+      "type": "object",
+      "description": "Version of each pinned reference table, e.g. {\"spdx-licenses\": \"3.27\"}.",
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "attribution": {
+      "type": "string",
+      "description": "RDA FAIR Data Maturity Model CC BY 4.0 attribution (research R-19).",
+      "pattern": "10\\.15497/rda00050"
+    },
+    "online_checks": {"enum": ["ran", "not_requested"]},
+    "input": {"$ref": "#/$defs/input"},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "results": {
+      "type": "array",
+      "description": "One entry per RDA indicator, all 41, in rubric order.",
+      "minItems": 41,
+      "maxItems": 41,
+      "items": {"$ref": "#/$defs/result"}
+    },
+    "conformance": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/conformance"}]},
+    "links": {"type": "array", "items": {"$ref": "#/$defs/link"}},
+    "circumstantial": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/circumstantial"}]},
+    "pair_classification": {
+      "oneOf": [
+        {"type": "null"},
+        {"enum": ["recorded-mismatch", "recorded-match", "inconsistent", "partial", "consistent-unverified", "unknown"]}
+      ]
+    },
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "online": {
+      "description": "Present only when online_checks is \"ran\". Time-dependent; excluded from reproducibility comparisons.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checks"],
+      "properties": {"checks": {"type": "array", "items": {"$ref": "#/$defs/online_check"}}}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"online_checks": {"const": "ran"}}},
+      "then": {"required": ["online"]},
+      "else": {"not": {"required": ["online"]}}
+    }
+  ],
+  "$defs": {
+    "semver": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "indicator_id": {
+      "type": "string",
+      "pattern": "^RDA-(F1|F2|F3|F4|A1|A1\\.1|A1\\.2|A2|I1|I2|I3|R1|R1\\.1|R1\\.2|R1\\.3)-0[1-5][MD]$"
+    },
+    "evidence_id": {"type": "string", "pattern": "^e[1-9][0-9]*$"},
+    "convention": {
+      "enum": ["fair-bioheaders", "gff3-directive", "gff3-pragma", "gaf", "vcf-meta", "fasta-defline", "unrecognised"]
+    },
+    "guideline_item": {"type": "string", "pattern": "^G[1-8]$"},
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "compression", "format", "format_source", "scope", "header_lines_read", "records_sampled"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "size": {"type": ["integer", "null"], "minimum": 0},
+        "compression": {"enum": ["none", "gzip", "bgzf"]},
+        "format": {"enum": ["fasta", "gff3", "gaf", "vcf", "gfa", "unknown-text", "binary", "archive"]},
+        "format_source": {"enum": ["content", "extension", "option"]},
+        "header_sha256": {"$ref": "#/$defs/sha256"},
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "header_lines_read": {"type": "integer", "minimum": 0},
+        "records_sampled": {"type": "integer", "minimum": 0},
+        "scope": {"enum": ["assessed", "out_of_scope", "error"]},
+        "error": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"scope": {"const": "error"}}}, "then": {"required": ["error"]}},
+        {"if": {"properties": {"scope": {"const": "assessed"}}}, "then": {"required": ["header_sha256"]}}
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "line", "convention", "raw", "key", "normalised_key", "value", "concepts", "scope", "value_forms"],
+      "properties": {
+        "id": {"$ref": "#/$defs/evidence_id"},
+        "line": {"type": "integer", "minimum": 1},
+        "convention": {"$ref": "#/$defs/convention"},
+        "raw": {"type": "string"},
+        "key": {"type": ["string", "null"]},
+        "normalised_key": {"type": ["string", "null"]},
+        "value": {"type": ["string", "object", "array", "null"]},
+        "concepts": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"}},
+        "scope": {"enum": ["file", "first-record", "upstream-provenance"]},
+        "value_forms": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "line", "convention", "value_source", "guideline_item"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "line": {"type": "string", "minLength": 1},
+        "convention": {"$ref": "#/$defs/convention"},
+        "value_source": {"enum": ["file", "related-file", "placeholder", "file-name"]},
+        "guideline_item": {"$ref": "#/$defs/guideline_item"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "evidence", "message"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "malformed", "conflicting-values", "identifier-in-free-text", "unrecognised-comment",
+            "header-truncated", "line-too-long", "undecodable-line", "format-irregularity",
+            "url-names-directory", "filename-hint"
+          ]
+        },
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence_id"}},
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["indicator", "status", "reason", "method", "evidence", "conditions_met", "conditions_total", "findings", "suggestion"],
+      "properties": {
+        "indicator": {"$ref": "#/$defs/indicator_id"},
+        "status": {"enum": ["evidenced", "partially_evidenced", "not_evidenced", "not_applicable", "not_assessed"]},
+        "reason": {"type": ["string", "null"]},
+        "method": {"enum": ["offline", "online", "none"]},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence_id"}},
+        "conditions_met": {"type": "integer", "minimum": 0},
+        "conditions_total": {"type": "integer", "minimum": 0},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "suggestion": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/suggestion"}]},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "not_applicable"}}},
+          "then": {"properties": {"reason": {"enum": ["embedded-metadata", "repository-level", "object-in-hand"]}, "method": {"const": "none"}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "not_assessed"}}},
+          "then": {
+            "properties": {
+              "reason": {
+                "enum": [
+                  "online-check-not-requested", "online-check-unavailable", "deferred-data-body",
+                  "binary-format-out-of-scope", "archive-not-supported", "unsupported-header-type",
+                  "unsupported-schema-version", "input-unreadable"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["evidenced", "partially_evidenced", "not_evidenced"]}}},
+          "then": {"properties": {"reason": {"const": null}, "method": {"enum": ["offline", "online"]}}}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["evidenced", "partially_evidenced"]}}},
+          "then": {"properties": {"evidence": {"minItems": 1}}}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["partially_evidenced", "not_evidenced"]}}},
+          "then": {"properties": {"suggestion": {"$ref": "#/$defs/suggestion"}}},
+          "else": {"properties": {"suggestion": {"const": null}}}
+        }
+      ]
+    },
+    "conformance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["header_type", "cited_schema", "cited_schema_version", "schema_used", "result", "reason"],
+      "properties": {
+        "header_type": {"description": "From the cited schema against an allow-list (spec#44); null when the schema value is missing or not on the list.", "enum": ["FHR", "FHT", "FHP", "FHGFF3", null]},
+        "cited_schema": {"type": ["string", "null"]},
+        "cited_schema_version": {"type": ["string", "null"]},
+        "schema_used": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["canonical_url", "bundled_sha256", "version"],
+              "properties": {
+                "canonical_url": {"type": "string", "format": "uri"},
+                "bundled_sha256": {"$ref": "#/$defs/sha256"},
+                "version": {"type": "string"}
+              }
+            }
+          ]
+        },
+        "result": {"enum": ["valid", "invalid", "not_assessed"]},
+        "reason": {"type": ["string", "null"]}
+      },
+      "allOf": [
+        {"if": {"properties": {"result": {"const": "valid"}}}, "then": {"properties": {"reason": {"const": null}}}, "else": {"properties": {"reason": {"type": "string", "minLength": 1}}}}
+      ]
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["related_path", "verdict", "reason", "expected", "actual", "method", "hints"],
+      "properties": {
+        "related_path": {"type": "string", "minLength": 1},
+        "verdict": {"enum": ["match", "mismatch", "unverifiable"]},
+        "reason": {
+          "oneOf": [
+            {"type": "null"},
+            {"enum": ["malformed", "related-file-states-no-identity", "related-file-states-no-seqcol", "related-file-unreadable", "sequence-absent"]}
+          ]
+        },
+        "expected": {"type": ["string", "object", "null"]},
+        "actual": {"type": ["string", "object", "null"]},
+        "method": {"enum": ["computed-fhr-checksum", "stated-fhr-checksum", "stated-seqcol", "computed-md5", "stated-identity", "none"]},
+        "hints": {"type": "array", "items": {"type": "string"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"verdict": {"const": "unverifiable"}}}, "then": {"properties": {"reason": {"type": "string"}}}, "else": {"properties": {"reason": {"const": null}}}}
+      ]
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rank", "value", "relationship", "evidence", "well_formed", "verification"],
+      "properties": {
+        "kind": {"enum": ["checksum", "seqcol", "sequence-digests", "accession", "url", "name"]},
+        "rank": {"type": "integer", "minimum": 1, "maximum": 4},
+        "value": {"type": ["string", "object"]},
+        "relationship": {"type": ["string", "null"]},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence_id"}},
+        "well_formed": {"type": "boolean"},
+        "verification": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/verification"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"enum": ["checksum", "seqcol", "sequence-digests"]}}}, "then": {"properties": {"rank": {"const": 1}}}},
+        {"if": {"properties": {"kind": {"const": "accession"}}}, "then": {"properties": {"rank": {"const": 2}}}},
+        {"if": {"properties": {"kind": {"const": "url"}}}, "then": {"properties": {"rank": {"const": 3}}}},
+        {"if": {"properties": {"kind": {"const": "name"}}}, "then": {"properties": {"rank": {"const": 4}}}}
+      ]
+    },
+    "circumstantial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "related_path", "source", "names_compared", "lengths_compared", "missing_from_related", "length_mismatches", "not_declared_count", "verdict"],
+      "properties": {
+        "label": {"const": "circumstantial evidence, not a recorded link"},
+        "related_path": {"type": "string", "minLength": 1},
+        "source": {"enum": ["sequence-region", "vcf-contig", "record-seqids", "none"]},
+        "names_compared": {"type": "integer", "minimum": 0},
+        "lengths_compared": {"type": "integer", "minimum": 0},
+        "missing_from_related": {"type": "array", "items": {"type": "string"}},
+        "length_mismatches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "declared", "actual"],
+            "properties": {
+              "name": {"type": "string"},
+              "declared": {"type": "integer", "minimum": 0},
+              "actual": {"type": "integer", "minimum": 0}
+            }
+          }
+        },
+        "not_declared_count": {"type": "integer", "minimum": 0},
+        "verdict": {"enum": ["consistent", "partially_consistent", "inconsistent", "not_checked"]}
+      }
+    },
+    "online_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "request_url", "final_url", "http_status", "outcome", "checked_at", "time_dependent"],
+      "properties": {
+        "target": {"type": "string", "minLength": 1},
+        "request_url": {"type": "string"},
+        "final_url": {"type": ["string", "null"]},
+        "http_status": {"type": ["integer", "null"]},
+        "outcome": {"enum": ["resolved", "not_found", "refused", "unavailable"]},
+        "checked_at": {"type": "string", "format": "date-time"},
+        "time_dependent": {"const": true}
+      }
+    }
+  }
+}

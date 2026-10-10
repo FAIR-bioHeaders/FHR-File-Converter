@@ -1,0 +1,807 @@
+{
+  "synonyms_version": "1.0.0",
+  "normalisation": {
+    "casefold": true,
+    "fold_separators": [
+      "-",
+      "_",
+      " "
+    ],
+    "split_camel_case": true,
+    "strip_trailing_colon": true
+  },
+  "forms": {
+    "insdc-assembly-accession": {
+      "pattern": "(?:NCBI_Assembly:)?GC[AF]_\\d{9}\\.\\d+",
+      "description": "Versioned INSDC/RefSeq assembly accession, optional NCBI_Assembly: prefix",
+      "identifier": true
+    },
+    "spdx-id": {
+      "pattern": "[A-Za-z0-9.+-]+",
+      "description": "SPDX licence identifier listed in the pinned SPDX licence list",
+      "reference_table": "spdx-licenses",
+      "identifier": true
+    },
+    "licence-url": {
+      "pattern": "https?://(?:creativecommons\\.org/(?:licenses|publicdomain)/\\S+|opendatacommons\\.org/licenses/\\S+|spdx\\.org/licenses/\\S+)",
+      "description": "Canonical URL of a standard licence (Creative Commons, Open Data Commons, SPDX)",
+      "identifier": true
+    },
+    "taxonomy-iri": {
+      "pattern": "https://identifiers\\.org/taxonomy:\\d+",
+      "description": "Persistent NCBI Taxonomy IRI at identifiers.org",
+      "identifier": true
+    },
+    "ncbi-taxonomy-url": {
+      "pattern": "https?://www\\.ncbi\\.nlm\\.nih\\.gov/Taxonomy/Browser/wwwtax\\.cgi\\?\\S*id=\\d+\\S*",
+      "description": "NCBI Taxonomy browser URL (a web page, not a persistent IRI)"
+    },
+    "orcid": {
+      "pattern": "https://orcid\\.org/\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]",
+      "description": "ORCID iD as a URI",
+      "identifier": true
+    },
+    "doi": {
+      "pattern": "(?:https://doi\\.org/|doi:)?10\\.\\d{4,9}/\\S+",
+      "description": "Digital Object Identifier",
+      "identifier": true
+    },
+    "registered-id": {
+      "pattern": "\\S+",
+      "description": "Identifier in a scheme of the pinned identifier-scheme table that is flagged persistent (prefix:local, DOI, or a GCA_/GCF_ accession)",
+      "reference_table": "id-schemes",
+      "identifier": true
+    },
+    "iso-date": {
+      "pattern": "\\d{4}-\\d{2}(?:-\\d{2}(?:[T ]\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d+)?)?(?:Z|[+-]\\d{2}:?\\d{2})?)?)?",
+      "description": "ISO 8601 date or date-time (reduced precision allowed)"
+    },
+    "vcf-date": {
+      "pattern": "\\d{8}",
+      "description": "VCF fileDate form YYYYMMDD"
+    },
+    "md5": {
+      "pattern": "[0-9A-Fa-f]{32}",
+      "description": "MD5 digest in hexadecimal",
+      "identifier": true
+    },
+    "fhr-checksum": {
+      "pattern": "[A-Za-z0-9+/]{43}=",
+      "description": "FHR-family SHA-512/256 checksum in base64 (44 characters)",
+      "identifier": true
+    },
+    "seqcol-digest": {
+      "pattern": "[A-Za-z0-9_-]{32}",
+      "description": "GA4GH sequence collection top-level digest (sha512t24u)",
+      "identifier": true
+    },
+    "url": {
+      "pattern": "(?:https?|ftp)://[^\\s/?#]+\\S*",
+      "description": "URL with an http, https or ftp scheme"
+    },
+    "directory-url": {
+      "pattern": "(?:https?|ftp)://[^\\s/?#]+/\\S*/",
+      "description": "URL that names a directory (ends with /)"
+    },
+    "vocabulary-bound-format": {
+      "pattern": "3(?:\\.\\d+)*|2\\.\\d+",
+      "description": "Format version of a format whose specification mandates a vocabulary (GFF3: Sequence Ontology; GAF 2.x: Gene Ontology)"
+    }
+  },
+  "concepts": {
+    "format-version": {
+      "description": "Declaration of the data format and its version",
+      "keys": {
+        "gff3-directive": [
+          "gff-version"
+        ],
+        "vcf-meta": [
+          "fileformat"
+        ],
+        "gaf": [
+          "gaf-version"
+        ]
+      },
+      "forms": [
+        "vocabulary-bound-format"
+      ],
+      "scope": "file",
+      "core_field": "schema",
+      "emit": {
+        "gff3-directive": "gff-version",
+        "vcf-meta": "fileformat",
+        "gaf": "gaf-version",
+        "fair-bioheaders": "schema"
+      }
+    },
+    "format-spec-version": {
+      "description": "Version of the format specification followed (NCBI GFF3)",
+      "keys": {
+        "gff3-pragma": [
+          "gff-spec-version"
+        ]
+      },
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "gff3-pragma": "gff-spec-version",
+        "fair-bioheaders": "schemaVersion"
+      }
+    },
+    "header-schema": {
+      "description": "Machine-readable schema of a FAIR-bioHeaders header",
+      "keys": {
+        "fair-bioheaders": [
+          "schema"
+        ]
+      },
+      "forms": [
+        "url"
+      ],
+      "scope": "file",
+      "core_field": "schema",
+      "emit": {
+        "fair-bioheaders": "schema"
+      }
+    },
+    "header-schema-version": {
+      "description": "Version of the FAIR-bioHeaders header schema",
+      "keys": {
+        "fair-bioheaders": [
+          "schemaVersion"
+        ]
+      },
+      "scope": "file",
+      "core_field": "schemaVersion",
+      "emit": {
+        "fair-bioheaders": "schemaVersion"
+      }
+    },
+    "context-iri": {
+      "description": "Mapping of header keys to IRIs (JSON-LD context); no surveyed file has one",
+      "keys": {
+        "fair-bioheaders": [
+          "@context"
+        ]
+      },
+      "forms": [
+        "url"
+      ],
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "fair-bioheaders": "@context"
+      }
+    },
+    "sequence-region": {
+      "description": "Declared sequence name and extent (circumstantial evidence only)",
+      "keys": {
+        "gff3-directive": [
+          "sequence-region"
+        ],
+        "vcf-meta": [
+          "contig"
+        ]
+      },
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "gff3-directive": "sequence-region",
+        "vcf-meta": "contig",
+        "fair-bioheaders": "vitalStats"
+      }
+    },
+    "assembly-accession": {
+      "description": "Accession of the assembly a derived file refers to",
+      "keys": {
+        "gff3-pragma": [
+          "genome-build-accession"
+        ],
+        "vcf-meta": [
+          "reference"
+        ],
+        "vcf-contig": [
+          "assembly"
+        ],
+        "fair-bioheaders": [
+          "derivedFrom.accessionID.name"
+        ]
+      },
+      "forms": [
+        "insdc-assembly-accession"
+      ],
+      "scope": "file",
+      "core_field": "derivedFrom.accessionID",
+      "link_kind": "accession",
+      "relationship": "annotates",
+      "emit": {
+        "gff3-pragma": "genome-build-accession",
+        "vcf-meta": "reference",
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "reference-url": {
+      "description": "URL of the reference sequence a derived file refers to",
+      "keys": {
+        "vcf-meta": [
+          "reference"
+        ],
+        "vcf-contig": [
+          "URL"
+        ]
+      },
+      "forms": [
+        "url"
+      ],
+      "scope": "file",
+      "core_field": null,
+      "link_kind": "url",
+      "relationship": "annotates",
+      "emit": {
+        "vcf-meta": "reference",
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "assembly-name": {
+      "description": "Name of the assembly or release a derived file refers to (not an identifier)",
+      "keys": {
+        "gff3-pragma": [
+          "genome-build",
+          "genome-version",
+          "assembly"
+        ],
+        "gff3-directive": [
+          "genome-build"
+        ],
+        "vcf-meta": [
+          "reference"
+        ],
+        "vcf-contig": [
+          "assembly"
+        ],
+        "fasta-defline": [
+          "ensembl-coord-assembly",
+          "release"
+        ]
+      },
+      "scope": "file",
+      "core_field": null,
+      "link_kind": "name",
+      "relationship": "annotates",
+      "emit": {
+        "gff3-pragma": "genome-build",
+        "vcf-meta": "reference",
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "derived-checksum": {
+      "description": "FHR-family checksum of the parent file",
+      "keys": {
+        "fair-bioheaders": [
+          "derivedFrom.checksum"
+        ]
+      },
+      "forms": [
+        "fhr-checksum"
+      ],
+      "scope": "file",
+      "core_field": "derivedFrom.checksum",
+      "link_kind": "checksum",
+      "emit": {
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "derived-seqcol": {
+      "description": "Sequence collection digest of the parent file",
+      "keys": {
+        "fair-bioheaders": [
+          "derivedFrom.seqcol_id"
+        ]
+      },
+      "forms": [
+        "seqcol-digest"
+      ],
+      "scope": "file",
+      "core_field": "derivedFrom.seqcol_id",
+      "link_kind": "seqcol",
+      "emit": {
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "derived-relationship": {
+      "description": "Stated relationship to the parent file",
+      "keys": {
+        "fair-bioheaders": [
+          "derivedFrom.relationship"
+        ]
+      },
+      "scope": "file",
+      "core_field": "derivedFrom.relationship",
+      "emit": {
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "sequence-digest": {
+      "description": "Per-sequence MD5 digests of the reference sequences",
+      "keys": {
+        "vcf-contig": [
+          "md5"
+        ]
+      },
+      "forms": [
+        "md5"
+      ],
+      "scope": "file",
+      "core_field": null,
+      "link_kind": "sequence-digests",
+      "relationship": "annotates",
+      "emit": {
+        "vcf-meta": "contig",
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "record-digest": {
+      "description": "MD5 digest of the record's own sequence (FlyBase defline); identifies the record, not a related file",
+      "keys": {
+        "fasta-defline": [
+          "MD5"
+        ]
+      },
+      "forms": [
+        "md5"
+      ],
+      "scope": "first-record",
+      "core_field": null,
+      "emit": {
+        "fair-bioheaders": "checksum"
+      }
+    },
+    "record-xref": {
+      "description": "Cross-reference of the first record (record-level only)",
+      "keys": {
+        "fasta-defline": [
+          "dbxref",
+          "uniprot",
+          "insdc"
+        ]
+      },
+      "scope": "first-record",
+      "core_field": null,
+      "emit": {
+        "fair-bioheaders": "identifier"
+      }
+    },
+    "source-data": {
+      "description": "What the file was made from: source annotation, parent data or software inputs",
+      "keys": {
+        "gff3-pragma": [
+          "annotation-source"
+        ],
+        "fair-bioheaders": [
+          "derivedFrom.headerType",
+          "assemblySoftware.name"
+        ]
+      },
+      "scope": "file",
+      "core_field": "derivedFrom",
+      "emit": {
+        "gff3-pragma": "annotation-source",
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "data-identifier": {
+      "description": "Identifier of this file's own data",
+      "keys": {
+        "fair-bioheaders": [
+          "identifier",
+          "accessionID.name"
+        ],
+        "gff3-pragma": [
+          "identifier"
+        ],
+        "vcf-meta": [
+          "identifier"
+        ],
+        "gaf": [
+          "identifier"
+        ]
+      },
+      "forms": [
+        "registered-id"
+      ],
+      "scope": "file",
+      "core_field": "identifier",
+      "emit": {
+        "gff3-pragma": "identifier",
+        "vcf-meta": "identifier",
+        "gaf": "identifier",
+        "fair-bioheaders": "identifier"
+      }
+    },
+    "checksum": {
+      "description": "FHR-family checksum of this file",
+      "keys": {
+        "fair-bioheaders": [
+          "checksum"
+        ]
+      },
+      "forms": [
+        "fhr-checksum"
+      ],
+      "scope": "file",
+      "core_field": "checksum",
+      "emit": {
+        "fair-bioheaders": "checksum"
+      }
+    },
+    "seqcol-id": {
+      "description": "Sequence collection digest of this file",
+      "keys": {
+        "fair-bioheaders": [
+          "seqcol_id"
+        ]
+      },
+      "forms": [
+        "seqcol-digest"
+      ],
+      "scope": "file",
+      "core_field": "seqcol_id",
+      "emit": {
+        "fair-bioheaders": "seqcol_id"
+      }
+    },
+    "access-url": {
+      "description": "Where to obtain the data",
+      "keys": {
+        "fair-bioheaders": [
+          "accessionID.url",
+          "relatedLink"
+        ],
+        "gff3-pragma": [
+          "relatedLink"
+        ],
+        "vcf-meta": [
+          "url",
+          "relatedLink"
+        ],
+        "gaf": [
+          "relatedLink"
+        ]
+      },
+      "forms": [
+        "url"
+      ],
+      "scope": "file",
+      "core_field": "relatedLink",
+      "emit": {
+        "gff3-pragma": "relatedLink",
+        "vcf-meta": "relatedLink",
+        "gaf": "relatedLink",
+        "fair-bioheaders": "relatedLink"
+      }
+    },
+    "subject-name": {
+      "description": "Name of the subject of the file (genome, transcriptome, proteome)",
+      "keys": {
+        "fair-bioheaders": [
+          "genome",
+          "transcriptome",
+          "proteome"
+        ]
+      },
+      "scope": "file",
+      "core_field": "FHR:genome",
+      "emit": {
+        "fair-bioheaders": "genome"
+      }
+    },
+    "taxon": {
+      "description": "Species or taxon of the data",
+      "keys": {
+        "gff3-directive": [
+          "species"
+        ],
+        "gff3-pragma": [
+          "species"
+        ],
+        "vcf-meta": [
+          "taxon"
+        ],
+        "gaf": [
+          "taxon"
+        ],
+        "vcf-contig": [
+          "species"
+        ],
+        "fair-bioheaders": [
+          "taxon.uri",
+          "taxon.name"
+        ],
+        "fasta-defline": [
+          "species",
+          "organism"
+        ]
+      },
+      "forms": [
+        "taxonomy-iri"
+      ],
+      "scope": "file",
+      "core_field": "taxon",
+      "emit": {
+        "gff3-directive": "species",
+        "vcf-meta": "taxon",
+        "gaf": "taxon",
+        "fair-bioheaders": "taxon"
+      }
+    },
+    "version": {
+      "description": "Version or release of this file's data",
+      "keys": {
+        "fair-bioheaders": [
+          "version"
+        ],
+        "gff3-pragma": [
+          "version"
+        ],
+        "vcf-meta": [
+          "version",
+          "dbSNP_BUILD_ID"
+        ],
+        "gaf": [
+          "version"
+        ],
+        "fasta-defline": [
+          "release"
+        ]
+      },
+      "scope": "file",
+      "core_field": "version",
+      "emit": {
+        "gff3-pragma": "version",
+        "vcf-meta": "version",
+        "gaf": "version",
+        "fair-bioheaders": "version"
+      }
+    },
+    "date-created": {
+      "description": "When this file or its data was produced",
+      "keys": {
+        "gff3-pragma": [
+          "date-produced",
+          "annotation-date",
+          "genebuild-last-updated"
+        ],
+        "vcf-meta": [
+          "fileDate"
+        ],
+        "gaf": [
+          "date-generated",
+          "Created on"
+        ],
+        "fair-bioheaders": [
+          "dateCreated"
+        ]
+      },
+      "forms": [
+        "iso-date",
+        "vcf-date"
+      ],
+      "scope": "file",
+      "core_field": "dateCreated",
+      "emit": {
+        "gff3-pragma": "date-produced",
+        "vcf-meta": "fileDate",
+        "gaf": "date-generated",
+        "fair-bioheaders": "dateCreated"
+      }
+    },
+    "assembly-date": {
+      "description": "Date of the assembly the file refers to (not of the file)",
+      "keys": {
+        "gff3-pragma": [
+          "genome-date"
+        ]
+      },
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "gff3-pragma": "genome-date",
+        "fair-bioheaders": "derivedFrom"
+      }
+    },
+    "creator": {
+      "description": "Who produced the file or its metadata",
+      "keys": {
+        "gff3-pragma": [
+          "data-source",
+          "primary-contact",
+          "processor"
+        ],
+        "vcf-meta": [
+          "source"
+        ],
+        "gaf": [
+          "generated-by"
+        ],
+        "fair-bioheaders": [
+          "metadataAuthor.name",
+          "metadataAuthor.uri",
+          "assemblyAuthor.name",
+          "assemblyAuthor.uri"
+        ]
+      },
+      "forms": [
+        "orcid"
+      ],
+      "scope": "file",
+      "core_field": "metadataAuthor",
+      "emit": {
+        "gff3-pragma": "data-source",
+        "vcf-meta": "source",
+        "gaf": "generated-by",
+        "fair-bioheaders": "metadataAuthor"
+      }
+    },
+    "software": {
+      "description": "Software that produced the file",
+      "keys": {
+        "gff3-pragma": [
+          "processor",
+          "tool"
+        ],
+        "gaf": [
+          "PANTHER version"
+        ],
+        "fair-bioheaders": [
+          "assemblySoftware.name",
+          "assemblySoftware.version"
+        ]
+      },
+      "scope": "file",
+      "core_field": "FHR:assemblySoftware",
+      "emit": {
+        "gff3-pragma": "tool",
+        "fair-bioheaders": "assemblySoftware"
+      }
+    },
+    "ontology-version": {
+      "description": "Ontology or vocabulary release used in the data",
+      "keys": {
+        "gaf": [
+          "go-version",
+          "GO version"
+        ],
+        "gff3-directive": [
+          "feature-ontology",
+          "attribute-ontology",
+          "source-ontology"
+        ]
+      },
+      "forms": [
+        "url"
+      ],
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "gff3-directive": "feature-ontology",
+        "gaf": "go-version",
+        "fair-bioheaders": "documentation"
+      }
+    },
+    "documentation": {
+      "description": "Documentation about the data or header",
+      "keys": {
+        "gaf": [
+          "Documentation about this header can be found here"
+        ],
+        "fair-bioheaders": [
+          "documentation"
+        ]
+      },
+      "scope": "file",
+      "core_field": "documentation",
+      "emit": {
+        "fair-bioheaders": "documentation"
+      }
+    },
+    "licence": {
+      "description": "Licence or reuse conditions",
+      "keys": {
+        "fair-bioheaders": [
+          "reuseConditions"
+        ],
+        "gff3-pragma": [
+          "reuseConditions",
+          "license",
+          "licence"
+        ],
+        "vcf-meta": [
+          "reuseConditions",
+          "license",
+          "licence"
+        ],
+        "gaf": [
+          "reuseConditions",
+          "license",
+          "licence"
+        ]
+      },
+      "forms": [
+        "spdx-id",
+        "licence-url"
+      ],
+      "scope": "file",
+      "core_field": "reuseConditions",
+      "emit": {
+        "gff3-pragma": "reuseConditions",
+        "vcf-meta": "reuseConditions",
+        "gaf": "reuseConditions",
+        "fair-bioheaders": "reuseConditions"
+      }
+    },
+    "scholarly-article": {
+      "description": "Article describing the data",
+      "keys": {
+        "fair-bioheaders": [
+          "scholarlyArticle"
+        ]
+      },
+      "forms": [
+        "doi"
+      ],
+      "scope": "file",
+      "core_field": "scholarlyArticle",
+      "emit": {
+        "fair-bioheaders": "scholarlyArticle"
+      }
+    },
+    "funding": {
+      "description": "Funding of the data",
+      "keys": {
+        "fair-bioheaders": [
+          "funding"
+        ]
+      },
+      "scope": "file",
+      "core_field": "funding",
+      "emit": {
+        "fair-bioheaders": "funding"
+      }
+    },
+    "field-definition": {
+      "description": "Structural: typed definitions of the data's own fields (VCF INFO and FORMAT); not FAIR metadata about the file",
+      "keys": {
+        "vcf-meta": [
+          "INFO",
+          "FORMAT"
+        ]
+      },
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "vcf-meta": "INFO",
+        "fair-bioheaders": "documentation"
+      }
+    },
+    "structural": {
+      "description": "Structural VCF meta-information (FILTER, ALT, ID, phasing); not FAIR metadata about the file",
+      "keys": {
+        "vcf-meta": [
+          "FILTER",
+          "ALT",
+          "ID",
+          "phasing",
+          "pedigree",
+          "SAMPLE",
+          "META"
+        ]
+      },
+      "scope": "file",
+      "core_field": null,
+      "emit": {
+        "vcf-meta": "ALT",
+        "fair-bioheaders": "documentation"
+      }
+    }
+  }
+}

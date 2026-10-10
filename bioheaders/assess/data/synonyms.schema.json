@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/main/bioheaders/assess/data/synonyms.schema.json",
+  "title": "FAIR-bioHeaders assessment synonym table (synonyms.json)",
+  "description": "Maps header keys in each convention to concepts, and defines value forms. See contracts/data-files.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["synonyms_version", "normalisation", "forms", "concepts"],
+  "properties": {
+    "synonyms_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "normalisation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["casefold", "fold_separators", "split_camel_case", "strip_trailing_colon"],
+      "properties": {
+        "casefold": {"const": true},
+        "fold_separators": {"const": ["-", "_", " "]},
+        "split_camel_case": {"const": true},
+        "strip_trailing_colon": {"const": true}
+      }
+    },
+    "forms": {
+      "type": "object",
+      "description": "Named value forms. Each pattern is a Python `re` pattern matched with fullmatch against the trimmed value.",
+      "propertyNames": {"pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pattern", "description"],
+        "properties": {
+          "pattern": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "reference_table": {"enum": ["spdx-licenses", "id-schemes", "formats"], "description": "Value must additionally be listed in this pinned table."},
+          "identifier": {"type": "boolean", "default": false, "description": "True if the form is an identifier (used for identifier-in-free-text findings)."}
+        }
+      }
+    },
+    "concepts": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "keys", "scope", "emit"],
+        "properties": {
+          "description": {"type": "string"},
+          "keys": {
+            "type": "object",
+            "propertyNames": {"enum": ["fair-bioheaders", "gff3-directive", "gff3-pragma", "gaf", "vcf-meta", "vcf-contig", "fasta-defline"]},
+            "additionalProperties": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          },
+          "forms": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "scope": {"enum": ["file", "first-record"]},
+          "core_field": {"type": ["string", "null"], "description": "Slot in FHR-Specification schemas/core.yaml (or `FHR:<slot>`)."},
+          "link_kind": {"enum": ["checksum", "seqcol", "sequence-digests", "accession", "url", "name"], "description": "Set when evidence of this concept is a recorded link to related data."},
+          "relationship": {"type": "string", "description": "Documented meaning of the native key as a derivedFrom relationship, e.g. annotates."},
+          "emit": {
+            "type": "object",
+            "propertyNames": {"enum": ["fair-bioheaders", "gff3-pragma", "gff3-directive", "gaf", "vcf-meta", "fasta-defline"]},
+            "additionalProperties": {"type": "string", "minLength": 1},
+            "required": ["fair-bioheaders"]
+          }
+        }
+      }
+    }
+  }
+}
