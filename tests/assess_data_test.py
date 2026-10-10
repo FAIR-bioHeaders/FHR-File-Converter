@@ -151,6 +151,18 @@ def test_suggestion_templates_use_only_values_related_fields_or_placeholders(rub
                 assert "e.g. " in placeholder, (indicator["id"], placeholder)
 
 
+def test_suggestion_texts_name_their_guideline_item(rubric):
+    """Each suggestion points to the item of docs/FAIR_HEADER_GUIDELINE.md (010 T046)."""
+    for indicator in rubric["indicators"]:
+        for convention, template in (indicator.get("suggestions") or {}).items():
+            assert (
+                f"(see guideline {indicator['guideline_item']})" in template["text"]
+            ), (
+                indicator["id"],
+                convention,
+            )
+
+
 def test_rubric_attribution(rubric):
     assert re.search(r"10\.15497/rda00050", rubric["attribution"])
     assert "CC BY 4.0" in rubric["attribution"]
@@ -160,7 +172,7 @@ def test_rubric_attribution(rubric):
 def test_loader_validates_and_reports_versions():
     loaded = data.load()
     assert loaded is data.load()  # cached per process
-    assert loaded.rubric_version == "1.0.0"
+    assert loaded.rubric_version == "1.1.0"
     assert loaded.synonyms_version == "1.0.0"
     assert set(loaded.reference_versions) == set(REFERENCE_ENTRY_KEYS)
     assert loaded.report_schema["properties"]["report_version"] == {"const": "1.0.0"}

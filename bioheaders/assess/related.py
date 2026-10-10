@@ -179,6 +179,15 @@ def scan(path):
     return _CACHE[key]
 
 
+def prime(path, related_file):
+    """Store a RelatedFile scanned elsewhere (another process) in this cache."""
+    try:
+        key = (os.path.realpath(path), os.stat(path).st_size)
+    except OSError:
+        return
+    _CACHE[key] = related_file
+
+
 def clear_cache():
     _CACHE.clear()
 

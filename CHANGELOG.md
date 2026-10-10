@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Add `bioheaders assess` (FHR-Specification feature 010): a FAIR checklist for the header of
+  a FASTA, GFF3, GAF, VCF, GFA or other text file against the 41 RDA FAIR Data Maturity Model
+  indicators, with the cited header lines and a suggestion in the file's own convention for
+  each gap; no score. It reports FAIR-bioHeaders schema conformance separately, verifies
+  recorded links against a `--related` file and reports name/length agreement as
+  circumstantial evidence. Batch mode (`--recursive`, `--include`, `--exclude`, `--jobs`,
+  `--pairs`, `--output`) writes per-file reports and `summary.json`/`.md`/`.tsv`,
+  byte-identical on a re-run; 200 synthetic files took about 20 s on a laptop
+  (`scripts/bench_assess.py`). Offline by default; `--online` (with `--online-timeout`)
+  resolves only header identifiers and URLs, refusing private addresses and never sending
+  file contents. The rubric (1.1.0), synonym and reference tables ship in
+  `bioheaders/assess/data/`; the `bioheaders.assess` API is provisional. RDA indicator text is
+  used under CC BY 4.0 with attribution. No new runtime dependency; existing commands are
+  unchanged.
 - Add JSON-LD (`.jsonld`, `--from/--to jsonld`) for FHR metadata, following
   FHR-Specification docs/JSONLD.md (feature 011): the record with its own keys, an
   embedded bundled context and typed nodes (`Dataset`, `Taxon`, `Person`/`Organization`/`Agent`

@@ -814,9 +814,11 @@ ASSESS_TYPES = ("auto", "fasta", "gff3", "gaf", "vcf", "gfa")
 ASSESS_EPILOG = """\
 Reports, for each of the 41 RDA FAIR Data Maturity Model indicators, a status
 with the header lines it rests on and a suggestion for each gap. There is no
-score. No network access is made. Exit codes: 0 assessed (any statuses),
-1 an input could not be read, 2 usage error, 3 --fail-on-mismatch and a
-recorded link did not match the related file.
+score. No network access is made unless --online is given; then only the
+identifiers and URLs in the header are resolved (through doi.org,
+identifiers.org or the URL itself), never file contents. Exit codes:
+0 assessed (any statuses), 1 an input could not be read, 2 usage error,
+3 --fail-on-mismatch and a recorded link did not match the related file.
 
 Indicator identifiers and titles from: FAIR Data Maturity Model Working Group
 (2020). FAIR Data Maturity Model. Specification and Guidelines. Research Data
@@ -832,8 +834,28 @@ def _non_negative(text):
     return value
 
 
+def _positive_seconds(text):
+    value = float(text)
+    if not value > 0 or value == float("inf"):
+        raise argparse.ArgumentTypeError("must be a positive number of seconds")
+    return value
+
+
+def _positive(text):
+    value = int(text)
+    if value < 1:
+        raise argparse.ArgumentTypeError("must be 1 or more")
+    return value
+
+
 def _assess_arguments(args_parser):
-    args_parser.add_argument("input", help="file to assess, or - for stdin")
+    args_parser.add_argument(
+        "inputs",
+        nargs="+",
+        metavar="PATH",
+        help="file to assess, or - for stdin; several files, or a directory with "
+        "--recursive, run batch mode",
+    )
     args_parser.add_argument(
         "--type",
         dest="assess_type",
@@ -852,7 +874,42 @@ def _assess_arguments(args_parser):
     args_parser.add_argument(
         "--output",
         metavar="DIR",
-        help="write NAME.assessment.json and NAME.assessment.md to DIR instead",
+        help="write NAME.assessment.json and NAME.assessment.md to DIR instead "
+        "(batch mode: per-file reports mirroring the input tree, plus summary.json, "
+        "summary.md and summary.tsv; required)",
+    )
+    args_parser.add_argument(
+        "--recursive",
+        action="store_true",
+        help="descend into directories given as PATH (batch mode)",
+    )
+    args_parser.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help="batch mode: assess only paths (relative to the directory) matching "
+        "GLOB; repeatable. Hidden files are assessed only when a GLOB names them",
+    )
+    args_parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help="batch mode: skip paths matching GLOB; repeatable",
+    )
+    args_parser.add_argument(
+        "--jobs",
+        type=_positive,
+        metavar="N",
+        help="batch mode: files assessed in parallel (default: CPU count, at most 8); "
+        "the output does not depend on N",
+    )
+    args_parser.add_argument(
+        "--pairs",
+        metavar="TSV",
+        help="batch mode: derived<TAB>related paths, relative to the directory; "
+        "cannot be combined with --related",
     )
     args_parser.add_argument(
         "--record-limit",
@@ -873,15 +930,82 @@ def _assess_arguments(args_parser):
         "and compare sequence names and lengths",
     )
     args_parser.add_argument(
+        "--online",
+        action="store_true",
+        help="resolve the identifiers and URLs in the header (opt-in; only those "
+        "values are sent, never file contents; private addresses are refused)",
+    )
+    args_parser.add_argument(
+        "--online-timeout",
+        type=_positive_seconds,
+        metavar="SECONDS",
+        help="per-request timeout for --online (default: 10)",
+    )
+    args_parser.add_argument(
         "--fail-on-mismatch",
         action="store_true",
         help="exit 3 if a recorded link does not match the related file",
     )
 
 
+def _assess_batch(args):
+    from .assess import batch
+
+    try:
+        summary, mismatch = batch.run(
+            args.inputs,
+            args.output,
+            pairs=args.pairs,
+            jobs=args.jobs,
+            related=args.related,
+            include=args.include,
+            exclude=args.exclude,
+            recursive=args.recursive,
+            record_limit=args.record_limit,
+            hash_inputs=args.hash_inputs,
+            type_option=None if args.assess_type == "auto" else args.assess_type,
+            online=args.online,
+            online_timeout=args.online_timeout,
+            progress=print,
+        )
+    except batch.UsageError as error:
+        print(f"FHR: {error}", file=sys.stderr)
+        return 2
+    print()
+    print(batch.counts_table(summary), end="")
+    print(f"\nSummary: {os.path.join(args.output, 'summary.md')}")
+    for error in summary["errors"]:
+        print(f"FHR: {error['path']}: {error['message']}", file=sys.stderr)
+    if summary["errors"]:
+        return 1
+    return 3 if args.fail_on_mismatch and mismatch else 0
+
+
 def _assess(args):
     from .assess import assess_file, render
 
+    if args.pairs and args.related:
+        print("FHR: give --pairs or --related, not both", file=sys.stderr)
+        return 2
+    if args.online_timeout is not None and not args.online:
+        print("FHR: --online-timeout needs --online", file=sys.stderr)
+        return 2
+    if (
+        len(args.inputs) > 1
+        or args.recursive
+        and any(os.path.isdir(path) for path in args.inputs)
+    ):
+        return _assess_batch(args)
+    (args.input,) = args.inputs
+    if os.path.isdir(args.input):
+        print(f"FHR: {args.input} is a directory: give --recursive", file=sys.stderr)
+        return 2
+    if args.pairs:
+        print(
+            "FHR: --pairs needs batch mode (a directory or several files)",
+            file=sys.stderr,
+        )
+        return 2
     if args.input == STANDARD_STREAM and args.assess_type == "auto":
         print("FHR: give the format of - with --type", file=sys.stderr)
         return 2
@@ -899,6 +1023,8 @@ def _assess(args):
         record_limit=args.record_limit,
         hash_inputs=args.hash_inputs,
         type_option=None if args.assess_type == "auto" else args.assess_type,
+        online=args.online,
+        online_timeout=args.online_timeout,
     )
     if report["input"]["scope"] == "error":
         print(f"FHR: {report['input']['error']}", file=sys.stderr)
@@ -987,9 +1113,9 @@ SUBCOMMANDS = (
     ),
     Subcommand(
         "assess",
-        "assess how FAIR the header of a data file is (offline)",
+        "assess how FAIR the header of a data file is (offline by default)",
         "Assess the header of a FASTA, GFF3, GAF, VCF, GFA or other text file "
-        "against the RDA FAIR Data Maturity Model indicators, offline",
+        "against the RDA FAIR Data Maturity Model indicators, offline by default",
         _assess_arguments,
         _assess,
         epilog=ASSESS_EPILOG,
