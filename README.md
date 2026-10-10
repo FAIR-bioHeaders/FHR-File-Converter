@@ -97,8 +97,20 @@ error. Formats are taken from the extension before `.gz` or `.bgz`.
 Outputs whose path ends in `.gz` or `.bgz` are written as BGZF, which `gzip`,
 `zcat`, `bgzip`, and htslib read. A combine without `-o` keeps the input's
 compression extension. Other outputs, and stdout, are never compressed. Note that
-`samtools faidx` rejects FASTA files containing `;` lines, compressed or not, so
-index a stripped copy for random access.
+`samtools faidx` (and tools built on htslib, such as `bcftools` and pysam's
+`FastaFile`) rejects FASTA files containing `;` lines, compressed or not. Keep
+the FHR file as the record of provenance and index a stripped copy:
+
+```sh
+bioheaders strip genome.fhr.fa.gz genome.fa.gz   # writes BGZF
+samtools faidx genome.fa.gz                       # .fai and .gzi
+```
+
+The stripped file has the same sequence bytes; `bioheaders verify` on the FHR
+file still checks the original. Which other tools accept FHR files is surveyed in
+[TOOL_COMPATIBILITY.md](https://github.com/FAIR-bioHeaders/FHR-Specification/blob/main/docs/TOOL_COMPATIBILITY.md);
+support for leading `;` lines in htslib is proposed in
+[samtools/htslib#2103](https://github.com/samtools/htslib/issues/2103).
 
 `-` reads stdin or writes stdout: the input of verify, strip, combine (the
 sequence), convert, and validate, and the output of strip, convert, and
