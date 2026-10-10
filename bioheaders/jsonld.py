@@ -8,9 +8,10 @@ and ``@type`` on the record and its nested nodes (FHR-Specification
 docs/JSONLD.md, feature 011). The bundled ``fhr.context.jsonld`` is a
 byte-identical copy of FHR-Specification ``jsonld/fhr.context.jsonld``.
 
-Writing and canonical reading (rule J1) need only the standard library and never
-use the network. Reading JSON-LD in other forms (rules J3 to J5) is not
-supported yet.
+Writing and canonical reading (rule J1) need only the standard library. Reading
+JSON-LD in other forms (rules J3 to J6) needs the ``jsonld`` extra (PyLD, Python
+3.10 or later), which is imported only for those documents. Nothing ever uses
+the network: contexts are served only from the bundled copies.
 """
 
 import copy
@@ -75,10 +76,9 @@ URL_TERM = "subjectOf"
 EXPORT_KEYS = ("id", "url", "keywords")
 # Root keys of a written document that carry export metadata, not FHR fields.
 EXPORT_OUTPUT = ("@id", "keywords", "url", "conformsTo")
-NOT_CANONICAL = (
-    "this JSON-LD is not in the canonical FAIR-bioHeaders form (rule J1 of "
-    "FHR-Specification docs/JSONLD.md); reading other JSON-LD forms is not "
-    "supported yet"
+NEEDS_EXTRA = (
+    "reading this JSON-LD form needs the jsonld extra: "
+    'pip install "fair-bioheaders[jsonld]"'
 )
 
 
@@ -293,20 +293,23 @@ def _without_types(value):
 
 
 def from_jsonld(document, *, ignore_unknown_terms=False, warn=None):
-    """Return the FHR metadata of a JSON-LD document (rule J1).
+    """Return the FHR metadata of a JSON-LD document.
 
-    ``@context`` and every ``@type`` are set aside, a root ``subjectOf`` is the
-    ``documentation`` value, and the export terms ``@id``, ``keywords``, ``url``
-    and ``conformsTo`` are set aside with a warning passed to ``warn`` (default:
-    print to stderr). ``ignore_unknown_terms`` is reserved for reading other
-    JSON-LD forms and has no effect on canonical documents. Raises
-    ``ValueError`` for anything else.
+    A canonical document (rule J1) has its ``@context`` and every ``@type`` set
+    aside; a root ``subjectOf`` is the ``documentation`` value, and the export
+    terms ``@id``, ``keywords``, ``url`` and ``conformsTo`` are set aside with a
+    warning passed to ``warn`` (default: print to stderr). Any other document is
+    read by JSON-LD expansion (rules J3 to J5, ``read_general``), which needs
+    the ``jsonld`` extra; ``ignore_unknown_terms`` turns its unknown terms into
+    warnings. Raises ``ValueError`` for anything else.
     """
     warn = _print_warning if warn is None else warn
-    if not isinstance(document, dict):
-        raise ValueError("JSON-LD metadata must be a JSON object")
+    if not isinstance(document, (dict, list)):
+        raise ValueError("JSON-LD metadata must be a JSON object or array")
     if not is_canonical(document):
-        raise ValueError(NOT_CANONICAL)
+        return read_general(
+            document, ignore_unknown_terms=ignore_unknown_terms, warn=warn
+        )
     record = {}
     for key, value in document.items():
         if key in ("@context", "@type"):
@@ -323,4 +326,242 @@ def from_jsonld(document, *, ignore_unknown_terms=False, warn=None):
                 raise ValueError("JSON-LD subjectOf must be a string")
             key = "documentation"
         record[key] = _without_types(value)
+    return record
+
+
+# The general path (rules J3 to J5): JSON-LD 1.1 expansion with bundled contexts
+# only, then the reverse of the bundled context, scope by scope.
+
+XSD_DATE = "http://www.w3.org/2001/XMLSchema#date"
+# Root terms of the context that are not FHR fields: export metadata, read as
+# unknown terms. subjectOf is read as documentation.
+EXPORT_TERMS = ("keywords", "url", "conformsTo")
+RECORD = "the record"
+
+
+def _iri(curie, body):
+    prefix, colon, rest = curie.partition(":")
+    namespace = body.get(prefix) or CONTEXT["@context"].get(prefix)
+    if colon and isinstance(namespace, str):
+        return namespace + rest
+    return curie
+
+
+def _reverse_scope(body, root=False):
+    """``(IRI -> (key, coercion, container, child scope), key that @id fills)``."""
+    reverse, id_key = {}, None
+    for key, term in body.items():
+        if term == "@id":
+            id_key = key
+            continue
+        if not isinstance(term, dict) or root and key in EXPORT_TERMS:
+            continue
+        child = None
+        if "@context" in term:
+            child = _reverse_scope(term["@context"][1])
+            coercion = "node"
+        elif term.get("@type") == "@id":
+            coercion = "iri"
+        elif term.get("@type") == "xsd:date":
+            coercion = "date"
+        else:
+            coercion = "literal"
+        target = "documentation" if key == URL_TERM else key
+        reverse[_iri(term["@id"], body)] = (
+            target,
+            coercion,
+            term.get("@container"),
+            child,
+        )
+    return reverse, id_key
+
+
+# The reverse map derived once from the bundled context (data-model section 4).
+REVERSE_MAP = _reverse_scope(CONTEXT["@context"], root=True)
+# Output key order: the context lists keys in fhr.json property order.
+KEY_ORDER = {
+    key: index for index, key in enumerate(CONTEXT["@context"]) if key != URL_TERM
+}
+
+
+def _document_loader(refused):
+    from pyld import jsonld as pyld
+
+    def load(url, options=None):
+        for version, context in BUNDLED_CONTEXTS:
+            if url in _context_urls(version):
+                return {
+                    "contextUrl": None,
+                    "documentUrl": url,
+                    "document": copy.deepcopy(context),
+                }
+        refused.append(url)
+        raise pyld.JsonLdError(
+            f"JSON-LD context is not available offline: {url}",
+            "jsonld.LoadDocumentError",
+            {"url": url},
+            code="loading document failed",
+        )
+
+    return load
+
+
+def expand(document):
+    """Expand ``document`` with the bundled contexts only (rule J3).
+
+    Returns ``(expanded, dropped)``; ``dropped`` lists the terms that expansion
+    dropped because they have no IRI. Raises ``ValueError``.
+    """
+    try:
+        from pyld import jsonld as pyld
+    except ImportError:
+        raise ValueError(NEEDS_EXTRA) from None
+    refused, dropped = [], []
+
+    def on_dropped(term):
+        if term is not None and term not in dropped:
+            dropped.append(term)
+
+    try:
+        expanded = pyld.expand(
+            copy.deepcopy(document),
+            {"documentLoader": _document_loader(refused)},
+            on_property_dropped=on_dropped,
+        )
+    except pyld.JsonLdError as error:
+        if refused:
+            raise ValueError(
+                f"JSON-LD context is not available offline: {refused[0]}"
+            ) from None
+        raise ValueError(
+            f"invalid JSON-LD: {error.code or error.type}: {error.args[0]}"
+        ) from None
+    return expanded, dropped
+
+
+class _Reader:
+    def __init__(self):
+        self.unknown = []
+
+    def node(self, node, scope, where):
+        reverse, id_key = scope
+        found = {}
+        for name, values in node.items():
+            if name == "@type":
+                continue
+            if name == "@id" and id_key is not None:
+                found[id_key] = node["@id"]
+                continue
+            if name not in reverse:
+                reason = "root-id" if name == "@id" and where == RECORD else "unmapped"
+                self.unknown.append((name, where, reason))
+                continue
+            key, coercion, container, child = reverse[name]
+            if key in found:
+                raise ValueError("JSON-LD gives both documentation and subjectOf")
+            field = key if where == RECORD else f"{where}.{key}"
+            items = []
+            for value in values:
+                if isinstance(value, dict) and "@list" in value:
+                    items.extend(value["@list"])
+                else:
+                    items.append(value)
+            converted = [
+                self.value(item, key, field, coercion, child, where, index)
+                for index, item in enumerate(items)
+            ]
+            if key == "assemblySoftware" and [type(v) for v in converted] == [str]:
+                found[key] = converted[0]
+            elif container is not None:
+                found[key] = converted
+            elif len(converted) != 1:
+                raise ValueError(
+                    f"JSON-LD gives {len(converted)} values for single-valued "
+                    f"field {field}"
+                )
+            else:
+                found[key] = converted[0]
+        if where == RECORD:
+            order = KEY_ORDER
+        else:
+            order = {key: index for index, key in enumerate(_scope_keys(scope))}
+        return dict(sorted(found.items(), key=lambda item: order.get(item[0], 1 << 30)))
+
+    def value(self, item, key, field, coercion, child, where, index):
+        if not isinstance(item, dict):
+            raise ValueError(f"JSON-LD gives an unsupported value for field {field}")
+        if "@value" in item:
+            if "@language" in item:
+                raise ValueError(
+                    f"JSON-LD gives a language-tagged value for field {field}, "
+                    "which FHR cannot keep"
+                )
+            kind = item.get("@type")
+            if kind is not None and not (coercion == "date" and kind == XSD_DATE):
+                allowed = (
+                    "only xsd:date or no datatype" if coercion == "date" else "none"
+                )
+                raise ValueError(
+                    f"JSON-LD gives field {field} the datatype {kind}; "
+                    f"allowed: {allowed}"
+                )
+            value = item["@value"]
+            if coercion == "node" and not (
+                key == "assemblySoftware" and isinstance(value, str)
+            ):
+                raise ValueError(
+                    f"JSON-LD gives a value for field {field}, which takes an object"
+                )
+            if coercion in ("iri", "date") and not isinstance(value, str):
+                raise ValueError(f"JSON-LD gives a non-string value for field {field}")
+            return value
+        if coercion == "iri" and set(item) == {"@id"}:
+            return item["@id"]
+        if coercion != "node":
+            raise ValueError(
+                f"JSON-LD gives a node for field {field}, which takes a value"
+            )
+        if set(item) == {"@id"}:
+            raise ValueError(
+                f"JSON-LD gives field {field} only as a reference to {item['@id']} "
+                "(flattened form), which is not supported"
+            )
+        path = key if where == RECORD else f"{where}.{key}"
+        if key in AUTHOR_KEYS or key == "assemblySoftware":
+            path = f"{path}[{index}]"
+        return self.node(item, child, path)
+
+
+def _scope_keys(scope):
+    reverse, id_key = scope
+    keys = [entry[0] for entry in reverse.values()]
+    return keys + [id_key] if id_key else keys
+
+
+def _unknown_text(term, where, reason):
+    if reason == "dropped":
+        return f"{term} (dropped by JSON-LD expansion: it has no IRI)"
+    return f"{term} (at {where})"
+
+
+def read_general(document, *, ignore_unknown_terms=False, warn=None):
+    """Read JSON-LD in any form by expansion (rules J3 to J5); see ``from_jsonld``."""
+    warn = _print_warning if warn is None else warn
+    expanded, dropped = expand(document)
+    nodes = expanded
+    if len(nodes) == 1 and set(nodes[0]) == {"@graph"}:
+        nodes = nodes[0]["@graph"]
+    if len(nodes) != 1:
+        raise ValueError(
+            f"JSON-LD must describe exactly one FHR record (found {len(nodes)} nodes)"
+        )
+    reader = _Reader()
+    record = reader.node(nodes[0], REVERSE_MAP, RECORD)
+    unknown = [(term, None, "dropped") for term in dropped] + reader.unknown
+    if unknown:
+        texts = [_unknown_text(*entry) for entry in unknown]
+        if not ignore_unknown_terms:
+            raise ValueError("JSON-LD term not in the FHR mapping: " + ", ".join(texts))
+        for text in texts:
+            warn(f"warning: JSON-LD term not in the FHR mapping: {text}")
     return record

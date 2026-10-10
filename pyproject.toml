@@ -22,6 +22,11 @@ include = ["bioheaders/fhr_schema.json", "bioheaders/fhr.context.jsonld", "biohe
 python = "^3.9"
 jsonschema = {version = "^4.21.1", extras = ["format"]}
 pyyaml = "^6.0.1"
+# Optional: reading JSON-LD that is not in the canonical form (rules J3 to J6).
+pyld = {version = "^3.3", optional = true, python = ">=3.10"}
+
+[tool.poetry.extras]
+jsonld = ["pyld"]
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
@@ -38,6 +43,7 @@ pytest = [
     { version = "^9.0.3", python = ">=3.10" },
     { version = "^8.4.2", python = "<3.10" },
 ]
+pyld = {version = "^3.3", python = ">=3.10"}
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues"

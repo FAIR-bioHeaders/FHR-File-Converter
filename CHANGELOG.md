@@ -21,8 +21,12 @@
   embedded bundled context and typed nodes (`Dataset`, `Taxon`, `Person`/`Organization`/`Agent`
   from the author identifier, `PropertyValue`, `SoftwareApplication`, `VitalStats`). Output
   is byte-identical to the specification's examples. A `documentation` URL is written as
-  `subjectOf`. Reading accepts the canonical form only (rule J1). No new runtime dependency;
-  nothing is fetched. `convert --export-context FILE` adds the dataset `@id`, `url` and
+  `subjectOf`. Reading the canonical form (rule J1) needs no new dependency. Other JSON-LD
+  forms (expanded, compacted with another context, one record in `@graph`) are read by
+  JSON-LD expansion (rules J3 to J5) with the new optional `jsonld` extra (PyLD, Python
+  3.10+); terms that map to no FHR field fail the read unless `convert`/`validate` get
+  `--ignore-unknown-terms`, which reports them as warnings. Nothing is fetched: contexts
+  come only from the bundled copy. `convert --export-context FILE` adds the dataset `@id`, `url` and
   `keywords` and claims Bioschemas Dataset 1.0-RELEASE conformance only when complete
   (provisional). The new `bioheaders.jsonld` API is provisional. Existing formats and
   commands are unchanged.
