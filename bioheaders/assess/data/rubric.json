@@ -1,5 +1,5 @@
 {
-  "rubric_version": "1.0.0",
+  "rubric_version": "1.1.0",
   "source": {
     "title": "FAIR Data Maturity Model. Specification and Guidelines",
     "version": "1.0",
@@ -48,19 +48,19 @@
       "guideline_item": "G1",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
         },
         "gff3-pragma": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "vcf-meta": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "gaf": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         }
       }
@@ -126,19 +126,19 @@
       "guideline_item": "G1",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
         },
         "gff3-pragma": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "vcf-meta": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "gaf": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         }
       }
@@ -184,19 +184,19 @@
       "guideline_item": "G2",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "State the version or release of this file's data.",
+          "text": "State the version or release of this file's data (see guideline G2).",
           "line": "#~version: <version or release of this file's data, e.g. WS298>"
         },
         "gff3-pragma": {
-          "text": "State the version or release of this file's data.",
+          "text": "State the version or release of this file's data (see guideline G2).",
           "line": "#!version <version or release of this file's data, e.g. WS298>"
         },
         "vcf-meta": {
-          "text": "State the version or release of this file's data.",
+          "text": "State the version or release of this file's data (see guideline G2).",
           "line": "##version=<version or release of this file's data, e.g. WS298>"
         },
         "gaf": {
-          "text": "State the version or release of this file's data.",
+          "text": "State the version or release of this file's data (see guideline G2).",
           "line": "!version: <version or release of this file's data, e.g. WS298>"
         }
       }
@@ -230,19 +230,19 @@
       "guideline_item": "G1",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
         },
         "gff3-pragma": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "vcf-meta": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "gaf": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G1).",
           "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         }
       }
@@ -286,19 +286,19 @@
       "guideline_item": "G8",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
         },
         "gff3-pragma": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "vcf-meta": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "gaf": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         }
       }
@@ -357,19 +357,19 @@
       "guideline_item": "G8",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G8).",
           "line": "#~identifier: [<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>]"
         },
         "gff3-pragma": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G8).",
           "line": "#!identifier <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "vcf-meta": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G8).",
           "line": "##identifier=<persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         },
         "gaf": {
-          "text": "State a persistent identifier of this file's own data, in a registered scheme.",
+          "text": "State a persistent identifier of this file's own data, in a registered scheme (see guideline G8).",
           "line": "!identifier: <persistent identifier of this file, e.g. doi:10.5281/zenodo.6762549>"
         }
       }
@@ -406,19 +406,19 @@
       "guideline_item": "G8",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
         },
         "gff3-pragma": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "vcf-meta": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "gaf": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         }
       }
@@ -444,19 +444,19 @@
       "guideline_item": "G8",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
         },
         "gff3-pragma": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "vcf-meta": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "gaf": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         }
       }
@@ -493,19 +493,19 @@
       "guideline_item": "G8",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#~relatedLink: [<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>]"
         },
         "gff3-pragma": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "#!relatedLink <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "vcf-meta": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "##relatedLink=<URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         },
         "gaf": {
-          "text": "Say where this file can be obtained, as a URL.",
+          "text": "Say where this file can be obtained, as a URL (see guideline G8).",
           "line": "!relatedLink: <URL where this file can be downloaded, e.g. https://ftp.ensembl.org/pub/release-116/>"
         }
       }
@@ -556,19 +556,19 @@
       "guideline_item": "G3",
       "suggestions": {
         "gff3-directive": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##gff-version <GFF version, e.g. 3>"
         },
         "vcf-meta": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
         },
         "gaf": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "!gaf-version: <GAF version, e.g. 2.2>"
         },
         "fair-bioheaders": {
-          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates (see guideline G3).",
           "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
         }
       }
@@ -598,19 +598,19 @@
       "guideline_item": "G3",
       "suggestions": {
         "gff3-directive": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##gff-version <GFF version, e.g. 3>"
         },
         "vcf-meta": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
         },
         "gaf": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "!gaf-version: <GAF version, e.g. 2.2>"
         },
         "fair-bioheaders": {
-          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates (see guideline G3).",
           "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
         }
       }
@@ -640,7 +640,7 @@
       "guideline_item": "G3",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Map the header keys to IRIs with a JSON-LD context, so that the metadata is machine-understandable.",
+          "text": "Map the header keys to IRIs with a JSON-LD context, so that the metadata is machine-understandable (see guideline G3).",
           "line": "#~'@context': <URL of a JSON-LD context for the header keys, e.g. https://example.org/context.jsonld>"
         }
       }
@@ -677,15 +677,15 @@
       "guideline_item": "G4",
       "suggestions": {
         "gff3-directive": {
-          "text": "Name the Sequence Ontology release used for feature types.",
+          "text": "Name the Sequence Ontology release used for feature types (see guideline G4).",
           "line": "##feature-ontology <URL of the Sequence Ontology release used, e.g. http://purl.obolibrary.org/obo/so/2024-11-18/so.owl>"
         },
         "gaf": {
-          "text": "Name the Gene Ontology release used.",
+          "text": "Name the Gene Ontology release used (see guideline G4).",
           "line": "!go-version: <PURL of the GO release used, e.g. http://purl.obolibrary.org/obo/go/releases/2026-08-02/go.owl>"
         },
         "fair-bioheaders": {
-          "text": "Point to documentation that defines the fields and vocabularies of the records.",
+          "text": "Point to documentation that defines the fields and vocabularies of the records (see guideline G4).",
           "line": "#~documentation: <URL of the documentation of the record fields, e.g. https://example.org/fields.html>"
         }
       }
@@ -725,19 +725,19 @@
       "guideline_item": "G4",
       "suggestions": {
         "gff3-directive": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "##species https://identifiers.org/taxonomy:{value}"
         },
         "vcf-meta": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "##taxon=https://identifiers.org/taxonomy:{value}"
         },
         "gaf": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "!taxon: https://identifiers.org/taxonomy:{value}"
         },
         "fair-bioheaders": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "#~taxon: {name: <species name, e.g. Caenorhabditis elegans>, uri: https://identifiers.org/taxonomy:{value}}"
         }
       }
@@ -770,15 +770,15 @@
       "guideline_item": "G4",
       "suggestions": {
         "gff3-directive": {
-          "text": "Name the Sequence Ontology release used for feature types.",
+          "text": "Name the Sequence Ontology release used for feature types (see guideline G4).",
           "line": "##feature-ontology <URL of the Sequence Ontology release used, e.g. http://purl.obolibrary.org/obo/so/2024-11-18/so.owl>"
         },
         "gaf": {
-          "text": "Name the Gene Ontology release used.",
+          "text": "Name the Gene Ontology release used (see guideline G4).",
           "line": "!go-version: <PURL of the GO release used, e.g. http://purl.obolibrary.org/obo/go/releases/2026-08-02/go.owl>"
         },
         "fair-bioheaders": {
-          "text": "Point to documentation that defines the fields and vocabularies of the records.",
+          "text": "Point to documentation that defines the fields and vocabularies of the records (see guideline G4).",
           "line": "#~documentation: <URL of the documentation of the record fields, e.g. https://example.org/fields.html>"
         }
       }
@@ -824,19 +824,19 @@
       "guideline_item": "G4",
       "suggestions": {
         "gff3-directive": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "##species https://identifiers.org/taxonomy:{value}"
         },
         "vcf-meta": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "##taxon=https://identifiers.org/taxonomy:{value}"
         },
         "gaf": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "!taxon: https://identifiers.org/taxonomy:{value}"
         },
         "fair-bioheaders": {
-          "text": "Give the taxon as a persistent identifiers.org IRI.",
+          "text": "Give the taxon as a persistent identifiers.org IRI (see guideline G4).",
           "line": "#~taxon: {name: <species name, e.g. Caenorhabditis elegans>, uri: https://identifiers.org/taxonomy:{value}}"
         }
       }
@@ -888,19 +888,19 @@
       "guideline_item": "G5",
       "suggestions": {
         "gff3-pragma": {
-          "text": "Record the accession of the assembly this annotation describes, so that the genome can be identified exactly.",
+          "text": "Record the accession of the assembly this annotation describes, so that the genome can be identified exactly (see guideline G5).",
           "line": "#!genome-build-accession NCBI_Assembly:<versioned assembly accession, e.g. GCF_000002985.6>"
         },
         "vcf-meta": {
-          "text": "Give each contig the MD5 of its reference sequence, one line per contig, so that the genome can be checked exactly.",
+          "text": "Give each contig the MD5 of its reference sequence, one line per contig, so that the genome can be checked exactly (see guideline G5).",
           "line": "##contig=<ID={related.name},length={related.length},md5={related.md5}>"
         },
         "gaf": {
-          "text": "Name the ontology release the annotations refer to.",
+          "text": "Name the ontology release the annotations refer to (see guideline G5).",
           "line": "!go-version: <PURL of the GO release used, e.g. http://purl.obolibrary.org/obo/go/releases/2026-08-02/go.owl>"
         },
         "fair-bioheaders": {
-          "text": "Add a derivedFrom entry that names the parent file by checksum and states the relationship.",
+          "text": "Add a derivedFrom entry that names the parent file by checksum and states the relationship (see guideline G5).",
           "line": "#~derivedFrom: [{headerType: <header type of the parent file, e.g. FHR>, relationship: <relationship to the parent, e.g. annotates>, checksum: {related.checksum}}]"
         }
       }
@@ -941,7 +941,7 @@
       "guideline_item": "G4",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Name the author of the header with an ORCID iD, which states the role and links to a record about the person.",
+          "text": "Name the author of the header with an ORCID iD, which states the role and links to a record about the person (see guideline G4).",
           "line": "#~metadataAuthor: [{name: <author name, e.g. Josiah Carberry>, uri: https://orcid.org/<ORCID iD, e.g. 0000-0002-1825-0097>}]"
         }
       }
@@ -972,15 +972,15 @@
       "guideline_item": "G5",
       "suggestions": {
         "gff3-pragma": {
-          "text": "Record the accession of the assembly this annotation describes, so that the genome can be identified exactly.",
+          "text": "Record the accession of the assembly this annotation describes, so that the genome can be identified exactly (see guideline G5).",
           "line": "#!genome-build-accession NCBI_Assembly:<versioned assembly accession, e.g. GCF_000002985.6>"
         },
         "vcf-meta": {
-          "text": "Give each contig the MD5 of its reference sequence, one line per contig, so that the genome can be checked exactly.",
+          "text": "Give each contig the MD5 of its reference sequence, one line per contig, so that the genome can be checked exactly (see guideline G5).",
           "line": "##contig=<ID={related.name},length={related.length},md5={related.md5}>"
         },
         "fair-bioheaders": {
-          "text": "Add a derivedFrom entry that names the parent file by checksum and states the relationship.",
+          "text": "Add a derivedFrom entry that names the parent file by checksum and states the relationship (see guideline G5).",
           "line": "#~derivedFrom: [{headerType: <header type of the parent file, e.g. FHR>, relationship: <relationship to the parent, e.g. annotates>, checksum: {related.checksum}}]"
         }
       }
@@ -1026,19 +1026,19 @@
       "guideline_item": "G2",
       "suggestions": {
         "gff3-pragma": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G2).",
           "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "vcf-meta": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G2).",
           "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
         },
         "gaf": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G2).",
           "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "fair-bioheaders": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G2).",
           "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         }
       }
@@ -1062,19 +1062,19 @@
       "guideline_item": "G7",
       "suggestions": {
         "gff3-pragma": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "vcf-meta": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
         },
         "gaf": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "fair-bioheaders": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         }
       }
@@ -1113,19 +1113,19 @@
       "guideline_item": "G7",
       "suggestions": {
         "gff3-pragma": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "vcf-meta": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
         },
         "gaf": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "fair-bioheaders": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         }
       }
@@ -1156,19 +1156,19 @@
       "guideline_item": "G7",
       "suggestions": {
         "gff3-pragma": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "#!reuseConditions <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "vcf-meta": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "##reuseConditions=<SPDX licence id, e.g. CC-BY-4.0>"
         },
         "gaf": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "!reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         },
         "fair-bioheaders": {
-          "text": "State the licence of this file as an SPDX identifier.",
+          "text": "State the licence of this file as an SPDX identifier (see guideline G7).",
           "line": "#~reuseConditions: <SPDX licence id, e.g. CC-BY-4.0>"
         }
       }
@@ -1200,19 +1200,19 @@
       "guideline_item": "G6",
       "suggestions": {
         "gff3-pragma": {
-          "text": "Record when this file was produced.",
+          "text": "Record when this file was produced (see guideline G6).",
           "line": "#!date-produced <ISO 8601 date, e.g. 2026-10-10>"
         },
         "vcf-meta": {
-          "text": "Record when this file was produced.",
+          "text": "Record when this file was produced (see guideline G6).",
           "line": "##fileDate=<date as YYYYMMDD, e.g. 20261010>"
         },
         "gaf": {
-          "text": "Record when this file was produced.",
+          "text": "Record when this file was produced (see guideline G6).",
           "line": "!date-generated: <ISO 8601 date, e.g. 2026-10-10>"
         },
         "fair-bioheaders": {
-          "text": "Record when this file was produced.",
+          "text": "Record when this file was produced (see guideline G6).",
           "line": "#~dateCreated: <ISO 8601 date, e.g. 2026-10-10>"
         }
       }
@@ -1241,7 +1241,7 @@
       "guideline_item": "G5",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Record the parent file with a derivedFrom entry and its relationship; the relationship vocabulary is still provisional (FHR-Specification#54).",
+          "text": "Record the parent file with a derivedFrom entry and its relationship; the relationship vocabulary is still provisional (FHR-Specification#54) (see guideline G5).",
           "line": "#~derivedFrom: [{headerType: <header type of the parent file, e.g. FHR>, relationship: <relationship to the parent, e.g. annotates>, checksum: {related.checksum}}]"
         }
       }
@@ -1271,19 +1271,19 @@
       "guideline_item": "G3",
       "suggestions": {
         "gff3-directive": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##gff-version <GFF version, e.g. 3>"
         },
         "vcf-meta": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
         },
         "gaf": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "!gaf-version: <GAF version, e.g. 2.2>"
         },
         "fair-bioheaders": {
-          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates (see guideline G3).",
           "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
         }
       }
@@ -1317,19 +1317,19 @@
       "guideline_item": "G3",
       "suggestions": {
         "gff3-directive": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##gff-version <GFF version, e.g. 3>"
         },
         "vcf-meta": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
         },
         "gaf": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "!gaf-version: <GAF version, e.g. 2.2>"
         },
         "fair-bioheaders": {
-          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates (see guideline G3).",
           "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
         }
       }
@@ -1369,7 +1369,7 @@
       "guideline_item": "G3",
       "suggestions": {
         "fair-bioheaders": {
-          "text": "Add a FAIR-bioHeaders header that names its machine-readable schema; for a genome, create it with bioheaders combine so that it validates.",
+          "text": "Add a FAIR-bioHeaders header that names its machine-readable schema; for a genome, create it with bioheaders combine so that it validates (see guideline G3).",
           "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
         }
       }
@@ -1403,19 +1403,19 @@
       "guideline_item": "G3",
       "suggestions": {
         "gff3-directive": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##gff-version <GFF version, e.g. 3>"
         },
         "vcf-meta": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "##fileformat=VCFv<VCF version, e.g. 4.3>"
         },
         "gaf": {
-          "text": "Declare the format and its version on the first line.",
+          "text": "Declare the format and its version on the first line (see guideline G3).",
           "line": "!gaf-version: <GAF version, e.g. 2.2>"
         },
         "fair-bioheaders": {
-          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates.",
+          "text": "Add a FAIR-bioHeaders header that names its schema; for a genome, create it with bioheaders combine so that it validates (see guideline G3).",
           "line": "#~schema: <schema URL of the FAIR-bioHeaders header type, e.g. https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json>"
         }
       }
